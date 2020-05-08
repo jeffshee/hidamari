@@ -1,25 +1,35 @@
 #!/bin/python
 import argparse
+import subprocess
+import os
+import pathlib
+import signal
+
 import gi
 import json
-import os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from PIL import Image, ImageFilter
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkClutter', '1.0')
 gi.require_version('ClutterGst', '3.0')
-from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst
+from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, Gio
 
 HOME = os.environ['HOME']
 RC_FILENAME = '.wallpaperrc'
 RC_PATH = HOME + '/' + RC_FILENAME
 
+gso = Gio.Settings.new('org.gnome.desktop.background')
+ORI_WALLPAPER_URI = gso.get_string('picture-uri')
+BLUR_WALLPAPER_PATH = './video-wallpaper.png'
+
 config = {
     'video_path': '',
     'audio_volume': 0.5,
     'is_mute': False,
-    'is_loop': True
+    'blur_wallpaper': True,
+    'blur_radius': 5
 }
 video_wallpaper = None
 
@@ -34,17 +44,27 @@ def monitor_detect():
     return width, height
 
 
+def set_blur_wallpaper(video_path):
+    # Extract first frame (use ffmpeg)
+    subprocess.call('ffmpeg -y -i {} -vframes 1 {}'.format(video_path, BLUR_WALLPAPER_PATH), shell=True)
+    blur_wallpaper = Image.open(BLUR_WALLPAPER_PATH)
+    blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(config['blur_radius']))
+    blur_wallpaper.save(BLUR_WALLPAPER_PATH)
+    gso.set_string('picture-uri', pathlib.Path(BLUR_WALLPAPER_PATH).resolve().as_uri())
+
+
 def generate_rc():
     with open(RC_PATH, 'w') as f:
         json.dump(config, f)
 
 
 def rc_modified_callback():
-    print("RC file modified, refreshing")
     with open(RC_PATH, 'r') as new_f:
         new_config = json.load(new_f)
         if new_config['video_path'] != config['video_path']:
             video_wallpaper.set_filename(new_config['video_path'])
+            if config['blur_wallpaper']:
+                set_blur_wallpaper(new_config['video_path'])
         if new_config['audio_volume'] != config['audio_volume']:
             video_wallpaper.set_audio_volume(new_config['audio_volume'])
         config.update(new_config)
@@ -54,8 +74,13 @@ def start_application():
     Gtk.main()
 
 
-def quit_application():
+def quit_application(*args):
     Gtk.main_quit()
+    gso.set_string('picture-uri', ORI_WALLPAPER_URI)
+
+
+signal.signal(signal.SIGTERM, quit_application)
+signal.signal(signal.SIGINT, quit_application)
 
 
 class VideoWallpaper:
@@ -63,6 +88,7 @@ class VideoWallpaper:
         # Settings
         self.video_path = rc['video_path']
         self.audio_volume = rc['audio_volume']
+        self.is_mute = rc['is_mute']
         bg_color = Clutter.Color.get_static(Clutter.StaticColor.BLACK)
 
         # Monitor Detect
@@ -85,7 +111,6 @@ class VideoWallpaper:
 
         # Playback settings
         self.video_playback.set_filename(self.video_path)
-        self.video_playback.set_audio_volume(self.audio_volume)
         self.video_playback.set_playing(True)
         self.video_playback.connect('eos', self.loop_playback)
         self.wallpaper_actor.set_content(self.video_content)
@@ -96,6 +121,8 @@ class VideoWallpaper:
         self.window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
         self.window.set_size_request(self.width, self.height)
         self.window.show_all()
+
+        self.set_audio_volume(0.0 if self.is_mute else self.audio_volume)
 
     def loop_playback(self, playback):
         playback.set_progress(0.0)
@@ -146,6 +173,8 @@ def main():
             config = json.load(f)
         FileModifiedHandler(path=HOME, file_name=RC_FILENAME, callback=rc_modified_callback)
         video_wallpaper = VideoWallpaper(rc=config)
+        if config['blur_wallpaper']:
+            set_blur_wallpaper(config['video_path'])
         start_application()
 
 
