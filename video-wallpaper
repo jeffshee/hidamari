@@ -1,0 +1,159 @@
+#!/bin/python
+import argparse
+import gi
+import json
+import os
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+gi.require_version('Gtk', '3.0')
+gi.require_version('GtkClutter', '1.0')
+gi.require_version('ClutterGst', '3.0')
+from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst
+
+HOME = os.environ['HOME']
+RC_FILENAME = '.wallpaperrc'
+RC_PATH = HOME + '/' + RC_FILENAME
+
+config = {
+    'video_path': '',
+    'audio_volume': 0.5,
+    'is_mute': False,
+    'is_loop': True
+}
+video_wallpaper = None
+
+
+def monitor_detect():
+    display = Gdk.Display.get_default()
+    monitor = display.get_primary_monitor()
+    geometry = monitor.get_geometry()
+    scale_factor = monitor.get_scale_factor()
+    width = scale_factor * geometry.width
+    height = scale_factor * geometry.height
+    return width, height
+
+
+def generate_rc():
+    with open(RC_PATH, 'w') as f:
+        json.dump(config, f)
+
+
+def rc_modified_callback():
+    print("RC file modified, refreshing")
+    with open(RC_PATH, 'r') as new_f:
+        new_config = json.load(new_f)
+        if new_config['video_path'] != config['video_path']:
+            video_wallpaper.set_filename(new_config['video_path'])
+        if new_config['audio_volume'] != config['audio_volume']:
+            video_wallpaper.set_audio_volume(new_config['audio_volume'])
+        config.update(new_config)
+
+
+def start_application():
+    Gtk.main()
+
+
+def quit_application():
+    Gtk.main_quit()
+
+
+class VideoWallpaper:
+    def __init__(self, rc=None):
+        # Settings
+        self.video_path = rc['video_path']
+        self.audio_volume = rc['audio_volume']
+        bg_color = Clutter.Color.get_static(Clutter.StaticColor.BLACK)
+
+        # Monitor Detect
+        self.width, self.height = monitor_detect()
+
+        # Actors initialize
+        GtkClutter.init()
+        self.embed = GtkClutter.Embed()
+        self.main_actor = self.embed.get_stage()
+        self.wallpaper_actor = Clutter.Actor()
+        self.wallpaper_actor.set_size(self.width, self.height)
+        self.main_actor.add_child(self.wallpaper_actor)
+        self.main_actor.set_background_color(bg_color)
+
+        # Video initialize
+        ClutterGst.init()
+        self.video_playback = ClutterGst.Playback()
+        self.video_content = ClutterGst.Content()
+        self.video_content.set_player(self.video_playback)
+
+        # Playback settings
+        self.video_playback.set_filename(self.video_path)
+        self.video_playback.set_audio_volume(self.audio_volume)
+        self.video_playback.set_playing(True)
+        self.video_playback.connect('eos', self.loop_playback)
+        self.wallpaper_actor.set_content(self.video_content)
+
+        # Window settings
+        self.window = Gtk.Window(title='Desktop')
+        self.window.add(self.embed)
+        self.window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
+        self.window.set_size_request(self.width, self.height)
+        self.window.show_all()
+
+    def loop_playback(self, playback):
+        playback.set_progress(0.0)
+        playback.set_audio_volume(self.audio_volume)
+        playback.set_playing(True)
+
+    def set_filename(self, filename):
+        self.video_playback.set_playing(False)
+        self.video_path = filename
+        self.video_playback.set_filename(filename)
+        self.video_playback.set_progress(0.0)
+        self.video_playback.set_playing(True)
+
+    def set_audio_volume(self, volume):
+        self.audio_volume = volume
+        self.video_playback.set_audio_volume(volume)
+
+
+class FileModifiedHandler(FileSystemEventHandler):
+    def __init__(self, path, file_name, callback):
+        self.file_name = file_name
+        self.callback = callback
+
+        # set observer to watch for changes in the directory
+        self.observer = Observer()
+        self.observer.schedule(self, path, recursive=False)
+        self.observer.start()
+
+    def on_moved(self, event):
+        print(event)
+        if not event.is_directory and event.dest_path.endswith(self.file_name):
+            self.callback()  # call callback
+
+    def on_modified(self, event):
+        if not event.is_directory and event.src_path.endswith(self.file_name):
+            self.callback()  # call callback
+
+
+def main():
+    global config
+    global video_wallpaper
+    if not os.path.isfile(RC_PATH):
+        generate_rc()
+        print('Generated .wallpaperrc in home directory, you have to configure it first')
+        exit(0)
+    else:
+        with open(RC_PATH, 'r') as f:
+            config = json.load(f)
+        FileModifiedHandler(path=HOME, file_name=RC_FILENAME, callback=rc_modified_callback)
+        video_wallpaper = VideoWallpaper(rc=config)
+        start_application()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--deamonize', action='store_true')
+    args = parser.parse_args()
+    if args.deamonize:
+        pass
+    else:
+        main()

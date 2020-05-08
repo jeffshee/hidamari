@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Video Wallpaper
+Exec=video-wallpaper
+StartupNotify=false
+Terminal=false
+Icon=
+Categories=System;Monitor;
