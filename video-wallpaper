@@ -1,188 +1,94 @@
 #!/bin/python
 import argparse
-import subprocess
 import os
-import pathlib
 import signal
-
-import gi
 import json
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from PIL import Image, ImageFilter
+import time
 
-gi.require_version('Gtk', '3.0')
-gi.require_version('GtkClutter', '1.0')
-gi.require_version('ClutterGst', '3.0')
-from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, Gio
+from gi.repository import GLib
+from player import Player
+from utils import WindowHandler, FileModifiedHandler, StaticWallpaper
 
 HOME = os.environ['HOME']
 RC_FILENAME = '.wallpaperrc'
 RC_PATH = HOME + '/' + RC_FILENAME
 
-gso = Gio.Settings.new('org.gnome.desktop.background')
-ORI_WALLPAPER_URI = gso.get_string('picture-uri')
-BLUR_WALLPAPER_PATH = './video-wallpaper.png'
-
-config = {
-    'video_path': '',
-    'audio_volume': 0.5,
-    'is_mute': False,
-    'blur_wallpaper': True,
-    'blur_radius': 5
-}
-video_wallpaper = None
+rc = None
+wallpaper_player = None
+static_wallpaper = None
+window_handler = None
 
 
-def monitor_detect():
-    display = Gdk.Display.get_default()
-    monitor = display.get_primary_monitor()
-    geometry = monitor.get_geometry()
-    scale_factor = monitor.get_scale_factor()
-    width = scale_factor * geometry.width
-    height = scale_factor * geometry.height
-    return width, height
+def window_listener(state):
+    is_any_maximized = state['is_any_maximized']
+    is_any_fullscreen = state['is_any_fullscreen']
+    if is_any_maximized or is_any_fullscreen:
+        GLib.idle_add(wallpaper_player.pause_playback)
+    else:
+        GLib.idle_add(wallpaper_player.resume_playback)
 
 
-def set_blur_wallpaper(video_path):
-    # Extract first frame (use ffmpeg)
-    subprocess.call('ffmpeg -y -i {} -vframes 1 {}'.format(video_path, BLUR_WALLPAPER_PATH), shell=True)
-    blur_wallpaper = Image.open(BLUR_WALLPAPER_PATH)
-    blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(config['blur_radius']))
-    blur_wallpaper.save(BLUR_WALLPAPER_PATH)
-    gso.set_string('picture-uri', pathlib.Path(BLUR_WALLPAPER_PATH).resolve().as_uri())
-
-
-def generate_rc():
+def generate_template_rc():
+    template_rc = {
+        'video_path': '',
+        'audio_volume': 0.5,
+        'static_wallpaper': True,
+        'static_wallpaper_blur_radius': 5
+    }
     with open(RC_PATH, 'w') as f:
-        json.dump(config, f)
+        json.dump(template_rc, f)
+    print('Generated .wallpaperrc in home directory, you have to configure it first ;)')
 
 
-def rc_modified_callback():
+def rc_modified_listener():
     with open(RC_PATH, 'r') as new_f:
-        new_config = json.load(new_f)
-        if new_config['video_path'] != config['video_path']:
-            video_wallpaper.set_filename(new_config['video_path'])
-            if config['blur_wallpaper']:
-                set_blur_wallpaper(new_config['video_path'])
-        if new_config['audio_volume'] != config['audio_volume']:
-            video_wallpaper.set_audio_volume(new_config['audio_volume'])
-        config.update(new_config)
-
-
-def start_application():
-    Gtk.main()
-
-
-def quit_application(*args):
-    Gtk.main_quit()
-    gso.set_string('picture-uri', ORI_WALLPAPER_URI)
-
-
-signal.signal(signal.SIGTERM, quit_application)
-signal.signal(signal.SIGINT, quit_application)
-
-
-class VideoWallpaper:
-    def __init__(self, rc=None):
-        # Settings
-        self.video_path = rc['video_path']
-        self.audio_volume = rc['audio_volume']
-        self.is_mute = rc['is_mute']
-        bg_color = Clutter.Color.get_static(Clutter.StaticColor.BLACK)
-
-        # Monitor Detect
-        self.width, self.height = monitor_detect()
-
-        # Actors initialize
-        GtkClutter.init()
-        self.embed = GtkClutter.Embed()
-        self.main_actor = self.embed.get_stage()
-        self.wallpaper_actor = Clutter.Actor()
-        self.wallpaper_actor.set_size(self.width, self.height)
-        self.main_actor.add_child(self.wallpaper_actor)
-        self.main_actor.set_background_color(bg_color)
-
-        # Video initialize
-        ClutterGst.init()
-        self.video_playback = ClutterGst.Playback()
-        self.video_content = ClutterGst.Content()
-        self.video_content.set_player(self.video_playback)
-
-        # Playback settings
-        self.video_playback.set_filename(self.video_path)
-        self.video_playback.set_playing(True)
-        self.video_playback.connect('eos', self.loop_playback)
-        self.wallpaper_actor.set_content(self.video_content)
-
-        # Window settings
-        self.window = Gtk.Window(title='Desktop')
-        self.window.add(self.embed)
-        self.window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
-        self.window.set_size_request(self.width, self.height)
-        self.window.show_all()
-
-        self.set_audio_volume(0.0 if self.is_mute else self.audio_volume)
-
-    def loop_playback(self, playback):
-        playback.set_progress(0.0)
-        playback.set_audio_volume(self.audio_volume)
-        playback.set_playing(True)
-
-    def set_filename(self, filename):
-        self.video_playback.set_playing(False)
-        self.video_path = filename
-        self.video_playback.set_filename(filename)
-        self.video_playback.set_progress(0.0)
-        self.video_playback.set_playing(True)
-
-    def set_audio_volume(self, volume):
-        self.audio_volume = volume
-        self.video_playback.set_audio_volume(volume)
-
-
-class FileModifiedHandler(FileSystemEventHandler):
-    def __init__(self, path, file_name, callback):
-        self.file_name = file_name
-        self.callback = callback
-
-        # set observer to watch for changes in the directory
-        self.observer = Observer()
-        self.observer.schedule(self, path, recursive=False)
-        self.observer.start()
-
-    def on_moved(self, event):
-        print(event)
-        if not event.is_directory and event.dest_path.endswith(self.file_name):
-            self.callback()  # call callback
-
-    def on_modified(self, event):
-        if not event.is_directory and event.src_path.endswith(self.file_name):
-            self.callback()  # call callback
+        new_rc = json.load(new_f)
+        GLib.idle_add(wallpaper_player.update_rc, new_rc)
+        if new_rc['static_wallpaper']:
+            static_wallpaper.update_rc(new_rc)
+        else:
+            static_wallpaper.restore_ori_wallpaper()
 
 
 def main():
-    global config
-    global video_wallpaper
+    global rc
+    global wallpaper_player
+    global static_wallpaper
+    global window_handler
+
     if not os.path.isfile(RC_PATH):
-        generate_rc()
-        print('Generated .wallpaperrc in home directory, you have to configure it first')
+        generate_template_rc()
         exit(0)
     else:
         with open(RC_PATH, 'r') as f:
-            config = json.load(f)
-        FileModifiedHandler(path=HOME, file_name=RC_FILENAME, callback=rc_modified_callback)
-        video_wallpaper = VideoWallpaper(rc=config)
-        if config['blur_wallpaper']:
-            set_blur_wallpaper(config['video_path'])
-        start_application()
+            rc = json.load(f)
+        FileModifiedHandler(path=HOME, file_name=RC_FILENAME, callback=rc_modified_listener)
+        wallpaper_player = Player(rc=rc)
+        window_handler = WindowHandler(window_listener)
+        static_wallpaper = StaticWallpaper(rc=rc)
+        if rc['static_wallpaper']:
+            static_wallpaper.set_static_wallpaper()
+        wallpaper_player.main()
 
+
+def quit(*args):
+    wallpaper_player.quit()
+    window_handler.quit()
+    static_wallpaper.restore_ori_wallpaper()
+
+
+signal.signal(signal.SIGTERM, quit)
+signal.signal(signal.SIGINT, quit)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--deamonize', action='store_true')
+    parser.add_argument('-p', '--pause', type=int, default=0)
     args = parser.parse_args()
+    time.sleep(args.pause)
     if args.deamonize:
+        # TODO
         pass
     else:
+        # Run in foreground
         main()
