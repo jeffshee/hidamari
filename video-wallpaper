@@ -5,9 +5,11 @@ import signal
 import json
 import time
 
+import daemon
 from gi.repository import GLib
 from player import Player
 from utils import WindowHandler, FileModifiedHandler, StaticWallpaper
+from gui import control_panel
 
 HOME = os.environ['HOME']
 RC_FILENAME = '.wallpaperrc'
@@ -22,7 +24,7 @@ window_handler = None
 def window_listener(state):
     is_any_maximized = state['is_any_maximized']
     is_any_fullscreen = state['is_any_fullscreen']
-    if is_any_maximized or is_any_fullscreen:
+    if (is_any_maximized and rc['detect_maximized']) or is_any_fullscreen:
         GLib.idle_add(wallpaper_player.pause_playback)
     else:
         GLib.idle_add(wallpaper_player.resume_playback)
@@ -31,9 +33,11 @@ def window_listener(state):
 def generate_template_rc():
     template_rc = {
         'video_path': '',
+        'mute_audio': False,
         'audio_volume': 0.5,
         'static_wallpaper': True,
-        'static_wallpaper_blur_radius': 5
+        'static_wallpaper_blur_radius': 5,
+        'detect_maximized': True,
     }
     with open(RC_PATH, 'w') as f:
         json.dump(template_rc, f)
@@ -41,6 +45,7 @@ def generate_template_rc():
 
 
 def rc_modified_listener():
+    global rc
     with open(RC_PATH, 'r') as new_f:
         new_rc = json.load(new_f)
         GLib.idle_add(wallpaper_player.update_rc, new_rc)
@@ -48,6 +53,7 @@ def rc_modified_listener():
             static_wallpaper.update_rc(new_rc)
         else:
             static_wallpaper.restore_ori_wallpaper()
+        rc = new_rc
 
 
 def main():
@@ -56,9 +62,12 @@ def main():
     global static_wallpaper
     global window_handler
 
+    # TODO check if rc file is broken, reconfigure as well
     if not os.path.isfile(RC_PATH):
         generate_template_rc()
-        exit(0)
+        os.chdir('./gui')
+        control_panel.main()
+        os.chdir('../')
     else:
         with open(RC_PATH, 'r') as f:
             rc = json.load(f)
@@ -87,8 +96,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     time.sleep(args.pause)
     if args.deamonize:
-        # TODO
-        pass
+        # TODO not working
+        with daemon.DaemonContext():
+            main()
     else:
         # Run in foreground
         main()

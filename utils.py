@@ -16,6 +16,7 @@ class WindowHandler:
         self.screen = Wnck.Screen.get_default()
         self.screen.force_update()
         self.screen.connect('window-opened', self.window_opened, None)
+        self.screen.connect('window-closed', self.window_closed, None)
         self.screen.connect('active-workspace-changed', self.active_workspace_changed, None)
         for window in self.screen.get_windows():
             window.connect('state-changed', self.state_changed, None)
@@ -31,6 +32,9 @@ class WindowHandler:
 
     def window_opened(self, screen, window, _):
         window.connect('state-changed', self.state_changed, None)
+
+    def window_closed(self, screen, window, _):
+        self.listener(self.check())
 
     def state_changed(self, window, changed_mask, new_state, _):
         print(window, changed_mask, new_state)
@@ -78,6 +82,7 @@ class FileModifiedHandler(FileSystemEventHandler):
 class StaticWallpaper:
     def __init__(self, rc=None):
         self.video_path = rc['video_path']
+        self.enabled = rc['static_wallpaper']
         self.blur_radius = rc['static_wallpaper_blur_radius']
         self.gso = Gio.Settings.new('org.gnome.desktop.background')
         self.ori_wallpaper_uri = self.gso.get_string('picture-uri')
@@ -90,11 +95,12 @@ class StaticWallpaper:
 
     def set_static_wallpaper(self):
         # Extract first frame (use ffmpeg)
-        subprocess.call('ffmpeg -y -i {} -vframes 1 {}'.format(self.video_path, self.new_wallpaper_uri), shell=True)
-        blur_wallpaper = Image.open(self.new_wallpaper_uri)
-        blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.blur_radius))
-        blur_wallpaper.save(self.new_wallpaper_uri)
-        self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+        if self.enabled:
+            subprocess.call('ffmpeg -y -i {} -vframes 1 {}'.format(self.video_path, self.new_wallpaper_uri), shell=True)
+            blur_wallpaper = Image.open(self.new_wallpaper_uri)
+            blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.blur_radius))
+            blur_wallpaper.save(self.new_wallpaper_uri)
+            self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
     def restore_ori_wallpaper(self):
         self.gso.set_string('picture-uri', self.ori_wallpaper_uri)
