@@ -37,7 +37,6 @@ class WindowHandler:
         self.listener(self.check())
 
     def state_changed(self, window, changed_mask, new_state, _):
-        print(window, changed_mask, new_state)
         self.listener(self.check())
 
     def active_workspace_changed(self, screen, previously_active_space, _):
@@ -51,7 +50,6 @@ class WindowHandler:
             window_name, is_maximized, is_fullscreen = window.get_name(), \
                                                        Wnck.Window.is_maximized(window) and base_state, \
                                                        Wnck.Window.is_fullscreen(window) and base_state
-            # print(window_name, is_maximized, is_fullscreen)
             if is_maximized is True:
                 is_any_maximized = True
             if is_fullscreen is True:
@@ -70,13 +68,25 @@ class FileModifiedHandler(FileSystemEventHandler):
         self.observer.start()
 
     def on_moved(self, event):
-        print(event)
         if not event.is_directory and event.dest_path.endswith(self.file_name):
             self.callback()  # call callback
 
     def on_modified(self, event):
         if not event.is_directory and event.src_path.endswith(self.file_name):
             self.callback()  # call callback
+
+
+class FolderModifiedHandler(FileSystemEventHandler):
+    def __init__(self, path, callback):
+        self.callback = callback
+
+        # set observer to watch for changes in the directory
+        self.observer = Observer()
+        self.observer.schedule(self, path, recursive=False)
+        self.observer.start()
+
+    def on_any_event(self, event):
+        self.callback()  # call callback
 
 
 class StaticWallpaper:
@@ -86,7 +96,7 @@ class StaticWallpaper:
         self.blur_radius = rc['static_wallpaper_blur_radius']
         self.gso = Gio.Settings.new('org.gnome.desktop.background')
         self.ori_wallpaper_uri = self.gso.get_string('picture-uri')
-        self.new_wallpaper_uri = '/tmp/video-wallpaper.png'
+        self.new_wallpaper_uri = '/tmp/hidamari.png'
 
     def update_rc(self, rc):
         self.video_path = rc['video_path']
@@ -97,7 +107,7 @@ class StaticWallpaper:
         # Extract first frame (use ffmpeg)
         if self.enabled:
             subprocess.call(
-                'ffmpeg -y -i {} -vframes 1 {} -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
+                'ffmpeg -y -i "{}" -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
                     self.video_path, self.new_wallpaper_uri), shell=True)
             blur_wallpaper = Image.open(self.new_wallpaper_uri)
             blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.blur_radius))

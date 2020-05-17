@@ -9,10 +9,9 @@ import daemon
 from gi.repository import GLib
 from player import Player
 from utils import WindowHandler, FileModifiedHandler, StaticWallpaper
-import control_panel
 
 HOME = os.environ['HOME']
-RC_FILENAME = '.wallpaperrc'
+RC_FILENAME = '.hidamari-rc'
 RC_PATH = HOME + '/' + RC_FILENAME
 
 rc = None
@@ -41,7 +40,7 @@ def generate_template_rc():
     }
     with open(RC_PATH, 'w') as f:
         json.dump(template_rc, f)
-    print('Generated .wallpaperrc in home directory, you have to configure it first ;)')
+    print('Generated .hidamarirc in home directory, you have to configure it first ;)')
 
 
 def rc_modified_listener():
@@ -65,17 +64,17 @@ def main():
     # TODO check if rc file is broken, reconfigure as well
     if not os.path.isfile(RC_PATH):
         generate_template_rc()
-        control_panel.main()
-    else:
-        with open(RC_PATH, 'r') as f:
-            rc = json.load(f)
-        FileModifiedHandler(path=HOME, file_name=RC_FILENAME, callback=rc_modified_listener)
-        wallpaper_player = Player(rc=rc)
-        window_handler = WindowHandler(window_listener)
-        static_wallpaper = StaticWallpaper(rc=rc)
-        if rc['static_wallpaper']:
-            static_wallpaper.set_static_wallpaper()
-        wallpaper_player.main()
+
+    with open(RC_PATH, 'r') as f:
+        rc = json.load(f)
+    FileModifiedHandler(path=HOME, file_name=RC_FILENAME, callback=rc_modified_listener)
+    wallpaper_player = Player(rc=rc)
+    window_handler = WindowHandler(window_listener)
+    static_wallpaper = StaticWallpaper(rc=rc)
+    if rc['static_wallpaper']:
+        static_wallpaper.set_static_wallpaper()
+    wallpaper_player.main()
+    static_wallpaper.restore_ori_wallpaper()
 
 
 def quit(*args):
@@ -94,7 +93,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     time.sleep(args.pause)
     if args.deamonize:
-        # TODO not working
+        # TODO Run in background
         with daemon.DaemonContext():
             main()
     else:

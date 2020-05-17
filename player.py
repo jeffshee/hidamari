@@ -6,7 +6,6 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('GtkClutter', '1.0')
 gi.require_version('ClutterGst', '3.0')
 from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst
-import control_panel
 
 # Initialize
 GtkClutter.init()
@@ -98,20 +97,33 @@ class Player:
         self.video_playback.set_playing(True)
 
     def _on_menuitem_main_gui(self, _):
-        control_panel.main()
-
-    def _on_menuitem_display_settings(self, _):
-        subprocess.Popen(['gnome-control-center', 'display'])
+        import gui
+        gui.main()
 
     def _on_menuitem_settings(self, _):
         subprocess.Popen('gnome-control-center')
 
+    def _on_menuitem_quit(self, _):
+        self.quit()
+
+    def _on_not_implemented(self, _):
+        print('Not implemented!')
+        message = Gtk.MessageDialog(type=Gtk.MessageType.INFO, buttons=Gtk.ButtonsType.OK,
+                                    message_format='Not implemented!')
+        message.connect("response", self._dialog_response)
+        message.show()
+
+    def _dialog_response(self, widget, response_id):
+        if response_id == Gtk.ResponseType.OK:
+            widget.destroy()
+
     def _build_context_menu(self):
+        items = [('Show Hidamari', self._on_menuitem_main_gui), ('Mute Audio', self._on_not_implemented),
+                 ('Pause Playback', self._on_not_implemented), ('Next Wallpaper', self._on_not_implemented),
+                 ('Quit Hidamari', self._on_menuitem_quit)]
+
         if os.environ['DESKTOP_SESSION'] == 'gnome':
-            items = [('Video Wallpaper', self._on_menuitem_main_gui), ('-', None),
-                     ('Display Settings', self._on_menuitem_display_settings), ('Settings', self._on_menuitem_settings)]
-        else:
-            items = [('Video Wallpaper', self._on_menuitem_main_gui)]
+            items += [('-', None), ('GNOME Settings', self._on_menuitem_settings)]
         self.menu = Gtk.Menu()
         for item in items:
             label, handler = item
@@ -120,8 +132,8 @@ class Player:
             else:
                 menuitem = Gtk.MenuItem.new_with_label(label)
                 menuitem.connect('activate', handler)
-                menuitem.set_margin_top(8)
-                menuitem.set_margin_bottom(8)
+                menuitem.set_margin_top(4)
+                menuitem.set_margin_bottom(4)
                 self.menu.append(menuitem)
         self.menu.show_all()
 

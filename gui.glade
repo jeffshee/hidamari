@@ -2,59 +2,6 @@
 <!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkFileChooserDialog">
-    <property name="can_focus">False</property>
-    <property name="type_hint">dialog</property>
-    <child internal-child="vbox">
-      <object class="GtkBox">
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox">
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton">
-                <property name="label">gtk-add</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="label">gtk-cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-    </child>
-  </object>
   <object class="GtkAdjustment" id="blur_adjustment">
     <property name="upper">20</property>
     <property name="step_increment">1</property>
@@ -67,8 +14,9 @@
   </object>
   <object class="GtkWindow" id="window">
     <property name="can_focus">False</property>
-    <property name="default_width">1280</property>
-    <property name="default_height">720</property>
+    <property name="title" translatable="yes">Hidamari　ーひだまりー</property>
+    <property name="default_width">960</property>
+    <property name="default_height">540</property>
     <child type="titlebar">
       <placeholder/>
     </child>
@@ -82,41 +30,16 @@
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkBox">
+              <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_top">8</property>
+                <property name="margin_left">16</property>
+                <property name="margin_top">16</property>
                 <property name="margin_bottom">8</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_left">8</property>
-                    <property name="label" translatable="yes">&lt;span size="x-large"&gt; Imported Videos &lt;/span&gt;</property>
-                    <property name="use_markup">True</property>
-                    <property name="xalign">0</property>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="add">
-                    <property name="label">gtk-add</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="use_stock">True</property>
-                    <signal name="clicked" handler="on_add_clicked" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
+                <property name="label" translatable="yes">&lt;span size="x-large"&gt;Videos&lt;/span&gt;
+&lt;span size="small"&gt;Located in ~/Videos/Wallpapers/&lt;/span&gt;</property>
+                <property name="use_markup">True</property>
+                <property name="xalign">0</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -134,7 +57,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="margin">0</property>
-                    <property name="item_width">64</property>
+                    <property name="item_width">128</property>
                     <signal name="selection-changed" handler="on_value_changed" swapped="no"/>
                   </object>
                 </child>
@@ -156,6 +79,8 @@
           <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_left">16</property>
+            <property name="margin_right">16</property>
             <property name="orientation">vertical</property>
             <child>
               <object class="GtkBox">
@@ -231,7 +156,7 @@
                     <property name="adjustment">volume_adjustment</property>
                     <property name="digits">0</property>
                     <property name="value_pos">right</property>
-                    <signal name="change-value" handler="on_value_changed" swapped="no"/>
+                    <signal name="value-changed" handler="on_value_changed" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -273,7 +198,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="adjustment">blur_adjustment</property>
-                    <signal name="change-value" handler="on_value_changed" swapped="no"/>
+                    <signal name="value-changed" handler="on_value_changed" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -307,12 +232,12 @@
                         <property name="can_focus">False</property>
                         <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkCheckButton" id="mute_audio">
-                            <property name="label" translatable="yes">Mute audio</property>
+                          <object class="GtkCheckButton" id="static_wallpaper">
+                            <property name="label" translatable="yes">Apply static wallpaper</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Mute audio regardless the current volume level</property>
+                            <property name="tooltip_text" translatable="yes">Apply the first frame of video as wallpaper (GNOME only )</property>
                             <property name="draw_indicator">True</property>
                             <signal name="toggled" handler="on_value_changed" swapped="no"/>
                           </object>
@@ -339,12 +264,12 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkCheckButton" id="static_wallpaper">
-                            <property name="label" translatable="yes">Apply static wallpaper</property>
+                          <object class="GtkCheckButton" id="mute_audio">
+                            <property name="label" translatable="yes">Mute audio</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Apply the first frame of video as wallpaper (GNOME only )</property>
+                            <property name="tooltip_text" translatable="yes">Mute audio regardless the current volume level</property>
                             <property name="draw_indicator">True</property>
                             <signal name="toggled" handler="on_value_changed" swapped="no"/>
                           </object>
@@ -377,7 +302,6 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="padding">8</property>
             <property name="pack_type">end</property>
             <property name="position">1</property>
           </packing>

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Video Wallpaper
-Exec=video-wallpaper
+Name=Hidamari
+Exec=hidamari
 StartupNotify=false
 Terminal=false
 Icon=
