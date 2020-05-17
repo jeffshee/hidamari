@@ -96,7 +96,9 @@ class StaticWallpaper:
     def set_static_wallpaper(self):
         # Extract first frame (use ffmpeg)
         if self.enabled:
-            subprocess.call('ffmpeg -y -i {} -vframes 1 {}'.format(self.video_path, self.new_wallpaper_uri), shell=True)
+            subprocess.call(
+                'ffmpeg -y -i {} -vframes 1 {} -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
+                    self.video_path, self.new_wallpaper_uri), shell=True)
             blur_wallpaper = Image.open(self.new_wallpaper_uri)
             blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.blur_radius))
             blur_wallpaper.save(self.new_wallpaper_uri)
