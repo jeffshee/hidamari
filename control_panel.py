@@ -1,3 +1,4 @@
+import sys
 import os
 import json
 import gi
@@ -10,6 +11,7 @@ HOME = os.environ['HOME']
 RC_FILENAME = '.wallpaperrc'
 RC_PATH = HOME + '/' + RC_FILENAME
 VIDEO_WALLPAPER_PATH = HOME + '/Videos/Wallpaper'
+GUI_GLADE_FILENAME = 'control_panel.glade'
 
 volume_adjustment, blur_adjustment = None, None
 mute_audio, static_wallpaper, detect_maximized = None, None, None
@@ -83,7 +85,7 @@ class ControlPanel():
         global volume_adjustment, blur_adjustment, icon_view, btn_apply
         global mute_audio, static_wallpaper, detect_maximized
         builder = Gtk.Builder()
-        builder.add_from_file('gui-main.glade')
+        builder.add_from_file(os.path.join(sys.path[0], GUI_GLADE_FILENAME))
         builder.connect_signals(Handler())
 
         list_store = Gtk.ListStore(Pixbuf, str)

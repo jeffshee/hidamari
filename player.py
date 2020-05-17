@@ -6,7 +6,7 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('GtkClutter', '1.0')
 gi.require_version('ClutterGst', '3.0')
 from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst
-from gui import control_panel
+import control_panel
 
 # Initialize
 GtkClutter.init()
@@ -98,9 +98,7 @@ class Player:
         self.video_playback.set_playing(True)
 
     def _on_menuitem_main_gui(self, _):
-        os.chdir('./gui')
         control_panel.main()
-        os.chdir('../')
 
     def _on_menuitem_display_settings(self, _):
         subprocess.Popen(['gnome-control-center', 'display'])

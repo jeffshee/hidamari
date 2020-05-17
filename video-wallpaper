@@ -9,7 +9,7 @@ import daemon
 from gi.repository import GLib
 from player import Player
 from utils import WindowHandler, FileModifiedHandler, StaticWallpaper
-from gui import control_panel
+import control_panel
 
 HOME = os.environ['HOME']
 RC_FILENAME = '.wallpaperrc'
@@ -65,9 +65,7 @@ def main():
     # TODO check if rc file is broken, reconfigure as well
     if not os.path.isfile(RC_PATH):
         generate_template_rc()
-        os.chdir('./gui')
         control_panel.main()
-        os.chdir('../')
     else:
         with open(RC_PATH, 'r') as f:
             rc = json.load(f)
