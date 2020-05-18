@@ -11,7 +11,7 @@ from utils import FolderModifiedHandler
 HOME = os.environ['HOME']
 RC_FILENAME = '.hidamari-rc'
 RC_PATH = HOME + '/' + RC_FILENAME
-VIDEO_WALLPAPER_PATH = HOME + '/Videos/Wallpapers'
+VIDEO_WALLPAPER_PATH = HOME + '/Videos/Hidamari'
 GUI_GLADE_FILENAME = 'gui.glade'
 
 volume_adjustment, blur_adjustment = None, None

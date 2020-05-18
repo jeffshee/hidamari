@@ -37,7 +37,7 @@
                 <property name="margin_top">16</property>
                 <property name="margin_bottom">8</property>
                 <property name="label" translatable="yes">&lt;span size="x-large"&gt;Videos&lt;/span&gt;
-&lt;span size="small"&gt;Located in ~/Videos/Wallpapers/&lt;/span&gt;</property>
+&lt;span size="small"&gt;Located in ~/Videos/Hidamari/&lt;/span&gt;</property>
                 <property name="use_markup">True</property>
                 <property name="xalign">0</property>
               </object>
