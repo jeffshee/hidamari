@@ -40,7 +40,7 @@ def generate_template_rc():
     }
     with open(RC_PATH, 'w') as f:
         json.dump(template_rc, f)
-    print('Generated .hidamarirc in home directory, you have to configure it first ;)')
+    print('Generated .hidamari-rc in home directory, you have to configure it first ;)')
 
 
 def rc_modified_listener():
