@@ -1,2 +1,5 @@
+# Byte-compiled
+__pycache__/
+
 # Project exclude paths
 /venv/
