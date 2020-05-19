@@ -25,6 +25,7 @@ def monitor_detect():
 class Player:
     def __init__(self, rc=None):
         # Settings
+        self.rc = rc  #TODO at line107
         self.video_path = rc['video_path']
         self.audio_volume = rc['audio_volume']
         self.mute_audio = rc['mute_audio']
@@ -89,6 +90,7 @@ class Player:
             self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
         if rc['mute_audio'] != self.mute_audio:
             self.mute_audio = rc['mute_audio']
+            self.check_menu['Mute Audio'].set_active(self.mute_audio)
             self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
 
     def _loop_playback(self, _):
@@ -99,6 +101,22 @@ class Player:
     def _on_menuitem_main_gui(self, _):
         import gui
         gui.main()
+
+    def _on_menuitem_mute_audio(self, _):
+        self.mute_audio = self.check_menu['Mute Audio'].get_active()
+        self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
+        #TODO Reflect the changes in GUI
+        # HOME = os.environ['HOME']
+        # RC_FILENAME = '.hidamari-rc'
+        # RC_PATH = HOME + '/' + RC_FILENAME
+        # import json
+        # self.rc['mute_audio'] = self.mute_audio
+        # print(self.rc)
+        # with open(RC_PATH, 'w') as f:
+        #     json.dump(self.rc, f)
+
+    def _on_menuitem_pause_playback(self, _):
+        self.pause_playback() if self.check_menu['Pause Playback'].get_active() else self.resume_playback()
 
     def _on_menuitem_settings(self, _):
         subprocess.Popen('gnome-control-center')
@@ -118,19 +136,25 @@ class Player:
             widget.destroy()
 
     def _build_context_menu(self):
-        items = [('Show Hidamari', self._on_menuitem_main_gui), ('Mute Audio', self._on_not_implemented),
-                 ('Pause Playback', self._on_not_implemented), ('Next Wallpaper', self._on_not_implemented),
-                 ('Quit Hidamari', self._on_menuitem_quit)]
+        self.menu = Gtk.Menu()
+        self.check_menu = {}
+        items = [('Show Hidamari', self._on_menuitem_main_gui, False), ('Mute Audio', self._on_menuitem_mute_audio, True),
+                 ('Pause Playback', self._on_menuitem_pause_playback, True), ('Next Wallpaper', self._on_not_implemented, False),
+                 ('Quit Hidamari', self._on_menuitem_quit, False)]
 
         if os.environ['DESKTOP_SESSION'] == 'gnome':
             items += [('-', None), ('GNOME Settings', self._on_menuitem_settings)]
-        self.menu = Gtk.Menu()
+
         for item in items:
-            label, handler = item
+            label, handler, check = item
             if label == '-':
                 self.menu.append(Gtk.SeparatorMenuItem())
             else:
-                menuitem = Gtk.MenuItem.new_with_label(label)
+                if check:
+                    menuitem = Gtk.CheckMenuItem.new_with_label(label)
+                    self.check_menu[label] = menuitem
+                else:
+                    menuitem = Gtk.MenuItem.new_with_label(label)
                 menuitem.connect('activate', handler)
                 menuitem.set_margin_top(4)
                 menuitem.set_margin_bottom(4)
