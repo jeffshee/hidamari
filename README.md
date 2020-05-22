@@ -1,12 +1,12 @@
 # Hidamari　ーひだまりー
 Video wallpaper for Linux, like Komorebi. Minimal and written in Python.
 
-Hidamari 陽だまり【ひだまり】(n) sunny spot; exposure to the sun
+Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun
 
 ## Prerequisite
 1. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
 2. Pillow `pip3 install pillow`
-3. Python-daemon `pip3 install python-daemon`
+3. pydbus `pip3 install pydbus`
 4. Watchdog `pip3 install watchdog`
 5. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/) or [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
 
