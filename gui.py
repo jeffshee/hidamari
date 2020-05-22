@@ -1,4 +1,5 @@
 import os
+import sys
 from collections import defaultdict
 from types import SimpleNamespace
 import subprocess
@@ -11,7 +12,7 @@ from gi.repository import Gtk, Gio, GLib
 from gi.repository.GdkPixbuf import Pixbuf
 
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
-GUI_GLADE_FILENAME = 'gui.glade'
+GUI_GLADE_FILENAME = sys.path[0] + '/gui.glade'
 
 from utils import RCHandler
 
