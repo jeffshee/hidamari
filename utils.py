@@ -1,18 +1,51 @@
+import os
+import json
 import subprocess
 import pathlib
+
 import gi
+import pydbus
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('Wnck', '3.0')
-from gi.repository import Gtk, Wnck, Gio
+from gi.repository import GLib, Wnck, Gio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from PIL import Image, ImageFilter
 
+from types import SimpleNamespace
+
+HOME = os.environ['HOME']
+RC_FILENAME = '.hidamari-rc'
+RC_PATH = HOME + '/' + RC_FILENAME
+
+
+class ActiveHandler:
+    """
+    Handler for monitoring screen lock
+    """
+
+    def __init__(self, on_active_changed: callable):
+        session_bus = pydbus.SessionBus()
+        screensaver_list = ['org.gnome.ScreenSaver',
+                            'org.cinnamon.ScreenSaver',
+                            'org.kde.screensaver',
+                            'org.freedesktop.ScreenSaver']
+        for s in screensaver_list:
+            try:
+                proxy = session_bus.get(s)
+                proxy.ActiveChanged.connect(on_active_changed)
+            except GLib.Error:
+                pass
+
 
 class WindowHandler:
-    def __init__(self, listener):
-        self.listener = listener
+    """
+    Handler for monitoring window events (maximized and fullscreen mode)
+    """
+
+    def __init__(self, on_window_state_changed: callable):
+        self.on_window_state_changed = on_window_state_changed
         self.screen = Wnck.Screen.get_default()
         self.screen.force_update()
         self.screen.connect('window-opened', self.window_opened, None)
@@ -24,23 +57,17 @@ class WindowHandler:
         # Initial check
         self.state_changed(None, None, None, None)
 
-    def main(self):
-        Gtk.main()
-
-    def quit(self):
-        Gtk.main_quit()
-
     def window_opened(self, screen, window, _):
         window.connect('state-changed', self.state_changed, None)
 
     def window_closed(self, screen, window, _):
-        self.listener(self.check())
+        self.on_window_state_changed(self.check())
 
     def state_changed(self, window, changed_mask, new_state, _):
-        self.listener(self.check())
+        self.on_window_state_changed(self.check())
 
     def active_workspace_changed(self, screen, previously_active_space, _):
-        self.listener(self.check())
+        self.on_window_state_changed(self.check())
 
     def check(self):
         is_any_maximized, is_any_fullscreen = False, False
@@ -57,15 +84,70 @@ class WindowHandler:
         return {'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen}
 
 
-class FileModifiedHandler(FileSystemEventHandler):
-    def __init__(self, path, file_name, callback):
+class StaticWallpaperHandler:
+    """
+    Handler for setting the static wallpaper
+    """
+
+    def __init__(self):
+        self.rc_handler = RCHandler(self._on_rc_modified)
+        self.rc = self.rc_handler.rc
+        self.current_video_path = self.rc.video_path
+        self.current_static_wallpaper = self.rc.static_wallpaper
+        self.current_static_wallpaper_blur_radius = self.rc.static_wallpaper_blur_radius
+        self.gso = Gio.Settings.new('org.gnome.desktop.background')
+        self.ori_wallpaper_uri = self.gso.get_string('picture-uri')
+        self.new_wallpaper_uri = '/tmp/hidamari.png'
+        if self.rc.static_wallpaper:
+            self.set_static_wallpaper()
+
+    def _on_rc_modified(self):
+        # Get new rc
+        self.rc = self.rc_handler.rc
+        if self.current_static_wallpaper != self.rc.static_wallpaper:
+            if self.rc.static_wallpaper:
+                self.set_static_wallpaper()
+            else:
+                self.restore_ori_wallpaper()
+        elif ((self.current_video_path != self.rc.video_path or
+               self.current_static_wallpaper_blur_radius != self.rc.static_wallpaper_blur_radius) and
+              self.rc.static_wallpaper):
+            self.set_static_wallpaper()
+        self.current_video_path = self.rc.video_path
+        self.current_static_wallpaper = self.rc.static_wallpaper
+        self.current_static_wallpaper_blur_radius = self.rc.static_wallpaper_blur_radius
+
+    def set_static_wallpaper(self):
+        # Extract first frame (use ffmpeg)
+        if self.rc.static_wallpaper:
+            subprocess.call(
+                'ffmpeg -y -i "{}" -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
+                    self.rc.video_path, self.new_wallpaper_uri), shell=True)
+            blur_wallpaper = Image.open(self.new_wallpaper_uri)
+            blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.rc.static_wallpaper_blur_radius))
+            blur_wallpaper.save(self.new_wallpaper_uri)
+            self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+
+    def restore_ori_wallpaper(self):
+        self.gso.set_string('picture-uri', self.ori_wallpaper_uri)
+
+
+class FileWatchdog(FileSystemEventHandler):
+    def __init__(self, path, file_name, callback: callable):
         self.file_name = file_name
         self.callback = callback
-
-        # set observer to watch for changes in the directory
+        # Set observer to watch for changes in the directory
         self.observer = Observer()
         self.observer.schedule(self, path, recursive=False)
         self.observer.start()
+
+    def on_created(self, event):
+        if not event.is_directory and event.src_path.endswith(self.file_name):
+            self.callback()  # call callback
+
+    def on_deleted(self, event):
+        if not event.is_directory and event.src_path.endswith(self.file_name):
+            self.callback()  # call callback
 
     def on_moved(self, event):
         if not event.is_directory and event.dest_path.endswith(self.file_name):
@@ -76,48 +158,48 @@ class FileModifiedHandler(FileSystemEventHandler):
             self.callback()  # call callback
 
 
-class FolderModifiedHandler(FileSystemEventHandler):
-    def __init__(self, path, callback):
-        self.callback = callback
+class RCHandler:
+    """
+    Handler for monitoring changes on configuration file (.hidamari-rc at home directory)
+    """
 
-        # set observer to watch for changes in the directory
-        self.observer = Observer()
-        self.observer.schedule(self, path, recursive=False)
-        self.observer.start()
+    def __init__(self, on_rc_modified: callable):
+        self.on_rc_modified = on_rc_modified
+        self.template_rc = {
+            'video_path': '',
+            'mute_audio': False,
+            'audio_volume': 0.5,
+            'static_wallpaper': True,
+            'static_wallpaper_blur_radius': 5,
+            'detect_maximized': True,
+        }
+        self._update()
+        FileWatchdog(path=HOME, file_name=RC_FILENAME, callback=self._rc_modified)
 
-    def on_any_event(self, event):
-        self.callback()  # call callback
+    def _generate_template_rc(self):
+        with open(RC_PATH, 'w') as f:
+            json.dump(self.template_rc, f)
+        return self.template_rc
 
+    def _update(self):
+        self.rc = SimpleNamespace(**self._load())
 
-class StaticWallpaper:
-    def __init__(self, rc=None):
-        self.video_path = rc['video_path']
-        self.enabled = rc['static_wallpaper']
-        self.blur_radius = rc['static_wallpaper_blur_radius']
-        self.gso = Gio.Settings.new('org.gnome.desktop.background')
-        self.ori_wallpaper_uri = self.gso.get_string('picture-uri')
-        self.new_wallpaper_uri = '/tmp/hidamari.png'
+    def _rc_modified(self):
+        self._update()
+        # print(vars(self.rc))
+        self.on_rc_modified()
 
-    def update_rc(self, rc):
-        self.video_path = rc['video_path']
-        self.blur_radius = rc['static_wallpaper_blur_radius']
-        self.set_static_wallpaper()
+    def _check(self, rc: dict):
+        return all(key in rc for key in self.template_rc)
 
-    def set_static_wallpaper(self):
-        # Extract first frame (use ffmpeg)
-        if self.enabled:
-            subprocess.call(
-                'ffmpeg -y -i "{}" -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
-                    self.video_path, self.new_wallpaper_uri), shell=True)
-            blur_wallpaper = Image.open(self.new_wallpaper_uri)
-            blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.blur_radius))
-            blur_wallpaper.save(self.new_wallpaper_uri)
-            self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+    def _load(self):
+        if os.path.isfile(RC_PATH):
+            with open(RC_PATH, 'r') as f:
+                rc = json.load(f)
+                if self._check(rc):
+                    return rc
+        return self._generate_template_rc()
 
-    def restore_ori_wallpaper(self):
-        self.gso.set_string('picture-uri', self.ori_wallpaper_uri)
-
-
-if __name__ == "__main__":
-    lister = WindowHandler(print)
-    lister.main()
+    def save(self):
+        with open(RC_PATH, 'w') as f:
+            json.dump(vars(self.rc), f)

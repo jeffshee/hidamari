@@ -1,15 +1,16 @@
 import os
+import signal
 import subprocess
 import gi
+from collections import defaultdict
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkClutter', '1.0')
 gi.require_version('ClutterGst', '3.0')
-from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst
+from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, GLib
 
-# Initialize
-GtkClutter.init()
-ClutterGst.init()
+from utils import RCHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
+from gui import ControlPanel
 
 
 def monitor_detect():
@@ -23,13 +24,16 @@ def monitor_detect():
 
 
 class Player:
-    def __init__(self, rc=None):
-        # Settings
-        self.rc = rc  # TODO at line107
-        self.video_path = rc['video_path']
-        self.audio_volume = rc['audio_volume']
-        self.mute_audio = rc['mute_audio']
-        bg_color = Clutter.Color.get_static(Clutter.StaticColor.BLACK)
+    def __init__(self):
+        # Initialize
+        GtkClutter.init()
+        ClutterGst.init()
+
+        self.rc_handler = RCHandler(self._on_rc_modified)
+        self.rc = self.rc_handler.rc
+        self.current_video_path = self.rc.video_path
+        self.user_pause_playback = False
+        self.is_any_maximized, self.is_any_fullscreen = False, False
 
         # Monitor Detect
         self.width, self.height = monitor_detect()
@@ -40,7 +44,7 @@ class Player:
         self.wallpaper_actor = Clutter.Actor()
         self.wallpaper_actor.set_size(self.width, self.height)
         self.main_actor.add_child(self.wallpaper_actor)
-        self.main_actor.set_background_color(bg_color)
+        self.main_actor.set_background_color(Clutter.Color.get_static(Clutter.StaticColor.BLACK))
 
         # Video initialize
         self.video_playback = ClutterGst.Playback()
@@ -48,10 +52,10 @@ class Player:
         self.video_content.set_player(self.video_playback)
 
         # Playback settings
-        self.video_playback.set_filename(self.video_path)
-        self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
+        self.video_playback.set_filename(self.rc.video_path)
+        self.video_playback.set_audio_volume(0.0 if self.rc.mute_audio else self.rc.audio_volume)
         self.video_playback.set_playing(True)
-        self.video_playback.connect('eos', self._loop_playback)
+        self.video_playback.connect('eos', self._on_eos)
         self.wallpaper_actor.set_content(self.video_content)
 
         # Window settings
@@ -66,63 +70,108 @@ class Player:
 
         self.window.show_all()
 
-    def main(self):
+        self.active_handler = ActiveHandler(self._on_active_changed)
+        self.window_handler = WindowHandler(self._on_window_state_changed)
+        self.static_wallpaper_handler = StaticWallpaperHandler()
+        self.static_wallpaper_handler.set_static_wallpaper()
+        signal.signal(signal.SIGTERM, self._quit)
+        signal.signal(signal.SIGINT, self._quit)
         Gtk.main()
-
-    def quit(self):
-        Gtk.main_quit()
 
     def pause_playback(self):
         self.video_playback.set_playing(False)
 
-    def resume_playback(self):
-        self.video_playback.set_playing(True)
-
-    def update_rc(self, rc):
-        if rc['video_path'] != self.video_path:
-            self.video_path = rc['video_path']
-            self.video_playback.set_playing(False)
-            self.video_playback.set_filename(self.video_path)
-            self.video_playback.set_progress(0.0)
+    def start_playback(self):
+        if not self.user_pause_playback:
             self.video_playback.set_playing(True)
-        if rc['audio_volume'] != self.audio_volume:
-            self.audio_volume = rc['audio_volume']
-            self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
-        if rc['mute_audio'] != self.mute_audio:
-            self.mute_audio = rc['mute_audio']
-            self.check_menu['Mute Audio'].set_active(self.mute_audio)
-            self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
 
-    def _loop_playback(self, _):
+    def _quit(self, *args):
+        self.static_wallpaper_handler.restore_ori_wallpaper()
+        Gtk.main_quit()
+
+    def _on_active_changed(self, active):
+        if active:
+            self.pause_playback()
+        else:
+            if (self.is_any_maximized and self.rc.detect_maximized) or self.is_any_fullscreen:
+                self.pause_playback()
+            else:
+                self.start_playback()
+
+    def _on_window_state_changed(self, state):
+        self.is_any_maximized, self.is_any_fullscreen = state['is_any_maximized'], state['is_any_fullscreen']
+        if (self.is_any_maximized and self.rc.detect_maximized) or self.is_any_fullscreen:
+            self.pause_playback()
+        else:
+            self.start_playback()
+
+    def _on_rc_modified(self):
+        def _run():
+            # Get new rc
+            self.rc = self.rc_handler.rc
+            self.pause_playback()
+            if self.current_video_path != self.rc.video_path:
+                self.video_playback.set_filename(self.rc.video_path)
+                self.video_playback.set_progress(0.0)
+                self.current_video_path = self.rc.video_path
+            self.video_playback.set_audio_volume(0.0 if self.rc.mute_audio else self.rc.audio_volume)
+            self.start_playback()
+            self.menuitem['Mute Audio'].set_active(self.rc.mute_audio)
+
+        # To ensure thread safe
+        GLib.idle_add(_run)
+
+    def _on_eos(self, _):
         self.video_playback.set_progress(0.0)
-        self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
-        self.video_playback.set_playing(True)
+        self.video_playback.set_audio_volume(0.0 if self.rc.mute_audio else self.rc.audio_volume)
+        self.start_playback()
 
     def _on_menuitem_main_gui(self, _):
-        import gui
-        gui.main()
+        ControlPanel().run()
 
-    def _on_menuitem_mute_audio(self, _):
-        self.mute_audio = self.check_menu['Mute Audio'].get_active()
-        self.video_playback.set_audio_volume(0.0 if self.mute_audio else self.audio_volume)
-        # TODO Reflect the changes in GUI
-        # HOME = os.environ['HOME']
-        # RC_FILENAME = '.hidamari-rc'
-        # RC_PATH = HOME + '/' + RC_FILENAME
-        # import json
-        # self.rc['mute_audio'] = self.mute_audio
-        # print(self.rc)
-        # with open(RC_PATH, 'w') as f:
-        #     json.dump(self.rc, f)
+    def _on_menuitem_mute_audio(self, item):
+        self.rc.mute_audio = item.get_active()
+        self.rc_handler.save()
 
-    def _on_menuitem_pause_playback(self, _):
-        self.pause_playback() if self.check_menu['Pause Playback'].get_active() else self.resume_playback()
+    def _on_menuitem_pause_playback(self, item):
+        self.user_pause_playback = item.get_active()
+        self.pause_playback() if self.user_pause_playback else self.start_playback()
 
-    def _on_menuitem_settings(self, _):
+    def _on_menuitem_gnome_settings(self, _):
         subprocess.Popen('gnome-control-center')
 
     def _on_menuitem_quit(self, _):
-        self.quit()
+        self._quit()
+
+    def _build_context_menu(self):
+        self.menu = Gtk.Menu()
+        items = [('Show Hidamari', self._on_menuitem_main_gui, Gtk.MenuItem),
+                 ('Mute Audio', self._on_menuitem_mute_audio, Gtk.CheckMenuItem),
+                 ('Pause Playback', self._on_menuitem_pause_playback, Gtk.CheckMenuItem),
+                 ('Next Wallpaper', self._on_not_implemented, Gtk.MenuItem),
+                 ('Quit Hidamari', self._on_menuitem_quit, Gtk.MenuItem)]
+        self.menuitem = defaultdict()
+        if os.environ['DESKTOP_SESSION'] == 'gnome':
+            items += [(None, None, Gtk.SeparatorMenuItem),
+                      ('GNOME Settings', self._on_menuitem_gnome_settings, Gtk.MenuItem)]
+
+        for item in items:
+            label, handler, item_type = item
+            if item_type == Gtk.SeparatorMenuItem:
+                self.menu.append(Gtk.SeparatorMenuItem())
+            else:
+                menuitem = item_type.new_with_label(label)
+                menuitem.connect('activate', handler)
+                menuitem.set_margin_top(4)
+                menuitem.set_margin_bottom(4)
+                self.menu.append(menuitem)
+                self.menuitem[label] = menuitem
+        self.menu.show_all()
+
+    def _on_button_press_event(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            self.menu.popup_at_pointer()
+        return True
 
     def _on_not_implemented(self, _):
         print('Not implemented!')
@@ -135,35 +184,6 @@ class Player:
         if response_id == Gtk.ResponseType.OK:
             widget.destroy()
 
-    def _build_context_menu(self):
-        self.menu = Gtk.Menu()
-        self.check_menu = {}
-        items = [('Show Hidamari', self._on_menuitem_main_gui, False),
-                 ('Mute Audio', self._on_menuitem_mute_audio, True),
-                 ('Pause Playback', self._on_menuitem_pause_playback, True),
-                 ('Next Wallpaper', self._on_not_implemented, False),
-                 ('Quit Hidamari', self._on_menuitem_quit, False)]
 
-        if os.environ['DESKTOP_SESSION'] == 'gnome':
-            items += [('-', None, False), ('GNOME Settings', self._on_menuitem_settings, False)]
-
-        for item in items:
-            label, handler, check = item
-            if label == '-':
-                self.menu.append(Gtk.SeparatorMenuItem())
-            else:
-                if check:
-                    menuitem = Gtk.CheckMenuItem.new_with_label(label)
-                    self.check_menu[label] = menuitem
-                else:
-                    menuitem = Gtk.MenuItem.new_with_label(label)
-                menuitem.connect('activate', handler)
-                menuitem.set_margin_top(4)
-                menuitem.set_margin_bottom(4)
-                self.menu.append(menuitem)
-        self.menu.show_all()
-
-    def _on_button_press_event(self, widget, event):
-        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
-            self.menu.popup_at_pointer()
-        return True
+if __name__ == '__main__':
+    player = Player()

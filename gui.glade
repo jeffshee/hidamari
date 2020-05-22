@@ -7,6 +7,11 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkImage" id="image_refresh">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-refresh</property>
+  </object>
   <object class="GtkAdjustment" id="volume_adjustment">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
@@ -30,16 +35,44 @@
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_left">16</property>
-                <property name="margin_top">16</property>
-                <property name="margin_bottom">8</property>
-                <property name="label" translatable="yes">&lt;span size="x-large"&gt;Videos&lt;/span&gt;
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">16</property>
+                    <property name="margin_top">16</property>
+                    <property name="margin_bottom">8</property>
+                    <property name="label" translatable="yes">&lt;span size="x-large"&gt;Videos&lt;/span&gt;
 &lt;span size="small"&gt;Located in ~/Videos/Hidamari/&lt;/span&gt;</property>
-                <property name="use_markup">True</property>
-                <property name="xalign">0</property>
+                    <property name="use_markup">True</property>
+                    <property name="xalign">0</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="refresh">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
+                    <property name="image">image_refresh</property>
+                    <property name="always_show_image">True</property>
+                    <signal name="clicked" handler="on_refresh_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -112,6 +145,9 @@
                     <property name="receives_default">True</property>
                     <property name="use_stock">True</property>
                     <signal name="clicked" handler="on_apply_clicked" swapped="no"/>
+                    <style>
+                      <class name="suggested-action"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="expand">False</property>

@@ -1,101 +1,12 @@
 #!/bin/python
 import argparse
-import os
-import signal
-import json
 import time
 
-import daemon
-from gi.repository import GLib
 from player import Player
-from utils import WindowHandler, FileModifiedHandler, StaticWallpaper
-
-HOME = os.environ['HOME']
-RC_FILENAME = '.hidamari-rc'
-RC_PATH = HOME + '/' + RC_FILENAME
-
-rc = None
-wallpaper_player = None
-static_wallpaper = None
-window_handler = None
-
-
-def window_listener(state):
-    is_any_maximized = state['is_any_maximized']
-    is_any_fullscreen = state['is_any_fullscreen']
-    if (is_any_maximized and rc['detect_maximized']) or is_any_fullscreen:
-        GLib.idle_add(wallpaper_player.pause_playback)
-    else:
-        GLib.idle_add(wallpaper_player.resume_playback)
-
-
-def generate_template_rc():
-    template_rc = {
-        'video_path': '',
-        'mute_audio': False,
-        'audio_volume': 0.5,
-        'static_wallpaper': True,
-        'static_wallpaper_blur_radius': 5,
-        'detect_maximized': True,
-    }
-    with open(RC_PATH, 'w') as f:
-        json.dump(template_rc, f)
-    print('Generated .hidamari-rc in home directory, you have to configure it first ;)')
-
-
-def rc_modified_listener():
-    global rc
-    with open(RC_PATH, 'r') as new_f:
-        new_rc = json.load(new_f)
-        GLib.idle_add(wallpaper_player.update_rc, new_rc)
-        if new_rc['static_wallpaper']:
-            static_wallpaper.update_rc(new_rc)
-        else:
-            static_wallpaper.restore_ori_wallpaper()
-        rc = new_rc
-
-
-def main():
-    global rc
-    global wallpaper_player
-    global static_wallpaper
-    global window_handler
-
-    # TODO check if rc file is broken, reconfigure as well
-    if not os.path.isfile(RC_PATH):
-        generate_template_rc()
-
-    with open(RC_PATH, 'r') as f:
-        rc = json.load(f)
-    FileModifiedHandler(path=HOME, file_name=RC_FILENAME, callback=rc_modified_listener)
-    wallpaper_player = Player(rc=rc)
-    window_handler = WindowHandler(window_listener)
-    static_wallpaper = StaticWallpaper(rc=rc)
-    if rc['static_wallpaper']:
-        static_wallpaper.set_static_wallpaper()
-    wallpaper_player.main()
-    static_wallpaper.restore_ori_wallpaper()
-
-
-def quit(*args):
-    wallpaper_player.quit()
-    window_handler.quit()
-    static_wallpaper.restore_ori_wallpaper()
-
-
-signal.signal(signal.SIGTERM, quit)
-signal.signal(signal.SIGINT, quit)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--deamonize', action='store_true')
     parser.add_argument('-p', '--pause', type=int, default=0)
     args = parser.parse_args()
     time.sleep(args.pause)
-    if args.deamonize:
-        # TODO Run in background
-        with daemon.DaemonContext():
-            main()
-    else:
-        # Run in foreground
-        main()
+    Player()

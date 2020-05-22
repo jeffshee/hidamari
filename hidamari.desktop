@@ -4,5 +4,5 @@ Name=Hidamari
 Exec=hidamari
 StartupNotify=false
 Terminal=false
-Icon=
+Icon=hidamari
 Categories=System;Monitor;
