@@ -2,11 +2,11 @@
 import argparse
 import time
 
-from player import Player
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--pause', type=int, default=0)
     args = parser.parse_args()
     time.sleep(args.pause)
+    # Do import after the sleep. (if not SIGSEGV during autostart)
+    from player import Player
     Player()
