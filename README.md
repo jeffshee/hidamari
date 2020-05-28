@@ -10,7 +10,7 @@ Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun
 
 ## Usage
 0. Prerequisite stated above.
-1. Run `wget -O - https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh | bash`
+1. Run `bash <(wget -qO- https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh)`
 
 **OR**
 1. Clone the repo, or simply download the `.zip` file from GitHub.

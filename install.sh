@@ -1,16 +1,30 @@
 #!/bin/sh
 
-install() {
+clear_old() {
   if [ -d "$HOME/.hidamari" ]; then
     rm -rf ~/.hidamari
   fi
-  git clone https://github.com/jeffshee/hidamari.git ~/.hidamari
+  if [ -f "$HOME/bin/hidamari" ] || [ -L "$HOME/bin/hidamari" ]; then
+    rm ~/bin/hidamari
+  fi
+}
+
+create_dirs() {
   if [ ! -d "$HOME/bin" ]; then
     mkdir ~/bin
   fi
-  if [ -f "$HOME/bin/hidamari" ]; then
-    rm ~/bin/hidamari
+  if [ ! -d "$HOME/.config/autostart/" ]; then
+    mkdir -p ~/.config/autostart
   fi
+  if [ ! -d "$HOME/.local/share/icons/hicolor/scalable/apps/" ]; then
+    mkdir -p ~/.local/share/icons/hicolor/scalable/apps
+  fi
+}
+
+install() {
+  clear_old
+  create_dirs
+  git clone https://github.com/jeffshee/hidamari.git ~/.hidamari
   ln -s ~/.hidamari/hidamari ~/bin/hidamari
   cp ~/.hidamari/hidamari.desktop ~/.config/autostart/hidamari.desktop
   cp ~/.hidamari/hidamari.desktop ~/.local/share/applications/hidamari.desktop
@@ -28,6 +42,7 @@ while true; do
     ;;
   *)
     echo "Abort"
-    exit ;;
+    exit
+    ;;
   esac
 done
