@@ -16,14 +16,8 @@ from gui import ControlPanel, create_dir, scan_dir
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
 
 
-def monitor_detect():
-    display = Gdk.Display.get_default()
-    monitor = display.get_primary_monitor()
-    geometry = monitor.get_geometry()
-    scale_factor = monitor.get_scale_factor()
-    width = scale_factor * geometry.width
-    height = scale_factor * geometry.height
-    return width, height
+
+
 
 
 class Player:
@@ -40,7 +34,7 @@ class Player:
         self.is_any_maximized, self.is_any_fullscreen = False, False
 
         # Monitor Detect
-        self.width, self.height = monitor_detect()
+        self.width, self.height = self.monitor_detect()
 
         # Actors initialize
         self.embed = GtkClutter.Embed()
@@ -99,6 +93,22 @@ class Player:
     def _quit(self, *args):
         self.static_wallpaper_handler.restore_ori_wallpaper()
         Gtk.main_quit()
+
+    def monitor_detect(self):
+        display = Gdk.Display.get_default()
+        screen = Gdk.Screen.get_default()
+        monitor = display.get_primary_monitor()
+        geometry = monitor.get_geometry()
+        scale_factor = monitor.get_scale_factor()
+        width = scale_factor * geometry.width
+        height = scale_factor * geometry.height
+        screen.connect('size-changed', self._on_size_changed)
+        return width, height
+
+    def _on_size_changed(self, *args):
+        self.width, self.height = self.monitor_detect()
+        self.window.resize(self.width, self.height)
+        self.wallpaper_actor.set_size(self.width, self.height)
 
     def _on_active_changed(self, active):
         if active:
