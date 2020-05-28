@@ -38,13 +38,22 @@ def setup_autostart(autostart):
             pass
 
 
-def get_frame_at_sec(video_path, sec=5):
-    # TODO exception when video < 5sec
-    # TODO async?
+def get_length(filename):
+    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                             "format=duration", "-of",
+                             "default=noprint_wrappers=1:nokey=1", filename],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    return float(result.stdout)
+
+
+def get_frame_at_sec(video_path, sec=None):
+    # TODO async?, also a better method?
     root_path = os.path.dirname(video_path) + '/.thumbnails'
     file_path = '{}/{}.png'.format(root_path, os.path.basename(video_path))
     create_dir(root_path)
     if not os.path.exists(file_path):
+        sec = get_length(video_path) / 3 if sec is None or sec > get_length(video_path) else sec
         subprocess.call(
             'ffmpeg -y -i "{}" -ss {}.000 -vf scale=128:-1 -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
                 video_path, time.strftime('%H:%M:%S', time.gmtime(sec)), file_path), shell=True)
@@ -54,7 +63,11 @@ def get_frame_at_sec(video_path, sec=5):
 def get_cached_thumbnail(path):
     file = Gio.File.new_for_path(path)
     info = file.query_info('*', 0, None)
-    return info.get_attribute_byte_string('thumbnail::path')
+    thumbnail = info.get_attribute_byte_string('thumbnail::path')
+    if thumbnail is None:
+        return get_frame_at_sec(path)
+    else:
+        return thumbnail
 
 
 class ControlPanel(Gtk.Application):
@@ -134,8 +147,9 @@ class ControlPanel(Gtk.Application):
             thumbnail = get_cached_thumbnail(video)
             # TODO async method would be better
             if thumbnail is None:
-                thumbnail = get_frame_at_sec(video)
-            list_store.append([Pixbuf.new_from_file_at_size(thumbnail, 128, 128), os.path.basename(video)])
+                list_store.append([None, os.path.basename(video)])
+            else:
+                list_store.append([Pixbuf.new_from_file_at_size(thumbnail, 128, 128), os.path.basename(video)])
 
     def _reload_widget(self):
         self.object.autostart.set_active(os.path.isfile(AUTOSTART_DESKTOP_PATH))
@@ -153,4 +167,5 @@ class ControlPanel(Gtk.Application):
 
 
 if __name__ == '__main__':
-    ControlPanel()
+    # ControlPanel()
+    print(get_length('/home/jeffshee/Videos/Rem_Live_2D_ Wallpaper.mp4'))

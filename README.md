@@ -7,6 +7,7 @@ Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun
 1. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
 2. Pillow, pydbus, Watchdog `pip3 install pillow pydbus watchdog`
 3. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/) or [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
+4. FFmpeg
 
 ## Usage
 0. Prerequisite stated above.

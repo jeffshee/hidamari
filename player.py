@@ -168,7 +168,7 @@ class Player:
                  ('I\'m Feeling Lucky', self._on_menuitem_feeling_lucky, Gtk.MenuItem),
                  ('Quit Hidamari', self._on_menuitem_quit, Gtk.MenuItem)]
         self.menuitem = defaultdict()
-        if os.environ['DESKTOP_SESSION'] == 'gnome':
+        if 'gnome' in os.environ['XDG_CURRENT_DESKTOP'].lower():
             items += [(None, None, Gtk.SeparatorMenuItem),
                       ('GNOME Settings', self._on_menuitem_gnome_settings, Gtk.MenuItem)]
 
