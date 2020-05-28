@@ -98,8 +98,6 @@ class StaticWallpaperHandler:
         self.gso = Gio.Settings.new('org.gnome.desktop.background')
         self.ori_wallpaper_uri = self.gso.get_string('picture-uri')
         self.new_wallpaper_uri = '/tmp/hidamari.png'
-        if self.rc.static_wallpaper:
-            self.set_static_wallpaper()
 
     def _on_rc_modified(self):
         # Get new rc
@@ -123,13 +121,16 @@ class StaticWallpaperHandler:
             subprocess.call(
                 'ffmpeg -y -i "{}" -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
                     self.rc.video_path, self.new_wallpaper_uri), shell=True)
-            blur_wallpaper = Image.open(self.new_wallpaper_uri)
-            blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.rc.static_wallpaper_blur_radius))
-            blur_wallpaper.save(self.new_wallpaper_uri)
-            self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+            if os.path.isfile(self.new_wallpaper_uri):
+                blur_wallpaper = Image.open(self.new_wallpaper_uri)
+                blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.rc.static_wallpaper_blur_radius))
+                blur_wallpaper.save(self.new_wallpaper_uri)
+                self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
     def restore_ori_wallpaper(self):
         self.gso.set_string('picture-uri', self.ori_wallpaper_uri)
+        if os.path.isfile(self.new_wallpaper_uri):
+            os.remove(self.new_wallpaper_uri)
 
 
 class FileWatchdog(FileSystemEventHandler):

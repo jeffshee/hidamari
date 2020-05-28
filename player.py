@@ -76,6 +76,13 @@ class Player:
         self.static_wallpaper_handler.set_static_wallpaper()
         signal.signal(signal.SIGTERM, self._quit)
         signal.signal(signal.SIGINT, self._quit)
+
+        if self.rc.video_path == '':
+            # First time
+            ControlPanel().run()
+        elif not os.path.isfile(self.rc.video_path):
+            self._on_file_not_found(self.rc.video_path)
+
         Gtk.main()
 
     def pause_playback(self):
@@ -121,12 +128,12 @@ class Player:
         # To ensure thread safe
         GLib.idle_add(_run)
 
-    def _on_eos(self, _):
+    def _on_eos(self, *args):
         self.video_playback.set_progress(0.0)
         self.video_playback.set_audio_volume(0.0 if self.rc.mute_audio else self.rc.audio_volume)
         self.start_playback()
 
-    def _on_menuitem_main_gui(self, _):
+    def _on_menuitem_main_gui(self, *args):
         ControlPanel().run()
 
     def _on_menuitem_mute_audio(self, item):
@@ -137,10 +144,10 @@ class Player:
         self.user_pause_playback = item.get_active()
         self.pause_playback() if self.user_pause_playback else self.start_playback()
 
-    def _on_menuitem_gnome_settings(self, _):
+    def _on_menuitem_gnome_settings(self, *args):
         subprocess.Popen('gnome-control-center')
 
-    def _on_menuitem_quit(self, _):
+    def _on_menuitem_quit(self, *args):
         self._quit()
 
     def _build_context_menu(self):
@@ -173,10 +180,17 @@ class Player:
             self.menu.popup_at_pointer()
         return True
 
-    def _on_not_implemented(self, _):
+    def _on_not_implemented(self, *args):
         print('Not implemented!')
         message = Gtk.MessageDialog(type=Gtk.MessageType.INFO, buttons=Gtk.ButtonsType.OK,
                                     message_format='Not implemented!')
+        message.connect("response", self._dialog_response)
+        message.show()
+
+    def _on_file_not_found(self, path):
+        print('File not found!')
+        message = Gtk.MessageDialog(type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK,
+                                    message_format='File {} not found!'.format(path))
         message.connect("response", self._dialog_response)
         message.show()
 
