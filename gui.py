@@ -11,7 +11,6 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib
 from gi.repository.GdkPixbuf import Pixbuf
 
-VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
 GUI_GLADE_FILENAME = sys.path[0] + '/gui.glade'
 AUTOSTART_DESKTOP_PATH = os.environ['HOME'] + '/.config/autostart/hidamari.desktop'
 AUTOSTART_DESKTOP_CONTENT = \
@@ -25,25 +24,7 @@ Icon=hidamari
 Categories=System;Monitor;
     '''
 
-from utils import RCHandler
-
-
-def create_dir(path):
-    if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-        except OSError:
-            pass
-
-
-def scan_dir():
-    file_list = []
-    ext_list = ['m4v', 'mkv', 'mp4', 'mpg', 'mpeg', 'webm']
-    for file in os.listdir(VIDEO_WALLPAPER_PATH):
-        path = VIDEO_WALLPAPER_PATH + '/' + file
-        if os.path.isfile(path) and path.split('.')[-1].lower() in ext_list:
-            file_list.append(path)
-    return file_list
+from utils import RCHandler, create_dir, scan_dir
 
 
 def setup_autostart(autostart):
@@ -79,7 +60,6 @@ def get_cached_thumbnail(path):
 class ControlPanel(Gtk.Application):
     def __init__(self):
         super().__init__(application_id='io.github.jeffshee.hidamari.gui')
-        create_dir(VIDEO_WALLPAPER_PATH)
 
         self.rc_handler = RCHandler(self._on_rc_modified)
         self.rc = self.rc_handler.rc

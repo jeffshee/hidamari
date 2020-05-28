@@ -1,8 +1,9 @@
 import os
 import signal
 import subprocess
-import gi
+import random
 from collections import defaultdict
+import gi
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkClutter', '1.0')
@@ -10,7 +11,9 @@ gi.require_version('ClutterGst', '3.0')
 from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, GLib
 
 from utils import RCHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
-from gui import ControlPanel
+from gui import ControlPanel, create_dir, scan_dir
+
+VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
 
 
 def monitor_detect():
@@ -28,6 +31,7 @@ class Player:
         # Initialize
         GtkClutter.init()
         ClutterGst.init()
+        create_dir(VIDEO_WALLPAPER_PATH)
 
         self.rc_handler = RCHandler(self._on_rc_modified)
         self.rc = self.rc_handler.rc
@@ -144,6 +148,12 @@ class Player:
         self.user_pause_playback = item.get_active()
         self.pause_playback() if self.user_pause_playback else self.start_playback()
 
+    def _on_menuitem_feeling_lucky(self, *args):
+        file_list = scan_dir()
+        if len(file_list) != 0:
+            self.rc.video_path = random.choice(file_list)
+            self.rc_handler.save()
+
     def _on_menuitem_gnome_settings(self, *args):
         subprocess.Popen('gnome-control-center')
 
@@ -155,7 +165,7 @@ class Player:
         items = [('Show Hidamari', self._on_menuitem_main_gui, Gtk.MenuItem),
                  ('Mute Audio', self._on_menuitem_mute_audio, Gtk.CheckMenuItem),
                  ('Pause Playback', self._on_menuitem_pause_playback, Gtk.CheckMenuItem),
-                 ('Next Wallpaper', self._on_not_implemented, Gtk.MenuItem),
+                 ('I\'m Feeling Lucky', self._on_menuitem_feeling_lucky, Gtk.MenuItem),
                  ('Quit Hidamari', self._on_menuitem_quit, Gtk.MenuItem)]
         self.menuitem = defaultdict()
         if os.environ['DESKTOP_SESSION'] == 'gnome':

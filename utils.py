@@ -18,6 +18,25 @@ from types import SimpleNamespace
 HOME = os.environ['HOME']
 RC_FILENAME = '.hidamari-rc'
 RC_PATH = HOME + '/' + RC_FILENAME
+VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
+
+
+def create_dir(path):
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+        except OSError:
+            pass
+
+
+def scan_dir():
+    file_list = []
+    ext_list = ['m4v', 'mkv', 'mp4', 'mpg', 'mpeg', 'webm']
+    for file in os.listdir(VIDEO_WALLPAPER_PATH):
+        path = VIDEO_WALLPAPER_PATH + '/' + file
+        if os.path.isfile(path) and path.split('.')[-1].lower() in ext_list:
+            file_list.append(path)
+    return file_list
 
 
 class ActiveHandler:
