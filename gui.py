@@ -7,12 +7,23 @@ import time
 
 import gi
 
-gi.require_version("Gtk", "3.0")
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib
 from gi.repository.GdkPixbuf import Pixbuf
 
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
 GUI_GLADE_FILENAME = sys.path[0] + '/gui.glade'
+AUTOSTART_DESKTOP_PATH = os.environ['HOME'] + '/.config/autostart/hidamari.desktop'
+AUTOSTART_DESKTOP_CONTENT = \
+    '''[Desktop Entry]
+Type=Application
+Name=Hidamari
+Exec=hidamari -p 1
+StartupNotify=false
+Terminal=false
+Icon=hidamari
+Categories=System;Monitor;
+    '''
 
 from utils import RCHandler
 
@@ -35,7 +46,20 @@ def scan_dir():
     return file_list
 
 
+def setup_autostart(autostart):
+    if autostart:
+        with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
+            f.write(AUTOSTART_DESKTOP_CONTENT)
+    else:
+        try:
+            os.remove(AUTOSTART_DESKTOP_PATH)
+        except OSError:
+            pass
+
+
 def get_frame_at_sec(video_path, sec=5):
+    # TODO exception when video < 5sec
+    # TODO async?
     root_path = os.path.dirname(video_path) + '/.thumbnails'
     file_path = '{}/{}.png'.format(root_path, os.path.basename(video_path))
     create_dir(root_path)
@@ -63,8 +87,8 @@ class ControlPanel(Gtk.Application):
         # Builder Initialization
         self.builder = Gtk.Builder()
         self.builder.add_from_file(GUI_GLADE_FILENAME)
-        object_list = ['window', 'icon_view', 'volume', 'volume_adjustment', 'mute_audio', 'detect_maximized',
-                       'static_wallpaper', 'blur_adjustment', 'blur_radius', 'apply']
+        object_list = ['window', 'icon_view', 'volume', 'volume_adjustment', 'autostart', 'mute_audio',
+                       'detect_maximized', 'static_wallpaper', 'blur_adjustment', 'blur_radius', 'apply']
         object_dict = defaultdict()
         for obj in object_list:
             object_dict[obj] = self.builder.get_object(obj)
@@ -100,6 +124,7 @@ class ControlPanel(Gtk.Application):
             icon_view_selection = selected[0].get_indices()[0]
             self.rc.video_path = self.file_list[icon_view_selection]
         #
+        setup_autostart(self.object.autostart.get_active())
         self.rc.static_wallpaper = self.object.static_wallpaper.get_active()
         self.rc.detect_maximized = self.object.detect_maximized.get_active()
         self.rc.mute_audio = self.object.mute_audio.get_active()
@@ -133,6 +158,7 @@ class ControlPanel(Gtk.Application):
             list_store.append([Pixbuf.new_from_file_at_size(thumbnail, 128, 128), os.path.basename(video)])
 
     def _reload_widget(self):
+        self.object.autostart.set_active(os.path.isfile(AUTOSTART_DESKTOP_PATH))
         self.object.static_wallpaper.set_active(self.rc.static_wallpaper)
         self.object.detect_maximized.set_active(self.rc.detect_maximized)
         self.object.mute_audio.set_active(self.rc.mute_audio)

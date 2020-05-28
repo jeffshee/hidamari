@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.2 -->
+<!-- Generated with glade 3.36.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkAdjustment" id="blur_adjustment">
@@ -22,9 +22,6 @@
     <property name="title" translatable="yes">Hidamari　ーひだまりー</property>
     <property name="default_width">960</property>
     <property name="default_height">540</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -34,17 +31,18 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
+            <property name="spacing">8</property>
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_left">16</property>
+                <property name="margin_start">16</property>
+                <property name="margin_top">16</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_left">16</property>
-                    <property name="margin_top">16</property>
-                    <property name="margin_bottom">8</property>
                     <property name="label" translatable="yes">&lt;span size="x-large"&gt;Videos&lt;/span&gt;
 &lt;span size="small"&gt;Located in ~/Videos/Hidamari/&lt;/span&gt;</property>
                     <property name="use_markup">True</property>
@@ -114,36 +112,37 @@
             <property name="can_focus">False</property>
             <property name="margin_left">16</property>
             <property name="margin_right">16</property>
+            <property name="margin_start">16</property>
+            <property name="margin_end">16</property>
             <property name="orientation">vertical</property>
+            <property name="spacing">16</property>
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="spacing">16</property>
                 <child>
                   <object class="GtkButton" id="cancel">
-                    <property name="label">gtk-cancel</property>
+                    <property name="label">Cancel</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="use_stock">True</property>
                     <signal name="clicked" handler="on_cancel_clicked" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="padding">8</property>
                     <property name="pack_type">end</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkButton" id="apply">
-                    <property name="label">gtk-apply</property>
+                    <property name="label">Apply</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="use_stock">True</property>
                     <signal name="clicked" handler="on_apply_clicked" swapped="no"/>
                     <style>
                       <class name="suggested-action"/>
@@ -152,7 +151,6 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="padding">8</property>
                     <property name="pack_type">end</property>
                     <property name="position">1</property>
                   </packing>
@@ -161,7 +159,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="padding">8</property>
+                <property name="padding">16</property>
                 <property name="pack_type">end</property>
                 <property name="position">0</property>
               </packing>
@@ -170,7 +168,6 @@
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_bottom">16</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkLabel">
@@ -214,7 +211,6 @@
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_bottom">16</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkLabel">
@@ -254,7 +250,6 @@
               <object class="GtkFrame">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_bottom">16</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
                 <child>
@@ -268,6 +263,21 @@
                         <property name="can_focus">False</property>
                         <property name="orientation">vertical</property>
                         <child>
+                          <object class="GtkCheckButton" id="autostart">
+                            <property name="label" translatable="yes">Autostart after login</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="on_value_changed" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkCheckButton" id="static_wallpaper">
                             <property name="label" translatable="yes">Apply static wallpaper</property>
                             <property name="visible">True</property>
@@ -280,7 +290,7 @@
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">0</property>
+                            <property name="position">1</property>
                           </packing>
                         </child>
                         <child>
@@ -296,7 +306,7 @@
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">1</property>
+                            <property name="position">2</property>
                           </packing>
                         </child>
                         <child>
@@ -312,7 +322,7 @@
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">2</property>
+                            <property name="position">3</property>
                           </packing>
                         </child>
                       </object>
@@ -343,6 +353,9 @@
           </packing>
         </child>
       </object>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
     </child>
   </object>
 </interface>
