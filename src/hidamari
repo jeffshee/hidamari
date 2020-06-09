@@ -8,5 +8,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     time.sleep(args.pause)
     # Do import after the sleep. (if not SIGSEGV during autostart)
-    from src.player import Player
+    from player import Player
     Player()
