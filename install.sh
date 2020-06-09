@@ -1,11 +1,11 @@
 #!/bin/sh
 
-TEMP_DIR "$HOME/hidamari_temp"
-INSTALL_DIR "$HOME/.hidamari"
-BIN_DIR "$HOME/bin"
-AUTOSTART_DIR "$HOME/.config/autostart"
-APPLICATIONS_DIR "$HOME/.local/share/applications/"
-ICONS_DIR "$HOME/.local/share/icons/hicolor/scalable/apps"
+TEMP_DIR="$HOME/hidamari_temp"
+INSTALL_DIR="$HOME/.hidamari"
+BIN_DIR="$HOME/bin"
+AUTOSTART_DIR="$HOME/.config/autostart"
+APPLICATIONS_DIR="$HOME/.local/share/applications/"
+ICONS_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
 
 clear_old() {
   if [ -d "$INSTALL_DIR" ]; then

@@ -10,8 +10,8 @@ gi.require_version('GtkClutter', '1.0')
 gi.require_version('ClutterGst', '3.0')
 from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, GLib
 
-from src.utils import RCHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
-from src.gui import ControlPanel, create_dir, scan_dir
+from utils import RCHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
+from gui import ControlPanel, create_dir, scan_dir
 
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
 
