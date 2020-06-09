@@ -24,7 +24,7 @@ Icon=hidamari
 Categories=System;Monitor;
     '''
 
-from utils import RCHandler, create_dir, scan_dir
+from src.utils import RCHandler, create_dir, scan_dir
 
 
 def setup_autostart(autostart):

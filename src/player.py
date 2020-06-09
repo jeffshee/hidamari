@@ -10,18 +10,19 @@ gi.require_version('GtkClutter', '1.0')
 gi.require_version('ClutterGst', '3.0')
 from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, GLib
 
-from utils import RCHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
-from gui import ControlPanel, create_dir, scan_dir
+from src.utils import RCHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
+from src.gui import ControlPanel, create_dir, scan_dir
 
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
 
 
-
-
-
-
 class Player:
     def __init__(self):
+        signal.signal(signal.SIGINT, self._quit)
+        signal.signal(signal.SIGTERM, self._quit)
+        # SIGSEGV as a fail-safe
+        signal.signal(signal.SIGSEGV, self._quit)
+
         # Initialize
         GtkClutter.init()
         ClutterGst.init()
@@ -72,8 +73,6 @@ class Player:
         self.window_handler = WindowHandler(self._on_window_state_changed)
         self.static_wallpaper_handler = StaticWallpaperHandler()
         self.static_wallpaper_handler.set_static_wallpaper()
-        signal.signal(signal.SIGTERM, self._quit)
-        signal.signal(signal.SIGINT, self._quit)
 
         if self.rc.video_path == '':
             # First time
