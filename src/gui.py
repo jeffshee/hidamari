@@ -26,7 +26,7 @@ Icon=hidamari
 Categories=System;Monitor;
     '''
 
-from utils import RCHandler, create_dir, scan_dir
+from utils import ConfigHandler, create_dir, scan_dir
 
 
 def setup_autostart(autostart):
@@ -102,8 +102,8 @@ class ControlPanel(Gtk.Application):
     def __init__(self):
         super().__init__(application_id='io.github.jeffshee.hidamari.gui')
 
-        self.rc_handler = RCHandler(self._on_rc_modified)
-        self.rc = self.rc_handler.rc
+        self.config_handler = ConfigHandler(self._on_config_modified)
+        self.config = self.config_handler.config
 
         # Builder Initialization
         self.builder = Gtk.Builder()
@@ -131,9 +131,9 @@ class ControlPanel(Gtk.Application):
     def do_activate(self):
         Gtk.main()
 
-    def _on_rc_modified(self):
+    def _on_config_modified(self):
         def _run():
-            self.rc = self.rc_handler.rc
+            self.config = self.config_handler.config
             self._reload_widget()
 
         # To ensure thread safe
@@ -143,15 +143,15 @@ class ControlPanel(Gtk.Application):
         selected = self.object.icon_view.get_selected_items()
         if len(selected) != 0:
             icon_view_selection = selected[0].get_indices()[0]
-            self.rc.video_path = self.file_list[icon_view_selection]
+            self.config.video_path = self.file_list[icon_view_selection]
         #
         setup_autostart(self.object.autostart.get_active())
-        self.rc.static_wallpaper = self.object.static_wallpaper.get_active()
-        self.rc.detect_maximized = self.object.detect_maximized.get_active()
-        self.rc.mute_audio = self.object.mute_audio.get_active()
-        self.rc.static_wallpaper_blur_radius = self.object.blur_adjustment.get_value()
-        self.rc.audio_volume = self.object.volume_adjustment.get_value() / 100
-        self.rc_handler.save()
+        self.config.static_wallpaper = self.object.static_wallpaper.get_active()
+        self.config.detect_maximized = self.object.detect_maximized.get_active()
+        self.config.mute_audio = self.object.mute_audio.get_active()
+        self.config.static_wallpaper_blur_radius = self.object.blur_adjustment.get_value()
+        self.config.audio_volume = self.object.volume_adjustment.get_value() / 100
+        self.config_handler.save()
         self.object.apply.set_sensitive(False)
 
     def _on_cancel_clicked(self, *args):
@@ -181,11 +181,11 @@ class ControlPanel(Gtk.Application):
 
     def _reload_widget(self):
         self.object.autostart.set_active(os.path.isfile(AUTOSTART_DESKTOP_PATH))
-        self.object.static_wallpaper.set_active(self.rc.static_wallpaper)
-        self.object.detect_maximized.set_active(self.rc.detect_maximized)
-        self.object.mute_audio.set_active(self.rc.mute_audio)
-        self.object.volume_adjustment.set_value(self.rc.audio_volume * 100)
-        self.object.blur_adjustment.set_value(self.rc.static_wallpaper_blur_radius)
+        self.object.static_wallpaper.set_active(self.config.static_wallpaper)
+        self.object.detect_maximized.set_active(self.config.detect_maximized)
+        self.object.mute_audio.set_active(self.config.mute_audio)
+        self.object.volume_adjustment.set_value(self.config.audio_volume * 100)
+        self.object.blur_adjustment.set_value(self.config.static_wallpaper_blur_radius)
         #
         self.object.icon_view.unselect_all()
         #

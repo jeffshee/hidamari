@@ -16,9 +16,9 @@ from PIL import Image, ImageFilter
 from types import SimpleNamespace
 
 HOME = os.environ['HOME']
-RC_FILENAME = '.hidamari-rc'
-RC_PATH = HOME + '/' + RC_FILENAME
-VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
+CONFIG_DIR = HOME + '/.config/hidamari'
+CONFIG_PATH = CONFIG_DIR + '/hidamari.config'
+VIDEO_WALLPAPER_DIR = HOME + '/Videos/Hidamari'
 
 
 def create_dir(path):
@@ -32,8 +32,8 @@ def create_dir(path):
 def scan_dir():
     file_list = []
     ext_list = ['m4v', 'mkv', 'mp4', 'mpg', 'mpeg', 'webm']
-    for file in os.listdir(VIDEO_WALLPAPER_PATH):
-        path = VIDEO_WALLPAPER_PATH + '/' + file
+    for file in os.listdir(VIDEO_WALLPAPER_DIR):
+        path = VIDEO_WALLPAPER_DIR + '/' + file
         if os.path.isfile(path) and path.split('.')[-1].lower() in ext_list:
             file_list.append(path)
     return file_list
@@ -109,40 +109,40 @@ class StaticWallpaperHandler:
     """
 
     def __init__(self):
-        self.rc_handler = RCHandler(self._on_rc_modified)
-        self.rc = self.rc_handler.rc
-        self.current_video_path = self.rc.video_path
-        self.current_static_wallpaper = self.rc.static_wallpaper
-        self.current_static_wallpaper_blur_radius = self.rc.static_wallpaper_blur_radius
+        self.config_handler = ConfigHandler(self._on_config_modified)
+        self.config = self.config_handler.config
+        self.current_video_path = self.config.video_path
+        self.current_static_wallpaper = self.config.static_wallpaper
+        self.current_static_wallpaper_blur_radius = self.config.static_wallpaper_blur_radius
         self.gso = Gio.Settings.new('org.gnome.desktop.background')
         self.ori_wallpaper_uri = self.gso.get_string('picture-uri')
         self.new_wallpaper_uri = '/tmp/hidamari.png'
 
-    def _on_rc_modified(self):
-        # Get new rc
-        self.rc = self.rc_handler.rc
-        if self.current_static_wallpaper != self.rc.static_wallpaper:
-            if self.rc.static_wallpaper:
+    def _on_config_modified(self):
+        # Get new config
+        self.config = self.config_handler.config
+        if self.current_static_wallpaper != self.config.static_wallpaper:
+            if self.config.static_wallpaper:
                 self.set_static_wallpaper()
             else:
                 self.restore_ori_wallpaper()
-        elif ((self.current_video_path != self.rc.video_path or
-               self.current_static_wallpaper_blur_radius != self.rc.static_wallpaper_blur_radius) and
-              self.rc.static_wallpaper):
+        elif ((self.current_video_path != self.config.video_path or
+               self.current_static_wallpaper_blur_radius != self.config.static_wallpaper_blur_radius) and
+              self.config.static_wallpaper):
             self.set_static_wallpaper()
-        self.current_video_path = self.rc.video_path
-        self.current_static_wallpaper = self.rc.static_wallpaper
-        self.current_static_wallpaper_blur_radius = self.rc.static_wallpaper_blur_radius
+        self.current_video_path = self.config.video_path
+        self.current_static_wallpaper = self.config.static_wallpaper
+        self.current_static_wallpaper_blur_radius = self.config.static_wallpaper_blur_radius
 
     def set_static_wallpaper(self):
         # Extract first frame (use ffmpeg)
-        if self.rc.static_wallpaper:
+        if self.config.static_wallpaper:
             subprocess.call(
                 'ffmpeg -y -i "{}" -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
-                    self.rc.video_path, self.new_wallpaper_uri), shell=True)
+                    self.config.video_path, self.new_wallpaper_uri), shell=True)
             if os.path.isfile(self.new_wallpaper_uri):
                 blur_wallpaper = Image.open(self.new_wallpaper_uri)
-                blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.rc.static_wallpaper_blur_radius))
+                blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.config.static_wallpaper_blur_radius))
                 blur_wallpaper.save(self.new_wallpaper_uri)
                 self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
@@ -178,14 +178,14 @@ class FileWatchdog(FileSystemEventHandler):
             self.callback()  # call callback
 
 
-class RCHandler:
+class ConfigHandler:
     """
-    Handler for monitoring changes on configuration file (.hidamari-rc at home directory)
+    Handler for monitoring changes on configuration file
     """
 
-    def __init__(self, on_rc_modified: callable):
-        self.on_rc_modified = on_rc_modified
-        self.template_rc = {
+    def __init__(self, on_config_modified: callable):
+        self.on_config_modified = on_config_modified
+        self.template_config = {
             'video_path': '',
             'mute_audio': False,
             'audio_volume': 0.5,
@@ -194,32 +194,33 @@ class RCHandler:
             'detect_maximized': True,
         }
         self._update()
-        FileWatchdog(path=HOME, file_name=RC_FILENAME, callback=self._rc_modified)
+        FileWatchdog(path=CONFIG_DIR, file_name=os.path.basename(CONFIG_PATH), callback=self._config_modified)
 
-    def _generate_template_rc(self):
-        with open(RC_PATH, 'w') as f:
-            json.dump(self.template_rc, f)
-        return self.template_rc
+    def _generate_template_config(self):
+        create_dir(CONFIG_DIR)
+        with open(CONFIG_PATH, 'w') as f:
+            json.dump(self.template_config, f)
+        return self.template_config
 
     def _update(self):
-        self.rc = SimpleNamespace(**self._load())
+        self.config = SimpleNamespace(**self._load())
 
-    def _rc_modified(self):
+    def _config_modified(self):
         self._update()
-        # print(vars(self.rc))
-        self.on_rc_modified()
+        # print(vars(self.config))
+        self.on_config_modified()
 
-    def _check(self, rc: dict):
-        return all(key in rc for key in self.template_rc)
+    def _check(self, config: dict):
+        return all(key in config for key in self.template_config)
 
     def _load(self):
-        if os.path.isfile(RC_PATH):
-            with open(RC_PATH, 'r') as f:
-                rc = json.load(f)
-                if self._check(rc):
-                    return rc
-        return self._generate_template_rc()
+        if os.path.isfile(CONFIG_PATH):
+            with open(CONFIG_PATH, 'r') as f:
+                config = json.load(f)
+                if self._check(config):
+                    return config
+        return self._generate_template_config()
 
     def save(self):
-        with open(RC_PATH, 'w') as f:
-            json.dump(vars(self.rc), f)
+        with open(CONFIG_PATH, 'w') as f:
+            json.dump(vars(self.config), f)

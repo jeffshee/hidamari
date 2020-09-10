@@ -10,7 +10,7 @@ gi.require_version('GtkClutter', '1.0')
 gi.require_version('ClutterGst', '3.0')
 from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, GLib
 
-from utils import RCHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
+from utils import ConfigHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
 from gui import ControlPanel, create_dir, scan_dir
 
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
@@ -28,9 +28,9 @@ class Player:
         ClutterGst.init()
         create_dir(VIDEO_WALLPAPER_PATH)
 
-        self.rc_handler = RCHandler(self._on_rc_modified)
-        self.rc = self.rc_handler.rc
-        self.current_video_path = self.rc.video_path
+        self.config_handler = ConfigHandler(self._on_config_modified)
+        self.config = self.config_handler.config
+        self.current_video_path = self.config.video_path
         self.user_pause_playback = False
         self.is_any_maximized, self.is_any_fullscreen = False, False
 
@@ -40,9 +40,6 @@ class Player:
         # Actors initialize
         self.embed = GtkClutter.Embed()
         self.main_actor = self.embed.get_stage()
-        self.wallpaper_actor = Clutter.Actor()
-        self.wallpaper_actor.set_size(self.width, self.height)
-        self.main_actor.add_child(self.wallpaper_actor)
         self.main_actor.set_background_color(Clutter.Color.get_static(Clutter.StaticColor.BLACK))
 
         # Video initialize
@@ -51,11 +48,11 @@ class Player:
         self.video_content.set_player(self.video_playback)
 
         # Playback settings
-        self.video_playback.set_filename(self.rc.video_path)
-        self.video_playback.set_audio_volume(0.0 if self.rc.mute_audio else self.rc.audio_volume)
+        self.video_playback.set_filename(self.config.video_path)
+        self.video_playback.set_audio_volume(0.0 if self.config.mute_audio else self.config.audio_volume)
         self.video_playback.set_playing(True)
         self.video_playback.connect('eos', self._on_eos)
-        self.wallpaper_actor.set_content(self.video_content)
+        self.main_actor.set_content(self.video_content)
 
         # Window settings
         self.window = Gtk.Window()
@@ -74,17 +71,17 @@ class Player:
         self.static_wallpaper_handler = StaticWallpaperHandler()
         self.static_wallpaper_handler.set_static_wallpaper()
 
-        if self.rc.video_path == '':
+        if self.config.video_path == '':
             # First time
             ControlPanel().run()
-        elif not os.path.isfile(self.rc.video_path):
-            self._on_file_not_found(self.rc.video_path)
+        elif not os.path.isfile(self.config.video_path):
+            self._on_file_not_found(self.config.video_path)
 
         self.file_list = scan_dir()
         random.shuffle(self.file_list)
         self.current = 0
-        if self.rc.video_path in self.file_list:
-            self.current = self.file_list.index(self.rc.video_path)
+        if self.config.video_path in self.file_list:
+            self.current = self.file_list.index(self.config.video_path)
         Gtk.main()
 
     def pause_playback(self):
@@ -118,45 +115,45 @@ class Player:
         if active:
             self.pause_playback()
         else:
-            if (self.is_any_maximized and self.rc.detect_maximized) or self.is_any_fullscreen:
+            if (self.is_any_maximized and self.config.detect_maximized) or self.is_any_fullscreen:
                 self.pause_playback()
             else:
                 self.start_playback()
 
     def _on_window_state_changed(self, state):
         self.is_any_maximized, self.is_any_fullscreen = state['is_any_maximized'], state['is_any_fullscreen']
-        if (self.is_any_maximized and self.rc.detect_maximized) or self.is_any_fullscreen:
+        if (self.is_any_maximized and self.config.detect_maximized) or self.is_any_fullscreen:
             self.pause_playback()
         else:
             self.start_playback()
 
-    def _on_rc_modified(self):
+    def _on_config_modified(self):
         def _run():
-            # Get new rc
-            self.rc = self.rc_handler.rc
+            # Get new config
+            self.config = self.config_handler.config
             self.pause_playback()
-            if self.current_video_path != self.rc.video_path:
-                self.video_playback.set_filename(self.rc.video_path)
+            if self.current_video_path != self.config.video_path:
+                self.video_playback.set_filename(self.config.video_path)
                 self.video_playback.set_progress(0.0)
-                self.current_video_path = self.rc.video_path
-            self.video_playback.set_audio_volume(0.0 if self.rc.mute_audio else self.rc.audio_volume)
+                self.current_video_path = self.config.video_path
+            self.video_playback.set_audio_volume(0.0 if self.config.mute_audio else self.config.audio_volume)
             self.start_playback()
-            self.menuitem['Mute Audio'].set_active(self.rc.mute_audio)
+            self.menuitem['Mute Audio'].set_active(self.config.mute_audio)
 
         # To ensure thread safe
         GLib.idle_add(_run)
 
     def _on_eos(self, *args):
         self.video_playback.set_progress(0.0)
-        self.video_playback.set_audio_volume(0.0 if self.rc.mute_audio else self.rc.audio_volume)
+        self.video_playback.set_audio_volume(0.0 if self.config.mute_audio else self.config.audio_volume)
         self.start_playback()
 
     def _on_menuitem_main_gui(self, *args):
         ControlPanel().run()
 
     def _on_menuitem_mute_audio(self, item):
-        self.rc.mute_audio = item.get_active()
-        self.rc_handler.save()
+        self.config.mute_audio = item.get_active()
+        self.config_handler.save()
 
     def _on_menuitem_pause_playback(self, item):
         self.user_pause_playback = item.get_active()
@@ -166,8 +163,8 @@ class Player:
         self.current += 1
         if self.current % len(self.file_list) == 0:
             random.shuffle(self.file_list)
-        self.rc.video_path = self.file_list[self.current % len(self.file_list)]
-        self.rc_handler.save()
+        self.config.video_path = self.file_list[self.current % len(self.file_list)]
+        self.config_handler.save()
 
     def _on_menuitem_gnome_settings(self, *args):
         subprocess.Popen('gnome-control-center')
