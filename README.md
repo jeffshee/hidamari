@@ -3,6 +3,21 @@ Video wallpaper for Linux, like Komorebi. Minimal and written in Python.
 
 Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun
 
+## Feature
+There are several solutions to achieve video as wallpaper on Linux, for example:
+1. [Xwinwrap + mpv](https://www.linuxuprising.com/2019/05/livestream-wallpaper-for-your-gnome.html)
+2. [Komorebi](https://github.com/cheesecakeufo/komorebi)
+
+Hidamari offers similar feature as above, with additional features listed below:
+- [x] Autostart after login
+- [x] Apply static wallpaper. Apply the first frame of the video as wallpaper underneath. Blur radius is adjustable too!
+- [x] Detect maximized window. Automatically pause the video playback if any maximized window is detected.
+- [x] Mute audio
+- [x] Volume level
+- [x] Pause the video playback manually at anytime
+- [x] I'm feeling lucky. Randomly select and play the video
+- [ ] You name it! =)
+
 ## Prerequisite
 1. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
 2. Pillow, pydbus, Watchdog `pip3 install pillow pydbus watchdog`
