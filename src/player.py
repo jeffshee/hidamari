@@ -80,6 +80,11 @@ class Player:
         elif not os.path.isfile(self.rc.video_path):
             self._on_file_not_found(self.rc.video_path)
 
+        self.file_list = scan_dir()
+        random.shuffle(self.file_list)
+        self.current = 0
+        if self.rc.video_path in self.file_list:
+            self.current = self.file_list.index(self.rc.video_path)
         Gtk.main()
 
     def pause_playback(self):
@@ -158,10 +163,11 @@ class Player:
         self.pause_playback() if self.user_pause_playback else self.start_playback()
 
     def _on_menuitem_feeling_lucky(self, *args):
-        file_list = scan_dir()
-        if len(file_list) != 0:
-            self.rc.video_path = random.choice(file_list)
-            self.rc_handler.save()
+        self.current += 1
+        if self.current % len(self.file_list) == 0:
+            random.shuffle(self.file_list)
+        self.rc.video_path = self.file_list[self.current % len(self.file_list)]
+        self.rc_handler.save()
 
     def _on_menuitem_gnome_settings(self, *args):
         subprocess.Popen('gnome-control-center')
