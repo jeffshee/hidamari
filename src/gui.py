@@ -78,7 +78,7 @@ def get_thumbnail_gnome(video_path, list_store, idx):
     info = file.query_info('*', 0, None)
     thumbnail = info.get_attribute_byte_string('thumbnail::path')
     if thumbnail is not None:
-        new_pixbuf = Pixbuf.new_from_file_at_size(thumbnail, 96, 96)
+        new_pixbuf = Pixbuf.new_from_file_at_size(thumbnail, -1, 96)
         list_store[idx][0] = new_pixbuf
     else:
         generate_thumbnail_gnome(video_path)
@@ -94,7 +94,7 @@ def get_thumbnail(video_path, list_store, idx):
         subprocess.call(
             'ffmpeg -y -i "{}" -ss {}.000 -vf scale=96:-1 -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
                 video_path, time.strftime('%H:%M:%S', time.gmtime(sec)), file_path), shell=True)
-    new_pixbuf = Pixbuf.new_from_file_at_size(file_path, 96, 96)
+    new_pixbuf = Pixbuf.new_from_file_at_size(file_path, -1, 96)
     list_store[idx][0] = new_pixbuf
 
 
@@ -172,7 +172,7 @@ class ControlPanel(Gtk.Application):
         self.object.icon_view.set_pixbuf_column(0)
         self.object.icon_view.set_text_column(1)
         for idx, video in enumerate(self.file_list):
-            icon_theme = Gtk.IconTheme()
+            icon_theme = Gtk.IconTheme().get_default()
             pixbuf = icon_theme.load_icon('video-x-generic', 96, 0)
             list_store.append([pixbuf, os.path.basename(video)])
             thread = threading.Thread(target=get_thumbnail_gnome, args=(video, list_store, idx))
