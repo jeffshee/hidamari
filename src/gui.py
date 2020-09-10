@@ -4,11 +4,13 @@ from collections import defaultdict
 from types import SimpleNamespace
 import subprocess
 import time
+import threading
 
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gio, GLib
+gi.require_version('GnomeDesktop', '3.0')
+from gi.repository import Gtk, Gio, GLib, GnomeDesktop
 from gi.repository.GdkPixbuf import Pixbuf
 
 GUI_GLADE_FILENAME = sys.path[0] + '/gui.glade'
@@ -47,27 +49,53 @@ def get_length(filename):
     return float(result.stdout)
 
 
-def get_frame_at_sec(video_path, sec=None):
-    # TODO async?, also a better method?
-    root_path = os.path.dirname(video_path) + '/.thumbnails'
-    file_path = '{}/{}.png'.format(root_path, os.path.basename(video_path))
-    create_dir(root_path)
-    if not os.path.exists(file_path):
-        sec = get_length(video_path) / 3 if sec is None or sec > get_length(video_path) else sec
-        subprocess.call(
-            'ffmpeg -y -i "{}" -ss {}.000 -vf scale=128:-1 -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
-                video_path, time.strftime('%H:%M:%S', time.gmtime(sec)), file_path), shell=True)
-    return file_path
+def generate_thumbnail_gnome(filename):
+    factory = GnomeDesktop.DesktopThumbnailFactory()
+    mtime = os.path.getmtime(filename)
+    # Use Gio to determine the URI and mime type
+    f = Gio.file_new_for_path(filename)
+    uri = f.get_uri()
+    info = f.query_info(
+        'standard::content-type', Gio.FileQueryInfoFlags.NONE, None)
+    mime_type = info.get_content_type()
+
+    if factory.lookup(uri, mtime) is not None:
+        return False
+
+    if not factory.can_thumbnail(uri, mime_type, mtime):
+        return False
+
+    thumbnail = factory.generate_thumbnail(uri, mime_type)
+    if thumbnail is None:
+        return False
+
+    factory.save_thumbnail(thumbnail, uri, mtime)
+    return True
 
 
-def get_cached_thumbnail(path):
-    file = Gio.File.new_for_path(path)
+def get_thumbnail_gnome(video_path, list_store, idx):
+    file = Gio.File.new_for_path(video_path)
     info = file.query_info('*', 0, None)
     thumbnail = info.get_attribute_byte_string('thumbnail::path')
-    if thumbnail is None:
-        return get_frame_at_sec(path)
+    if thumbnail is not None:
+        new_pixbuf = Pixbuf.new_from_file_at_size(thumbnail, 96, 96)
+        list_store[idx][0] = new_pixbuf
     else:
-        return thumbnail
+        generate_thumbnail_gnome(video_path)
+
+
+def get_thumbnail(video_path, list_store, idx):
+    # TODO too resource intensive, looking for a better approach
+    root_path = os.path.dirname(video_path) + '/.thumbnails'
+    file_path = '{}/{}.png'.format(root_path, os.path.basename(video_path))
+    if not os.path.exists(file_path):
+        create_dir(root_path)
+        sec = get_length(video_path) / 3
+        subprocess.call(
+            'ffmpeg -y -i "{}" -ss {}.000 -vf scale=96:-1 -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
+                video_path, time.strftime('%H:%M:%S', time.gmtime(sec)), file_path), shell=True)
+    new_pixbuf = Pixbuf.new_from_file_at_size(file_path, 96, 96)
+    list_store[idx][0] = new_pixbuf
 
 
 class ControlPanel(Gtk.Application):
@@ -91,10 +119,10 @@ class ControlPanel(Gtk.Application):
         Gtk.Application.do_startup(self)
 
         # Object Initialization
-        self._reload_icon_view()
-        self._reload_widget()
         self.object.window.connect('destroy', Gtk.main_quit)
         self.object.window.show_all()
+        self._reload_icon_view()
+        self._reload_widget()
 
         self.builder.connect_signals(
             {'on_apply_clicked': self._on_apply_clicked, 'on_cancel_clicked': self._on_cancel_clicked,
@@ -143,13 +171,13 @@ class ControlPanel(Gtk.Application):
         self.object.icon_view.set_model(list_store)
         self.object.icon_view.set_pixbuf_column(0)
         self.object.icon_view.set_text_column(1)
-        for video in self.file_list:
-            thumbnail = get_cached_thumbnail(video)
-            # TODO async method would be better
-            if thumbnail is None:
-                list_store.append([None, os.path.basename(video)])
-            else:
-                list_store.append([Pixbuf.new_from_file_at_size(thumbnail, 128, 128), os.path.basename(video)])
+        for idx, video in enumerate(self.file_list):
+            icon_theme = Gtk.IconTheme()
+            pixbuf = icon_theme.load_icon('video-x-generic', 96, 0)
+            list_store.append([pixbuf, os.path.basename(video)])
+            thread = threading.Thread(target=get_thumbnail_gnome, args=(video, list_store, idx))
+            thread.daemon = True
+            thread.start()
 
     def _reload_widget(self):
         self.object.autostart.set_active(os.path.isfile(AUTOSTART_DESKTOP_PATH))
@@ -167,5 +195,4 @@ class ControlPanel(Gtk.Application):
 
 
 if __name__ == '__main__':
-    # ControlPanel()
-    print(get_length('/home/jeffshee/Videos/Rem_Live_2D_ Wallpaper.mp4'))
+    ControlPanel()

@@ -10,7 +10,7 @@
   <object class="GtkImage" id="image_refresh">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="stock">gtk-refresh</property>
+    <property name="icon_name">view-refresh</property>
   </object>
   <object class="GtkAdjustment" id="volume_adjustment">
     <property name="upper">100</property>
@@ -36,7 +36,6 @@
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_left">16</property>
                 <property name="margin_start">16</property>
                 <property name="margin_top">16</property>
                 <child>
@@ -110,8 +109,6 @@
           <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_left">16</property>
-            <property name="margin_right">16</property>
             <property name="margin_start">16</property>
             <property name="margin_end">16</property>
             <property name="orientation">vertical</property>
