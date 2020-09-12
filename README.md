@@ -11,20 +11,26 @@ There are several solutions to achieve video as wallpaper on Linux, for example:
 Hidamari offers similar feature as above, with additional features listed below:
 - [x] Autostart after login
 - [x] Apply static wallpaper. Apply the first frame of the video as wallpaper underneath. Blur radius is adjustable too!
-- [x] Detect maximized window. Automatically pause the video playback if any maximized window is detected.
+- [x] Detect maximized window. Automatically pause the video playback if any maximized window is detected
 - [x] Mute audio
 - [x] Volume level
 - [x] Pause the video playback manually at anytime
 - [x] I'm feeling lucky. Randomly select and play the video
 - [ ] You name it! =)
 
-## Prerequisite
+## Installation (Fedora)
+1. Enable Copr `sudo dnf copr enable jeffshee/hidamari`
+2. Install `sudo dnf install hidamari`
+3. (Perhaps) Multimedia codecs, refer to [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
+
+## Installation (Other linux)
+### Prerequisite
 1. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
 2. Pillow, pydbus, Watchdog `pip3 install pillow pydbus watchdog`
-3. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/) or [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
+3. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
 4. FFmpeg
 
-## Installation
+### Installation
 0. Prerequisite stated above.
 1. Run `bash <(wget -qO- https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh)`
 
