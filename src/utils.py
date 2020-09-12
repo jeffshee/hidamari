@@ -142,7 +142,8 @@ class StaticWallpaperHandler:
                     self.config.video_path, self.new_wallpaper_uri), shell=True)
             if os.path.isfile(self.new_wallpaper_uri):
                 blur_wallpaper = Image.open(self.new_wallpaper_uri)
-                blur_wallpaper = blur_wallpaper.filter(ImageFilter.GaussianBlur(self.config.static_wallpaper_blur_radius))
+                blur_wallpaper = blur_wallpaper.filter(
+                    ImageFilter.GaussianBlur(self.config.static_wallpaper_blur_radius))
                 blur_wallpaper.save(self.new_wallpaper_uri)
                 self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
@@ -153,29 +154,54 @@ class StaticWallpaperHandler:
 
 
 class FileWatchdog(FileSystemEventHandler):
-    def __init__(self, path, file_name, callback: callable):
-        self.file_name = file_name
+    def __init__(self, filepath, callback: callable):
+        self.file_name = os.path.basename(filepath)
         self.callback = callback
-        # Set observer to watch for changes in the directory
         self.observer = Observer()
-        self.observer.schedule(self, path, recursive=False)
+        self.observer.schedule(self, os.path.dirname(filepath), recursive=False)
         self.observer.start()
 
     def on_created(self, event):
         if not event.is_directory and event.src_path.endswith(self.file_name):
+            print('Watchdog:', event)
             self.callback()  # call callback
 
     def on_deleted(self, event):
         if not event.is_directory and event.src_path.endswith(self.file_name):
+            print('Watchdog:', event)
             self.callback()  # call callback
 
     def on_moved(self, event):
         if not event.is_directory and event.dest_path.endswith(self.file_name):
+            print('Watchdog:', event)
             self.callback()  # call callback
 
     def on_modified(self, event):
         if not event.is_directory and event.src_path.endswith(self.file_name):
+            print('Watchdog:', event)
             self.callback()  # call callback
+
+
+# class FileWatchdog:
+#     # NOTE: Pyinotify didn't quit well
+#     def __init__(self, filepath, callback: callable):
+#         import pyinotify
+#         self.filepath = filepath
+#         self.callback = callback
+#         wm = pyinotify.WatchManager()
+#         wm.add_watch(os.path.dirname(filepath), pyinotify.IN_MOVED_TO | pyinotify.IN_MODIFY, self.on_modified)
+#         self.notifier = pyinotify.ThreadedNotifier(wm)
+#
+#     def on_modified(self, event):
+#         if event.pathname == self.filepath:
+#             print('Pyinotify:', event)
+#             self.callback()
+#
+#     def start(self):
+#         self.notifier.start()
+#
+#     def stop(self):
+#         self.notifier.stop()
 
 
 class ConfigHandler:
@@ -194,7 +220,7 @@ class ConfigHandler:
             'detect_maximized': True,
         }
         self._update()
-        FileWatchdog(path=CONFIG_DIR, file_name=os.path.basename(CONFIG_PATH), callback=self._config_modified)
+        FileWatchdog(filepath=CONFIG_PATH, callback=self._config_modified)
 
     def _generate_template_config(self):
         create_dir(CONFIG_DIR)
@@ -203,11 +229,12 @@ class ConfigHandler:
         return self.template_config
 
     def _update(self):
-        self.config = SimpleNamespace(**self._load())
+        status, config = self._load()
+        if status:
+            self.config = SimpleNamespace(**config)
 
     def _config_modified(self):
         self._update()
-        # print(vars(self.config))
         self.on_config_modified()
 
     def _check(self, config: dict):
@@ -216,10 +243,15 @@ class ConfigHandler:
     def _load(self):
         if os.path.isfile(CONFIG_PATH):
             with open(CONFIG_PATH, 'r') as f:
-                config = json.load(f)
-                if self._check(config):
-                    return config
-        return self._generate_template_config()
+                json_str = f.read()
+                try:
+                    config = json.loads(json_str)
+                    print('JSON:', json_str)
+                    return self._check(config), config
+                except json.decoder.JSONDecodeError:
+                    print('JSONDecodeError:', json_str)
+                    return False, None
+        return True, self._generate_template_config()
 
     def save(self):
         with open(CONFIG_PATH, 'w') as f:

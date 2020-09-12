@@ -63,8 +63,10 @@ class Player:
         # button event
         self._build_context_menu()
         self.window.connect('button-press-event', self._on_button_press_event)
-
         self.window.show_all()
+
+        # GUI
+        self.gui = ControlPanel()
 
         self.active_handler = ActiveHandler(self._on_active_changed)
         self.window_handler = WindowHandler(self._on_window_state_changed)
@@ -73,7 +75,7 @@ class Player:
 
         if self.config.video_path == '':
             # First time
-            ControlPanel().run()
+            self.gui.run()
         elif not os.path.isfile(self.config.video_path):
             self._on_file_not_found(self.config.video_path)
 
@@ -149,7 +151,7 @@ class Player:
         self.start_playback()
 
     def _on_menuitem_main_gui(self, *args):
-        ControlPanel().run()
+        self.gui.run()
 
     def _on_menuitem_mute_audio(self, item):
         self.config.mute_audio = item.get_active()
