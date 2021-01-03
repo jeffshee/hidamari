@@ -71,27 +71,15 @@ class Player(Gtk.ApplicationWindow):
         return width, height
 
     def _build_context_menu(self):
-        self.menu = Gtk.Menu()
-        items = [("Show Hidamari", self._on_menuitem_main_gui, Gtk.MenuItem),
-                 ("Mute Audio", self._on_menuitem_mute_audio, Gtk.CheckMenuItem),
-                 ("Pause Playback", self._on_menuitem_pause_playback, Gtk.CheckMenuItem),
-                 ("I'm Feeling Lucky", self._on_menuitem_feeling_lucky, Gtk.MenuItem),
-                 ("Quit Hidamari", self._on_menuitem_quit, Gtk.MenuItem)]
-        if "gnome" in os.environ["XDG_CURRENT_DESKTOP"].lower():
-            items += [(None, None, Gtk.SeparatorMenuItem),
-                      ("GNOME Settings", self._on_menuitem_gnome_settings, Gtk.MenuItem)]
-
-        self.menuitem = []
-        for index, item in enumerate(items):
-            label, handler, item_type = item
-            if label is None:
-                self.menu.append(item_type())
-            else:
-                menuitem = item_type(label)
-                menuitem.connect("activate", handler)
-                self.menu.append(menuitem)
-                self.menuitem.append(menuitem)  # Save the references
+        builder = Gtk.Builder()
+        builder.add_from_file("xml/menu.glade")
+        builder.connect_signals(self)
+        self.menu = builder.get_object("menu")
+        self.menuitem_mute_audio = builder.get_object("menuitem_mute_audio")
         self.menu.show_all()
+        if "gnome" in os.environ["XDG_CURRENT_DESKTOP"].lower():
+            builder.get_object("menuitem_separator").set_visible(True)
+            builder.get_object("menuitem_gnome_settings").set_visible(True)
 
     def _should_playback_start(self):
         # Check if conditions are met to start the playback
@@ -143,7 +131,7 @@ class Player(Gtk.ApplicationWindow):
 
     def _on_button_press_event(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
-            self.menuitem[1].set_active(self.config.get(constants.CONFIG_KEY_IS_MUTED, False))
+            self.menuitem_mute_audio.set_active(self.config.get(constants.CONFIG_KEY_IS_MUTED, False))
             self.menu.popup_at_pointer()
         return True
 
