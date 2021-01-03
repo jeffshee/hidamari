@@ -2,6 +2,7 @@ import os
 import gi
 from collections import defaultdict
 import subprocess
+import signal
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("GtkClutter", "1.0")
@@ -9,7 +10,7 @@ gi.require_version("ClutterGst", "3.0")
 
 from gi.repository import Gtk, GtkClutter, ClutterGst, Clutter, Gdk
 from v2 import constants
-from v2.utils import StaticWallpaperHandler
+from v2.utils import StaticWallpaperHandler, WindowHandler, ActiveHandler
 
 GtkClutter.init()
 ClutterGst.init()
@@ -21,8 +22,9 @@ class Player(Gtk.ApplicationWindow):
         # Config
         self.config = defaultdict()
 
-        # Handlers
-        self.static_wallpaper_handler = StaticWallpaperHandler()
+        # Flags and states
+        self.is_any_maximized = False
+        self.is_any_fullscreen = False
 
         # Actors initialize
         embed = GtkClutter.Embed()
@@ -46,6 +48,17 @@ class Player(Gtk.ApplicationWindow):
         # Set transparency
         self.set_opacity(0.0)
 
+        # Handlers
+        self.static_wallpaper_handler = StaticWallpaperHandler()
+        WindowHandler(self._on_window_state_changed)
+        ActiveHandler(self._on_active_changed)
+
+        # Trap signals
+        signal.signal(signal.SIGINT, self._on_signal)
+        signal.signal(signal.SIGTERM, self._on_signal)
+        # Also SIGSEGV as a fail-safe
+        signal.signal(signal.SIGSEGV, self._on_signal)
+
     def _monitor_detect(self):
         display = Gdk.Display.get_default()
         screen = Gdk.Screen.get_default()
@@ -64,12 +77,12 @@ class Player(Gtk.ApplicationWindow):
                  ("Pause Playback", self._on_menuitem_pause_playback, Gtk.CheckMenuItem),
                  ("I'm Feeling Lucky", self._on_menuitem_feeling_lucky, Gtk.MenuItem),
                  ("Quit Hidamari", self._on_menuitem_quit, Gtk.MenuItem)]
-        self.menuitem = defaultdict()
         if "gnome" in os.environ["XDG_CURRENT_DESKTOP"].lower():
             items += [(None, None, Gtk.SeparatorMenuItem),
                       ("GNOME Settings", self._on_menuitem_gnome_settings, Gtk.MenuItem)]
 
-        for item in items:
+        self.menuitem = []
+        for index, item in enumerate(items):
             label, handler, item_type = item
             if label is None:
                 self.menu.append(item_type())
@@ -77,8 +90,13 @@ class Player(Gtk.ApplicationWindow):
                 menuitem = item_type(label)
                 menuitem.connect("activate", handler)
                 self.menu.append(menuitem)
-                self.menuitem[label] = menuitem
+                self.menuitem.append(menuitem)  # Save the references
         self.menu.show_all()
+
+    def _should_playback_start(self):
+        # Check if conditions are met to start the playback
+        return not ((self.is_any_maximized and self.config.get(constants.CONFIG_KEY_IS_DETECT_MAXIMIZED,
+                                                               True)) or self.is_any_fullscreen)
 
     def set_data_source(self, path):
         if os.path.isfile(path):
@@ -114,6 +132,10 @@ class Player(Gtk.ApplicationWindow):
     def set_volume(self, volume):
         self.video_playback.set_audio_volume(volume)
 
+    """
+    Event Handlers
+    """
+
     def _on_size_changed(self, *args):
         width, height = self.monitor_detect()
         self.main_actor.set_size(width, height)
@@ -121,22 +143,36 @@ class Player(Gtk.ApplicationWindow):
 
     def _on_button_press_event(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            self.menuitem[1].set_active(self.config.get(constants.CONFIG_KEY_IS_MUTED, False))
             self.menu.popup_at_pointer()
         return True
-
-    """
-    Event Handlers
-    """
 
     def _on_eos(self, *args):
         self.video_playback.set_progress(0.0)
         self.start()
 
+    def _on_active_changed(self, is_screensaver):
+        if is_screensaver:  # Is screensaver activated?
+            self.pause()
+        else:
+            self.start() if self._should_playback_start() else self.pause()
+
+    def _on_window_state_changed(self, state):
+        self.is_any_maximized, self.is_any_fullscreen = state
+        self.start() if self._should_playback_start() else self.pause()
+
+    def _on_signal(self, *args):
+        self.stop()
+        self.close()
+
     def _on_menuitem_main_gui(self, *args):
         pass
 
     def _on_menuitem_mute_audio(self, item):
-        pass
+        self.config[constants.CONFIG_KEY_IS_MUTED] = item.get_active()
+        self.video_playback.set_audio_volume(
+            0.0 if self.config.get(constants.CONFIG_KEY_IS_MUTED, False) else self.config.get(
+                constants.CONFIG_KEY_AUDIO_VOLUME, 0.5))
 
     def _on_menuitem_pause_playback(self, item):
         self.pause() if item.get_active() else self.start()
