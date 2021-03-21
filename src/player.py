@@ -8,8 +8,6 @@ import ctypes
 import vlc
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('GtkClutter', '1.0')
-gi.require_version('ClutterGst', '3.0')
 from gi.repository import Gtk, Gdk, GLib
 
 from utils import ConfigHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
