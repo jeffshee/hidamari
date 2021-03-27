@@ -11,14 +11,13 @@ from gi.repository import GLib, Wnck, Gio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from PIL import Image, ImageFilter
-from time import sleep
+
 from types import SimpleNamespace
 
 HOME = os.environ['HOME']
 CONFIG_DIR = HOME + '/.config/hidamari'
 CONFIG_PATH = CONFIG_DIR + '/hidamari.config'
 VIDEO_WALLPAPER_DIR = HOME + '/Videos/Hidamari'
-SESSION_TYPE = os.environ.get("XDG_SESSION_TYPE")
 
 
 def create_dir(path):
@@ -89,28 +88,13 @@ class WindowHandler:
         self.on_window_state_changed(self.check())
 
     def check(self):
-
-        workspace = None
-
-        if SESSION_TYPE == "wayland":
-            try:
-                workspace = self.screen.get_workspace(
-                    int(subprocess.getoutput("xprop -root -notype _NET_CURRENT_DESKTOP").split(" = ")[-1])
-                )
-            except ValueError:
-                """
-                _NET_CURRENT_DESKTOP is not defined until the user actually switches to another workspace. So we can
-                assume that if the value isn't defined, we are on the first. I'm not sure if this is accurate, does
-                the value become undefined after resuming from hibernation on another workspace?
-                """
-                workspace = self.screen.get_workspace(0)
-
-        else:
-            workspace = self.screen.get_active_workspace()
+        # Grab the active workspace using X.
+        active_workspace = int(subprocess.getoutput("xprop -root -notype _NET_CURRENT_DESKTOP").split(" = ")[-1])
 
         is_any_maximized, is_any_fullscreen = False, False
         for window in self.screen.get_windows():
-            base_state = not Wnck.Window.is_minimized(window) and Wnck.Window.is_on_workspace(window, workspace)
+            base_state = not Wnck.Window.is_minimized(window) and \
+                         Wnck.Window.is_on_workspace(window, self.screen.get_workspace(active_workspace))
             window_name, is_maximized, is_fullscreen = window.get_name(), \
                                                        Wnck.Window.is_maximized(window) and base_state, \
                                                        Wnck.Window.is_fullscreen(window) and base_state
