@@ -11,7 +11,6 @@ from gi.repository import GLib, Wnck, Gio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from PIL import Image, ImageFilter
-from time import sleep
 from types import SimpleNamespace
 
 HOME = os.environ['HOME']
