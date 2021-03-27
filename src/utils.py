@@ -2,7 +2,6 @@ import os
 import json
 import subprocess
 import pathlib
-
 import gi
 import pydbus
 
@@ -89,10 +88,13 @@ class WindowHandler:
         self.on_window_state_changed(self.check())
 
     def check(self):
+        # Grab the active workspace using X.
+        active_workspace = int(subprocess.getoutput("xprop -root -notype _NET_CURRENT_DESKTOP").split(" = ")[-1])
+
         is_any_maximized, is_any_fullscreen = False, False
         for window in self.screen.get_windows():
             base_state = not Wnck.Window.is_minimized(window) and \
-                         Wnck.Window.is_on_workspace(window, self.screen.get_active_workspace())
+                         Wnck.Window.is_on_workspace(window, self.screen.get_workspace(active_workspace))
             window_name, is_maximized, is_fullscreen = window.get_name(), \
                                                        Wnck.Window.is_maximized(window) and base_state, \
                                                        Wnck.Window.is_fullscreen(window) and base_state
