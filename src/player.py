@@ -4,16 +4,47 @@ import subprocess
 import random
 from collections import defaultdict
 import gi
+import ctypes
+import vlc
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('GtkClutter', '1.0')
-gi.require_version('ClutterGst', '3.0')
-from gi.repository import Gtk, Gdk, GtkClutter, Clutter, ClutterGst, GLib
+from gi.repository import Gtk, Gdk, GLib
 
 from utils import ConfigHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
 from gui import ControlPanel, create_dir, scan_dir
 
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
+
+
+def get_window_pointer(window):
+    """ Use the window.__gpointer__ PyCapsule to get the C void* pointer to the window
+    """
+    # get the c gpointer of the gdk window
+    ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p
+    ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object]
+    return ctypes.pythonapi.PyCapsule_GetPointer(window.__gpointer__, None)
+
+
+class VLCWidget(Gtk.DrawingArea):
+    """Simple VLC widget.
+    Its player can be controlled through the 'player' attribute, which
+    is a vlc.MediaPlayer() instance.
+    """
+    __gtype_name__ = 'VLCWidget'
+
+    def __init__(self, width, height):
+        self.instance = vlc.Instance()
+        Gtk.DrawingArea.__init__(self)
+        self.player = self.instance.media_player_new()
+        self.width = width
+        self.height = height
+
+        def handle_embed(*args):
+            self.player.set_xwindow(self.get_window().get_xid())
+            return True
+
+        self.connect("realize", handle_embed)
+        self.set_size_request(self.width, self.height)
 
 
 class Player:
@@ -24,8 +55,6 @@ class Player:
         signal.signal(signal.SIGSEGV, self._quit)
 
         # Initialize
-        GtkClutter.init()
-        ClutterGst.init()
         create_dir(VIDEO_WALLPAPER_PATH)
 
         self.config_handler = ConfigHandler(self._on_config_modified)
@@ -37,26 +66,19 @@ class Player:
         # Monitor Detect
         self.width, self.height = self.monitor_detect()
 
-        # Actors initialize
-        self.embed = GtkClutter.Embed()
-        self.main_actor = self.embed.get_stage()
-        self.main_actor.set_background_color(Clutter.Color.get_static(Clutter.StaticColor.BLACK))
+        x11 = ctypes.cdll.LoadLibrary('libX11.so')
+        x11.XInitThreads()
 
-        # Video initialize
-        self.video_playback = ClutterGst.Playback()
-        self.video_content = ClutterGst.Content()
-        self.video_content.set_player(self.video_playback)
-
-        # Playback settings
-        self.video_playback.set_filename(self.config.video_path)
-        self.video_playback.set_audio_volume(0.0 if self.config.mute_audio else self.config.audio_volume)
-        self.video_playback.set_playing(True)
-        self.video_playback.connect('eos', self._on_eos)
-        self.main_actor.set_content(self.video_content)
+        self.video_playback = VLCWidget(self.width, self.height)
+        self.media = self.video_playback.instance.media_new(self.config.video_path)
+        self.media.add_option("input-repeat=65535")
+        self.video_playback.player.set_media(self.media)
+        self.video_playback.player.video_set_mouse_input(False)
+        self.video_playback.player.video_set_key_input(False)
 
         # Window settings
         self.window = Gtk.Window()
-        self.window.add(self.embed)
+        self.window.add(self.video_playback)
         self.window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
         self.window.set_size_request(self.width, self.height)
 
@@ -84,15 +106,16 @@ class Player:
         Gtk.main()
 
     def pause_playback(self):
-        self.video_playback.set_playing(False)
+        self.video_playback.player.pause()
 
     def start_playback(self):
         if not self.user_pause_playback:
-            self.video_playback.set_playing(True)
+            self.video_playback.player.play()
 
     def _quit(self, *args):
         self.static_wallpaper_handler.restore_ori_wallpaper()
         Gtk.main_quit()
+        self.video_playback.instance.release()
 
     def monitor_detect(self):
         display = Gdk.Display.get_default()
@@ -108,7 +131,6 @@ class Player:
     def _on_size_changed(self, *args):
         self.width, self.height = self.monitor_detect()
         self.window.resize(self.width, self.height)
-        self.wallpaper_actor.set_size(self.width, self.height)
 
     def _on_active_changed(self, active):
         if active:
@@ -132,20 +154,19 @@ class Player:
             self.config = self.config_handler.config
             self.pause_playback()
             if self.current_video_path != self.config.video_path:
-                self.video_playback.set_filename(self.config.video_path)
-                self.video_playback.set_progress(0.0)
+                self.media = self.video_playback.instance.media_new(self.config.video_path)
+                self.media.add_option("input-repeat=65535")
+                self.video_playback.player.set_media(self.media)
+                self.video_playback.player.set_position(0.0)
                 self.current_video_path = self.config.video_path
-            self.video_playback.set_audio_volume(0.0 if self.config.mute_audio else self.config.audio_volume)
+            if self.config.mute_audio:
+                self.video_playback.player.audio_set_volume(0)
+            else:
+                self.video_playback.player.audio_set_volume(int(self.config.audio_volume * 100))
             self.start_playback()
-            self.menuitem['Mute Audio'].set_active(self.config.mute_audio)
 
         # To ensure thread safe
         GLib.idle_add(_run)
-
-    def _on_eos(self, *args):
-        self.video_playback.set_progress(0.0)
-        self.video_playback.set_audio_volume(0.0 if self.config.mute_audio else self.config.audio_volume)
-        self.start_playback()
 
     def _on_menuitem_main_gui(self, *args):
         ControlPanel().run()
