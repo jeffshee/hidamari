@@ -16,6 +16,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [x] Volume level
 - [x] Pause the video playback manually at anytime
 - [x] I'm feeling lucky. Randomly select and play the video
+- [x] GPU decoding (thanks 94824!) 
 - [ ] You name it! =)
 
 ## Installation (Fedora)
@@ -26,7 +27,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 ## Installation (Other linux)
 ### Prerequisite
 1. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
-2. Pillow, pydbus, Watchdog `pip3 install pillow pydbus watchdog`
+2. Pillow, pydbus, Watchdog `pip3 install pillow pydbus watchdog python-vlc`
 3. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
 4. FFmpeg
 
