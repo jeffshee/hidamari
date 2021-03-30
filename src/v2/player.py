@@ -25,6 +25,8 @@ class Player(Gtk.ApplicationWindow):
         # Flags and states
         self.is_any_maximized = False
         self.is_any_fullscreen = False
+        self.is_user_requested_pause = False
+        self.is_data_source_set = False
 
         # Actors initialize
         embed = GtkClutter.Embed()
@@ -84,7 +86,7 @@ class Player(Gtk.ApplicationWindow):
     def _should_playback_start(self):
         # Check if conditions are met to start the playback
         return not ((self.is_any_maximized and self.config.get(constants.CONFIG_KEY_IS_DETECT_MAXIMIZED,
-                                                               True)) or self.is_any_fullscreen)
+                                                               True)) or self.is_any_fullscreen or self.is_user_requested_pause)
 
     def set_data_source(self, path):
         if os.path.isfile(path):
@@ -99,15 +101,20 @@ class Player(Gtk.ApplicationWindow):
             if self.config.get(constants.CONFIG_KEY_IS_STATIC_WALLPAPER, True):
                 self.static_wallpaper_handler.set_static_wallpaper(path, self.config.get(
                     constants.CONFIG_KEY_WALLPAPER_BLUR_R, 5))
-            # Show everything and start playback
-            self.set_opacity(1.0)
+            self.is_data_source_set = True
             self.start()
 
-    def pause(self):
+    def pause(self, is_user_requested=True):
+        if is_user_requested:
+            # Is the pause requested by user?
+            self.is_user_requested_pause = True
         self.video_playback.set_playing(False)
 
     def start(self):
-        self.video_playback.set_playing(True)
+        if self.is_data_source_set:
+            self.set_opacity(1.0)
+            self.is_user_requested_pause = False
+            self.video_playback.set_playing(True)
 
     def stop(self):
         # Set original wallpaper
@@ -141,13 +148,13 @@ class Player(Gtk.ApplicationWindow):
 
     def _on_active_changed(self, is_screensaver):
         if is_screensaver:  # Is screensaver activated?
-            self.pause()
+            self.pause(is_user_requested=False)
         else:
-            self.start() if self._should_playback_start() else self.pause()
+            self.start() if self._should_playback_start() else self.pause(is_user_requested=False)
 
     def _on_window_state_changed(self, state):
         self.is_any_maximized, self.is_any_fullscreen = state
-        self.start() if self._should_playback_start() else self.pause()
+        self.start() if self._should_playback_start() else self.pause(is_user_requested=False)
 
     def _on_signal(self, *args):
         self.stop()

@@ -1,39 +1,39 @@
 <node>
     <interface name="io.github.jeffshee.hidamari">
-        <method name="getCurrentPosition">
-            <arg type="i" direction="out"/>
-        </method>
-        <method name="getDuration">
-            <arg type="i" direction="out"/>
-        </method>
-        <method name="getVideoHeight">
-            <arg type="i" direction="out"/>
-        </method>
-        <method name="getVideoWitdth">
-            <arg type="i" direction="out"/>
-        </method>
-        <method name="isPlaying">
+<!--        <method name="get_current_position">-->
+<!--            <arg type="i" direction="out"/>-->
+<!--        </method>-->
+<!--        <method name="get_duration">-->
+<!--            <arg type="i" direction="out"/>-->
+<!--        </method>-->
+<!--        <method name="get_video_height">-->
+<!--            <arg type="i" direction="out"/>-->
+<!--        </method>-->
+<!--        <method name="get_video_witdth">-->
+<!--            <arg type="i" direction="out"/>-->
+<!--        </method>-->
+        <method name="is_playing">
             <arg type="b" direction="out"/>
         </method>
-        <method name="isLooping">
-            <arg type="b" direction="out"/>
-        </method>
+<!--        <method name="is_looping">-->
+<!--            <arg type="b" direction="out"/>-->
+<!--        </method>-->
         <method name="pause"/>
         <method name="release"/>
         <method name="reset"/>
-        <method name="seekTo">
-            <arg type="d" direction="in"/>
-        </method>
-        <method name="setDataSource">
+<!--        <method name="seek_to">-->
+<!--            <arg type="d" direction="in"/>-->
+<!--        </method>-->
+        <method name="set_data_source">
             <arg type="s" direction="in"/>
         </method>
-        <method name="setDisplay">
+        <method name="set_display">
             <arg type="i" direction="in"/>
         </method>
-        <method name="setLooping">
-            <arg type="b" direction="in"/>
-        </method>
-        <method name="setVolume">
+<!--        <method name="set_looping">-->
+<!--            <arg type="b" direction="in"/>-->
+<!--        </method>-->
+        <method name="set_volume">
             <arg type="d" direction="in"/>
         </method>
         <method name="start"/>

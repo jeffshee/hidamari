@@ -41,17 +41,15 @@ class Application(Gtk.Application):
 
     def handle_method_call(self, connection, sender, object_path, interface_name, method_name, params, invocation):
         print("called")
-        if method_name == "start":
-            self.window.start()
-            invocation.return_value(None)  # Nothing to say, so just return None.
-        elif method_name == "pause":
-            self.window.pause()
-            invocation.return_value(None)
-        elif method_name == "setVolume":
+
+        if method_name == "set_volume":
             self.window.set_volume(params.unpack()[0])
             invocation.return_value(None)
-        elif method_name == "setDataSource":
+        elif method_name == "set_data_source":
             self.window.set_data_source(params.unpack()[0])
+            invocation.return_value(None)
+        else:
+            getattr(self.window, method_name)()
             invocation.return_value(None)
 
     def on_bus_acquired(self, connection, name):

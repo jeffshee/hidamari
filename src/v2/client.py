@@ -43,15 +43,34 @@ class Client:
         self._proxy_call_sync("pause")
 
     def set_volume(self, volume):
-        self._proxy_call_sync("setVolume", volume, "(d)")
+        self._proxy_call_sync("set_volume", volume, "(d)")
 
     def set_data_source(self, path):
-        self._proxy_call_sync("setDataSource", path, "(s)")
+        self._proxy_call_sync("set_data_source", path, "(s)")
 
 
 if __name__ == "__main__":
     """
     For debug
     """
+
+    # https://stackoverflow.com/questions/788411/check-to-see-if-python-script-is-running
+    
+    # import daemon
+    #
+    # with daemon.DaemonContext():
+    #     app = Application()
+    #     app.run()
+    def create_server():
+        from v2.server import Application
+        app = Application()
+        app.run()
+
+
+    from multiprocessing import Process
+    import time
+    p = Process(target=create_server)
+    p.start()
+    time.sleep(1)
     client = Client()
     client.set_data_source("/home/jeffshee/Developers/video-wallpaper-linux/src/v2/Rem.mp4")
