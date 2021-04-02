@@ -69,6 +69,7 @@ class WindowHandler:
         self.screen.connect('window-opened', self.window_opened, None)
         self.screen.connect('window-closed', self.window_closed, None)
         self.screen.connect('active-workspace-changed', self.active_workspace_changed, None)
+        self.gnome_shell = pydbus.SessionBus().get("org.gnome.Shell")
         for window in self.screen.get_windows():
             window.connect('state-changed', self.state_changed, None)
 
@@ -88,36 +89,34 @@ class WindowHandler:
         self.on_window_state_changed(self.check())
 
     def check(self):
+        workspace = int(subprocess.getoutput("xprop -root -notype _NET_CURRENT_DESKTOP").split(" = ")[-1])
 
-        workspace = None
+        ok, maximized = self.gnome_shell.Eval("""
+        var window_list = global.get_window_actors().find(window =>
+            window.meta_window.maximized_horizontally &
+            window.meta_window.maximized_vertically &
+            window.meta_window.get_workspace().workspace_index == {0}
+        );
+        window_list
+        """.format(workspace)
+        )
 
-        if SESSION_TYPE == "wayland":
-            try:
-                workspace = self.screen.get_workspace(
-                    int(subprocess.getoutput("xprop -root -notype _NET_CURRENT_DESKTOP").split(" = ")[-1])
-                )
-            except ValueError:
-                """
-                _NET_CURRENT_DESKTOP is not defined until the user actually switches to another workspace. So we can
-                assume that if the value isn't defined, we are on the first. I'm not sure if this is accurate, does
-                the value become undefined after resuming from hibernation on another workspace?
-                """
-                workspace = self.screen.get_workspace(0)
+        if not ok:
+            raise RuntimeError("Cannot communicate with Gnome Shell!")
 
-        else:
-            workspace = self.screen.get_active_workspace()
+        ok, fullscreen = self.gnome_shell.Eval("""
+        var window_list = global.get_window_actors().find(window =>
+            window.meta_window.is_fullscreen() &
+            window.meta_window.get_workspace().workspace_index == {0}
+        );
+        window_list
+        """.format(workspace)
+        )
 
-        is_any_maximized, is_any_fullscreen = False, False
-        for window in self.screen.get_windows():
-            base_state = not Wnck.Window.is_minimized(window) and Wnck.Window.is_on_workspace(window, workspace)
-            window_name, is_maximized, is_fullscreen = window.get_name(), \
-                                                       Wnck.Window.is_maximized(window) and base_state, \
-                                                       Wnck.Window.is_fullscreen(window) and base_state
-            if is_maximized is True:
-                is_any_maximized = True
-            if is_fullscreen is True:
-                is_any_fullscreen = True
-        return {'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen}
+        if not ok:
+            raise RuntimeError("Cannot communicate with Gnome Shell!")
+
+        return {'is_any_maximized': maximized != "", 'is_any_fullscreen': fullscreen != ""}
 
 
 class StaticWallpaperHandler:
