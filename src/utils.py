@@ -2,7 +2,6 @@ import os
 import json
 import subprocess
 import pathlib
-
 import gi
 import pydbus
 
@@ -12,7 +11,6 @@ from gi.repository import GLib, Wnck, Gio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from PIL import Image, ImageFilter
-
 from types import SimpleNamespace
 
 HOME = os.environ['HOME']
@@ -68,27 +66,21 @@ class WindowHandler:
         self.screen = Wnck.Screen.get_default()
         self.screen.force_update()
         self.screen.connect('window-opened', self.window_opened, None)
-        self.screen.connect('window-closed', self.window_closed, None)
-        self.screen.connect('active-workspace-changed', self.active_workspace_changed, None)
+        self.screen.connect('window-closed', self.eval, None)
+        self.screen.connect('active-workspace-changed', self.eval, None)
         for window in self.screen.get_windows():
-            window.connect('state-changed', self.state_changed, None)
+            window.connect('state-changed', self.eval, None)
 
+        self.prev_state = None
         # Initial check
-        self.state_changed(None, None, None, None)
+        self.eval()
 
     def window_opened(self, screen, window, _):
-        window.connect('state-changed', self.state_changed, None)
+        window.connect('state-changed', self.eval, None)
 
-    def window_closed(self, screen, window, _):
-        self.on_window_state_changed(self.check())
+    def eval(self, *args):
+        is_changed = False
 
-    def state_changed(self, window, changed_mask, new_state, _):
-        self.on_window_state_changed(self.check())
-
-    def active_workspace_changed(self, screen, previously_active_space, _):
-        self.on_window_state_changed(self.check())
-
-    def check(self):
         is_any_maximized, is_any_fullscreen = False, False
         for window in self.screen.get_windows():
             base_state = not Wnck.Window.is_minimized(window) and \
@@ -100,7 +92,65 @@ class WindowHandler:
                 is_any_maximized = True
             if is_fullscreen is True:
                 is_any_fullscreen = True
-        return {'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen}
+
+        cur_state = {'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen}
+        if self.prev_state is None or self.prev_state != cur_state:
+            is_changed = True
+            self.prev_state = cur_state
+
+        if is_changed:
+            self.on_window_state_changed({'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen})
+            print(cur_state)
+
+
+class WindowHandlerGnome:
+    """
+    Handler for monitoring window events for Gnome only
+    """
+
+    def __init__(self, on_window_state_changed: callable):
+        self.on_window_state_changed = on_window_state_changed
+        self.gnome_shell = pydbus.SessionBus().get("org.gnome.Shell")
+        self.prev_state = None
+        GLib.timeout_add(500, self.eval)
+
+    def eval(self):
+        is_changed = False
+
+        ret1, workspace = self.gnome_shell.Eval("""
+                        global.workspace_manager.get_active_workspace_index()
+                        """)
+
+        ret2, maximized = self.gnome_shell.Eval(f"""
+                var window_list = global.get_window_actors().find(window =>
+                    window.meta_window.maximized_horizontally &
+                    window.meta_window.maximized_vertically &
+                    !window.meta_window.minimized &
+                    window.meta_window.get_workspace().workspace_index == {workspace}
+                );
+                window_list
+                """)
+
+        ret3, fullscreen = self.gnome_shell.Eval(f"""
+                var window_list = global.get_window_actors().find(window =>
+                    window.meta_window.is_fullscreen() &
+                    !window.meta_window.minimized &
+                    window.meta_window.get_workspace().workspace_index == {workspace}
+                );
+                window_list
+                """)
+        if not all([ret1, ret2, ret3]):
+            raise RuntimeError("Cannot communicate with Gnome Shell!")
+
+        cur_state = {'is_any_maximized': maximized != "", 'is_any_fullscreen': fullscreen != ""}
+        if self.prev_state is None or self.prev_state != cur_state:
+            is_changed = True
+            self.prev_state = cur_state
+
+        if is_changed:
+            self.on_window_state_changed({'is_any_maximized': maximized != "", 'is_any_fullscreen': fullscreen != ""})
+            print(cur_state)
+        return True
 
 
 class StaticWallpaperHandler:
@@ -180,28 +230,6 @@ class FileWatchdog(FileSystemEventHandler):
         if not event.is_directory and event.src_path.endswith(self.file_name):
             print('Watchdog:', event)
             self.callback()  # call callback
-
-
-# class FileWatchdog:
-#     # NOTE: Pyinotify didn't quit well
-#     def __init__(self, filepath, callback: callable):
-#         import pyinotify
-#         self.filepath = filepath
-#         self.callback = callback
-#         wm = pyinotify.WatchManager()
-#         wm.add_watch(os.path.dirname(filepath), pyinotify.IN_MOVED_TO | pyinotify.IN_MODIFY, self.on_modified)
-#         self.notifier = pyinotify.ThreadedNotifier(wm)
-#
-#     def on_modified(self, event):
-#         if event.pathname == self.filepath:
-#             print('Pyinotify:', event)
-#             self.callback()
-#
-#     def start(self):
-#         self.notifier.start()
-#
-#     def stop(self):
-#         self.notifier.stop()
 
 
 class ConfigHandler:
