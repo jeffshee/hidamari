@@ -10,7 +10,7 @@ import vlc
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GLib
 
-from utils import ConfigHandler, ActiveHandler, WindowHandler, StaticWallpaperHandler
+from utils import ConfigHandler, ActiveHandler, WindowHandler, WindowHandlerGnome, StaticWallpaperHandler
 from gui import ControlPanel, create_dir, scan_dir
 
 VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
@@ -25,7 +25,6 @@ class VLCWidget(Gtk.DrawingArea):
     __gtype_name__ = 'VLCWidget'
 
     def __init__(self, width, height):
-
         # Spawn a VLC instance and create a new media player to embed.
         self.instance = vlc.Instance()
         Gtk.DrawingArea.__init__(self)
@@ -93,7 +92,10 @@ class Player:
         self.window.show_all()
 
         self.active_handler = ActiveHandler(self._on_active_changed)
-        self.window_handler = WindowHandler(self._on_window_state_changed)
+        if os.environ["DESKTOP_SESSION"] in ["gnome", "gnome-xorg"]:
+            self.window_handler = WindowHandlerGnome(self._on_window_state_changed)
+        else:
+            self.window_handler = WindowHandler(self._on_window_state_changed)
         self.static_wallpaper_handler = StaticWallpaperHandler()
         self.static_wallpaper_handler.set_static_wallpaper()
 
