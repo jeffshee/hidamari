@@ -2,7 +2,6 @@ import os
 import json
 import subprocess
 import pathlib
-
 import gi
 import pydbus
 
@@ -12,13 +11,13 @@ from gi.repository import GLib, Wnck, Gio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from PIL import Image, ImageFilter
-
 from types import SimpleNamespace
 
 HOME = os.environ['HOME']
 CONFIG_DIR = HOME + '/.config/hidamari'
 CONFIG_PATH = CONFIG_DIR + '/hidamari.config'
 VIDEO_WALLPAPER_DIR = HOME + '/Videos/Hidamari'
+SESSION_TYPE = os.environ.get("XDG_SESSION_TYPE")
 
 
 def create_dir(path):
@@ -70,6 +69,7 @@ class WindowHandler:
         self.screen.connect('window-opened', self.window_opened, None)
         self.screen.connect('window-closed', self.window_closed, None)
         self.screen.connect('active-workspace-changed', self.active_workspace_changed, None)
+        self.gnome_shell = pydbus.SessionBus().get("org.gnome.Shell")
         for window in self.screen.get_windows():
             window.connect('state-changed', self.state_changed, None)
 
@@ -89,18 +89,34 @@ class WindowHandler:
         self.on_window_state_changed(self.check())
 
     def check(self):
-        is_any_maximized, is_any_fullscreen = False, False
-        for window in self.screen.get_windows():
-            base_state = not Wnck.Window.is_minimized(window) and \
-                         Wnck.Window.is_on_workspace(window, self.screen.get_active_workspace())
-            window_name, is_maximized, is_fullscreen = window.get_name(), \
-                                                       Wnck.Window.is_maximized(window) and base_state, \
-                                                       Wnck.Window.is_fullscreen(window) and base_state
-            if is_maximized is True:
-                is_any_maximized = True
-            if is_fullscreen is True:
-                is_any_fullscreen = True
-        return {'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen}
+        workspace = int(subprocess.getoutput("xprop -root -notype _NET_CURRENT_DESKTOP").split(" = ")[-1])
+
+        ok, maximized = self.gnome_shell.Eval("""
+        var window_list = global.get_window_actors().find(window =>
+            window.meta_window.maximized_horizontally &
+            window.meta_window.maximized_vertically &
+            window.meta_window.get_workspace().workspace_index == {0}
+        );
+        window_list
+        """.format(workspace)
+        )
+
+        if not ok:
+            raise RuntimeError("Cannot communicate with Gnome Shell!")
+
+        ok, fullscreen = self.gnome_shell.Eval("""
+        var window_list = global.get_window_actors().find(window =>
+            window.meta_window.is_fullscreen() &
+            window.meta_window.get_workspace().workspace_index == {0}
+        );
+        window_list
+        """.format(workspace)
+        )
+
+        if not ok:
+            raise RuntimeError("Cannot communicate with Gnome Shell!")
+
+        return {'is_any_maximized': maximized != "", 'is_any_fullscreen': fullscreen != ""}
 
 
 class StaticWallpaperHandler:
