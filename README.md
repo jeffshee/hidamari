@@ -16,7 +16,8 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [x] Volume level
 - [x] Pause the video playback manually at anytime
 - [x] I'm feeling lucky. Randomly select and play the video
-- [x] GPU decoding (thanks 94824!) 
+- [x] GPU video decoding (thanks 94824!)
+- [x] Gnome Wayland support (thanks 94824!)
 - [ ] You name it! =)
 
 ## Installation (Fedora)
