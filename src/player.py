@@ -55,41 +55,14 @@ class Player:
         self.user_pause_playback = False
         self.is_any_maximized, self.is_any_fullscreen = False, False
 
-        # Monitor Detect
-        self.width, self.height = self.monitor_detect()
-
         # We need to initialize X11 threads so we can use hardware decoding.
         x11 = ctypes.cdll.LoadLibrary('libX11.so')
         x11.XInitThreads()
 
-        # Setup a VLC widget given the provided width and height.
-        self.video_playback = VLCWidget(self.width, self.height)
-        self.media = self.video_playback.instance.media_new(self.config.video_path)
-
-        """
-        This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
-        based on reading, this probably only repeats 65535 times, which is still a lot of time, but might
-        cause the program to stop playback if it's left on for a very long time.
-        """
-        self.media.add_option("input-repeat=65535")
-
-        self.video_playback.player.set_media(self.media)
-
-        # These are to allow us to right click. VLC can't hijack mouse input, and probably not key inputs either in
-        # Case we want to add keyboard shortcuts later on.
-        self.video_playback.player.video_set_mouse_input(False)
-        self.video_playback.player.video_set_key_input(False)
-
-        # Window settings
-        self.window = Gtk.Window()
-        self.window.add(self.video_playback)
-        self.window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
-        self.window.set_size_request(self.width, self.height)
-
-        # button event
-        self._build_context_menu()
-        self.window.connect('button-press-event', self._on_button_press_event)
-        self.window.show_all()
+        # Monitor Detect
+        self.monitors = {}
+        self.monitor_detect()
+        self._start_all_monitors()
 
         self.active_handler = ActiveHandler(self._on_active_changed)
         if os.environ["DESKTOP_SESSION"] in ["gnome", "gnome-xorg"]:
@@ -113,32 +86,104 @@ class Player:
 
         Gtk.main()
 
+    def _start_all_monitors(self):
+        first = True
+        for monitor in self.monitors.values():
+            # Setup a VLC widget given the provided width and height.
+            video_playback = VLCWidget(monitor["Width"], monitor["Height"])
+            media = video_playback.instance.media_new(self.config.video_path)
+
+            """
+            This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
+            based on reading, this probably only repeats 65535 times, which is still a lot of time, but might
+            cause the program to stop playback if it's left on for a very long time.
+            """
+            media.add_option("input-repeat=65535")
+
+            video_playback.player.set_media(media)
+
+            # These are to allow us to right click. VLC can't hijack mouse input, and probably not key inputs either in
+            # Case we want to add keyboard shortcuts later on.
+            video_playback.player.video_set_mouse_input(False)
+            video_playback.player.video_set_key_input(False)
+
+            # Prevent awful ear-rape with multiple instances.
+            if not first:
+                media.add_option("no-audio")
+
+            # Window settings
+            window = Gtk.Window()
+            window.add(video_playback)
+            window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
+            window.set_size_request(monitor["Width"], monitor["Height"])
+            window.move(monitor["X"], monitor["Y"])
+
+            # button event
+            self._build_context_menu()
+            window.connect('button-press-event', self._on_button_press_event)
+            window.show_all()
+
+            monitor["Video"] = video_playback
+            monitor["Window"] = window
+            first = False
+
+    def _set_volume(self, volume):
+        first = True
+        for monitor in self.monitors.values():
+            if first:
+                monitor["Video"].player.audio_set_volume(volume)
+                first = False
+            else:
+                monitor["Video"].player.audio_set_volume(0)
+
     def pause_playback(self):
-        self.video_playback.player.pause()
+        for monitor in self.monitors.values():
+            monitor["Video"].player.pause()
 
     def start_playback(self):
         if not self.user_pause_playback:
-            self.video_playback.player.play()
+            for monitor in self.monitors.values():
+                monitor["Video"].player.play()
 
     def _quit(self, *args):
         self.static_wallpaper_handler.restore_ori_wallpaper()
         Gtk.main_quit()
-        self.video_playback.instance.release()
+        for monitor in self.monitors.values():
+            monitor["Video"].player.release()
 
     def monitor_detect(self):
         display = Gdk.Display.get_default()
         screen = Gdk.Screen.get_default()
-        monitor = display.get_primary_monitor()
-        geometry = monitor.get_geometry()
-        scale_factor = monitor.get_scale_factor()
-        width = scale_factor * geometry.width
-        height = scale_factor * geometry.height
+
+        x = 0
+        while True:
+            monitor = display.get_monitor(x)
+            if monitor is None:
+                break
+            geometry = monitor.get_geometry()
+            scale_factor = monitor.get_scale_factor()
+
+            # Since this happens every time a size change, we need to be aware that the key may already exist, and might
+            # Have Video and Window attributes, so we just replace if it exists, otherwise we're creating the first
+            # Dictionary and should create a new value associated with the monitor number.
+            if x in self.monitors.keys():
+                self.monitors[x]["Width"] = scale_factor * geometry.width
+                self.monitors[x]["Height"] = scale_factor * geometry.height
+                self.monitors[x]["X"] = geometry.x
+                self.monitors[x]["Y"] = geometry.y
+            else:
+                self.monitors[x] = {"Width": scale_factor * geometry.width, "Height": scale_factor * geometry.height,
+                                    "X": geometry.x, "Y": geometry.y}
+            x += 1
+
         screen.connect('size-changed', self._on_size_changed)
-        return width, height
 
     def _on_size_changed(self, *args):
-        self.width, self.height = self.monitor_detect()
-        self.window.resize(self.width, self.height)
+        self.monitor_detect()
+
+        for monitor in self.monitors.values():
+            monitor["Window"].resize(monitor["Width"], monitor["Height"])
+            monitor["Window"].move(monitor["X"], monitor["Y"])
 
     def _on_active_changed(self, active):
         if active:
@@ -162,15 +207,16 @@ class Player:
             self.config = self.config_handler.config
             self.pause_playback()
             if self.current_video_path != self.config.video_path:
-                self.media = self.video_playback.instance.media_new(self.config.video_path)
-                self.media.add_option("input-repeat=65535")
-                self.video_playback.player.set_media(self.media)
-                self.video_playback.player.set_position(0.0)
+                for monitor in self.monitors.values():
+                    media = monitor["Video"].instance.media_new(self.config.video_path)
+                    media.add_option("input-repeat=65535")
+                    monitor["Video"].player.set_media(media)
+                    monitor["Video"].player.set_position(0.0)
                 self.current_video_path = self.config.video_path
             if self.config.mute_audio:
-                self.video_playback.player.audio_set_volume(0)
+                self._set_volume(0)
             else:
-                self.video_playback.player.audio_set_volume(int(self.config.audio_volume * 100))
+                self._set_volume(int(self.config.audio_volume * 100))
             self.start_playback()
 
         # To ensure thread safe
