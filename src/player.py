@@ -7,13 +7,13 @@ import gi
 import ctypes
 import vlc
 
-gi.require_version('Gtk', '3.0')
+gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib
 
 from utils import ConfigHandler, ActiveHandler, WindowHandler, WindowHandlerGnome, StaticWallpaperHandler
 from gui import ControlPanel, create_dir, scan_dir
 
-VIDEO_WALLPAPER_PATH = os.environ['HOME'] + '/Videos/Hidamari'
+VIDEO_WALLPAPER_PATH = os.environ["HOME"] + "/Videos/Hidamari"
 
 
 class VLCWidget(Gtk.DrawingArea):
@@ -22,7 +22,7 @@ class VLCWidget(Gtk.DrawingArea):
     Its player can be controlled through the 'player' attribute, which
     is a vlc.MediaPlayer() instance.
     """
-    __gtype_name__ = 'VLCWidget'
+    __gtype_name__ = "VLCWidget"
 
     def __init__(self, width, height):
         # Spawn a VLC instance and create a new media player to embed.
@@ -37,6 +37,89 @@ class VLCWidget(Gtk.DrawingArea):
         # Embed and set size.
         self.connect("realize", handle_embed)
         self.set_size_request(width, height)
+
+
+class Monitor:
+    """
+    A wrapper of Gdk.Monitor
+    """
+
+    def __init__(self, gdk_monitor: Gdk.Monitor):
+        self.gdk_monitor = gdk_monitor
+        # Window and VLC widget dedicated for each monitor
+        self.__window = None
+        self.__vlc_widget = None
+
+    def initialize(self, window: Gtk.Window, vlc_widget: VLCWidget):
+        self.__window = window
+        self.__vlc_widget = vlc_widget
+
+    @property
+    def is_initialized(self):
+        return self.__window is not None and self.__vlc_widget is not None
+
+    @property
+    def x(self):
+        return self.gdk_monitor.get_geometry().x
+
+    @property
+    def y(self):
+        return self.gdk_monitor.get_geometry().y
+
+    @property
+    def width(self):
+        return self.gdk_monitor.get_geometry().width * self.gdk_monitor.get_scale_factor()
+
+    @property
+    def height(self):
+        return self.gdk_monitor.get_geometry().height * self.gdk_monitor.get_scale_factor()
+
+    @property
+    def is_primary(self):
+        return self.gdk_monitor.is_primary()
+
+    # Expose frequently used functions
+    def vlc_play(self):
+        if self.is_initialized:
+            self.__vlc_widget.player.play()
+
+    def vlc_pause(self):
+        if self.is_initialized:
+            self.__vlc_widget.player.play()
+
+    def vlc_media_new(self, *args):
+        if self.is_initialized:
+            return self.__vlc_widget.instance.media_new(*args)
+
+    def vlc_set_media(self, *args):
+        if self.is_initialized:
+            self.__vlc_widget.player.set_media(*args)
+
+    def vlc_audio_set_volume(self, *args):
+        if self.is_initialized:
+            self.__vlc_widget.player.audio_set_volume(*args)
+
+    def vlc_set_position(self, *args):
+        if self.is_initialized:
+            self.__vlc_widget.player.set_position(*args)
+
+    def win_move(self, *args):
+        if self.is_initialized:
+            self.__window.move(*args)
+
+    def win_resize(self, *args):
+        if self.is_initialized:
+            self.__window.resize(*args)
+
+    def __eq__(self, other):
+        if isinstance(other, Monitor):
+            return self.gdk_monitor == other.gdk_monitor
+        return False
+
+    def __del__(self):
+        if self.is_initialized:
+            self.__vlc_widget.player.release()
+            self.__window.close()
 
 
 class Player:
@@ -56,11 +139,13 @@ class Player:
         self.is_any_maximized, self.is_any_fullscreen = False, False
 
         # We need to initialize X11 threads so we can use hardware decoding.
-        x11 = ctypes.cdll.LoadLibrary('libX11.so')
+        x11 = ctypes.cdll.LoadLibrary("libX11.so")
         x11.XInitThreads()
 
+        self._build_context_menu()
+
         # Monitor Detect
-        self.monitors = {}
+        self.monitors = []
         self.monitor_detect()
         self._start_all_monitors()
 
@@ -72,7 +157,7 @@ class Player:
         self.static_wallpaper_handler = StaticWallpaperHandler()
         self.static_wallpaper_handler.set_static_wallpaper()
 
-        if self.config.video_path == '':
+        if self.config.video_path == "":
             # First time
             ControlPanel().run()
         elif not os.path.isfile(self.config.video_path):
@@ -87,12 +172,12 @@ class Player:
         Gtk.main()
 
     def _start_all_monitors(self):
-        first = True
-        for monitor in self.monitors.values():
+        for monitor in self.monitors:
+            if monitor.is_initialized:
+                continue
             # Setup a VLC widget given the provided width and height.
-            video_playback = VLCWidget(monitor["Width"], monitor["Height"])
-            media = video_playback.instance.media_new(self.config.video_path)
-
+            vlc_widget = VLCWidget(monitor.width, monitor.height)
+            media = vlc_widget.instance.media_new(self.config.video_path)
             """
             This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
             based on reading, this probably only repeats 65535 times, which is still a lot of time, but might
@@ -100,90 +185,82 @@ class Player:
             """
             media.add_option("input-repeat=65535")
 
-            video_playback.player.set_media(media)
+            # Prevent awful ear-rape with multiple instances.
+            if not monitor.is_primary:
+                media.add_option("no-audio")
+
+            vlc_widget.player.set_media(media)
 
             # These are to allow us to right click. VLC can't hijack mouse input, and probably not key inputs either in
             # Case we want to add keyboard shortcuts later on.
-            video_playback.player.video_set_mouse_input(False)
-            video_playback.player.video_set_key_input(False)
-
-            # Prevent awful ear-rape with multiple instances.
-            if not first:
-                media.add_option("no-audio")
+            vlc_widget.player.video_set_mouse_input(False)
+            vlc_widget.player.video_set_key_input(False)
 
             # Window settings
             window = Gtk.Window()
-            window.add(video_playback)
+            window.add(vlc_widget)
             window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
-            window.set_size_request(monitor["Width"], monitor["Height"])
-            window.move(monitor["X"], monitor["Y"])
+            window.set_size_request(monitor.width, monitor.height)
+            window.move(monitor.x, monitor.y)
 
-            # button event
-            self._build_context_menu()
-            window.connect('button-press-event', self._on_button_press_event)
+            # Button event
+            window.connect("button-press-event", self._on_button_press_event)
             window.show_all()
 
-            monitor["Video"] = video_playback
-            monitor["Window"] = window
-            first = False
+            monitor.initialize(window, vlc_widget)
 
     def _set_volume(self, volume):
-        first = True
-        for monitor in self.monitors.values():
-            if first:
-                monitor["Video"].player.audio_set_volume(volume)
-                first = False
+        for monitor in self.monitors:
+            if monitor.is_primary:
+                monitor.vlc_audio_set_volume(volume)
             else:
-                monitor["Video"].player.audio_set_volume(0)
+                monitor.vlc_audio_set_volume(0)
 
     def pause_playback(self):
-        for monitor in self.monitors.values():
-            monitor["Video"].player.pause()
+        for monitor in self.monitors:
+            monitor.vlc_pause()
 
     def start_playback(self):
         if not self.user_pause_playback:
-            for monitor in self.monitors.values():
-                monitor["Video"].player.play()
+            for monitor in self.monitors:
+                monitor.vlc_play()
 
     def _quit(self, *args):
         self.static_wallpaper_handler.restore_ori_wallpaper()
+        del self.monitors
         Gtk.main_quit()
-        for monitor in self.monitors.values():
-            monitor["Video"].player.release()
 
     def monitor_detect(self):
         display = Gdk.Display.get_default()
-        screen = Gdk.Screen.get_default()
+        screen = display.get_default_screen()
 
-        x = 0
-        while True:
-            monitor = display.get_monitor(x)
-            if monitor is None:
-                break
-            geometry = monitor.get_geometry()
-            scale_factor = monitor.get_scale_factor()
+        for i in range(display.get_n_monitors()):
+            monitor = Monitor(display.get_monitor(i))
+            if monitor not in self.monitors:
+                self.monitors.append(monitor)
 
-            # Since this happens every time a size change, we need to be aware that the key may already exist, and might
-            # Have Video and Window attributes, so we just replace if it exists, otherwise we're creating the first
-            # Dictionary and should create a new value associated with the monitor number.
-            if x in self.monitors.keys():
-                self.monitors[x]["Width"] = scale_factor * geometry.width
-                self.monitors[x]["Height"] = scale_factor * geometry.height
-                self.monitors[x]["X"] = geometry.x
-                self.monitors[x]["Y"] = geometry.y
-            else:
-                self.monitors[x] = {"Width": scale_factor * geometry.width, "Height": scale_factor * geometry.height,
-                                    "X": geometry.x, "Y": geometry.y}
-            x += 1
-
-        screen.connect('size-changed', self._on_size_changed)
+        screen.connect("size-changed", self._on_size_changed)
+        display.connect("monitor-added", self._on_monitor_added)
+        display.connect("monitor-removed", self._on_monitor_removed)
 
     def _on_size_changed(self, *args):
-        self.monitor_detect()
+        print("size-changed")
+        for monitor in self.monitors:
+            monitor.win_resize(monitor.width, monitor.height)
+            monitor.win_move(monitor.x, monitor.y)
+            print(monitor.x, monitor.y, monitor.width, monitor.height)
 
-        for monitor in self.monitors.values():
-            monitor["Window"].resize(monitor["Width"], monitor["Height"])
-            monitor["Window"].move(monitor["X"], monitor["Y"])
+    def _on_monitor_added(self, _, gdk_monitor, *args):
+        print("monitor-added")
+        new_monitor = Monitor(gdk_monitor)
+        self.monitors.append(new_monitor)
+        self._start_all_monitors()
+        # TODO Sync
+        new_monitor.vlc_play()
+
+    def _on_monitor_removed(self, _, gdk_monitor, *args):
+        print("monitor-removed")
+        self.monitors.remove(Monitor(gdk_monitor))
 
     def _on_active_changed(self, active):
         if active:
@@ -195,7 +272,7 @@ class Player:
                 self.start_playback()
 
     def _on_window_state_changed(self, state):
-        self.is_any_maximized, self.is_any_fullscreen = state['is_any_maximized'], state['is_any_fullscreen']
+        self.is_any_maximized, self.is_any_fullscreen = state["is_any_maximized"], state["is_any_fullscreen"]
         if (self.is_any_maximized and self.config.detect_maximized) or self.is_any_fullscreen:
             self.pause_playback()
         else:
@@ -207,11 +284,13 @@ class Player:
             self.config = self.config_handler.config
             self.pause_playback()
             if self.current_video_path != self.config.video_path:
-                for monitor in self.monitors.values():
-                    media = monitor["Video"].instance.media_new(self.config.video_path)
+                for monitor in self.monitors:
+                    media = monitor.vlc_media_new(self.config.video_path)
                     media.add_option("input-repeat=65535")
-                    monitor["Video"].player.set_media(media)
-                    monitor["Video"].player.set_position(0.0)
+                    if not monitor.is_primary:
+                        media.add_option("no-audio")
+                    monitor.vlc_set_media(media)
+                    monitor.vlc_set_position(0.0)
                 self.current_video_path = self.config.video_path
             if self.config.mute_audio:
                 self._set_volume(0)
