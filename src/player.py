@@ -147,8 +147,16 @@ class Player:
         self.is_any_maximized, self.is_any_fullscreen = False, False
 
         # We need to initialize X11 threads so we can use hardware decoding.
-        x11 = ctypes.cdll.LoadLibrary("libX11.so")
-        x11.XInitThreads()
+        # `libX11.so.6` fix for Fedora 33
+        x11 = None
+        for lib in ["libX11.so", "libX11.so.6"]:
+            try:
+                x11 = ctypes.cdll.LoadLibrary(lib)
+            except OSError:
+                pass
+            if x11 is not None:
+                x11.XInitThreads()
+                break
 
         self._build_context_menu()
 
