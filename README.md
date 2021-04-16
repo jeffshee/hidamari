@@ -18,6 +18,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [x] I'm feeling lucky. Randomly select and play the video
 - [x] GPU video decoding (thanks 94824!)
 - [x] Gnome Wayland support (thanks 94824!)
+- [x] Multi-monitor support (thanks 94824!)
 - [ ] You name it! =)
 
 ## Installation (Fedora)
