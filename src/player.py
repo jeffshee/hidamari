@@ -155,7 +155,7 @@ class Player:
         # Monitor Detect
         self.monitors = []
         self.monitor_detect()
-        self._start_all_monitors()
+        self.start_all_monitors()
 
         self.active_handler = ActiveHandler(self._on_active_changed)
         if os.environ["DESKTOP_SESSION"] in ["gnome", "gnome-xorg"]:
@@ -179,7 +179,7 @@ class Player:
 
         Gtk.main()
 
-    def _start_all_monitors(self):
+    def start_all_monitors(self):
         for monitor in self.monitors:
             if monitor.is_initialized:
                 continue
@@ -272,14 +272,12 @@ class Player:
         print("monitor-added")
         new_monitor = Monitor(gdk_monitor)
         self.monitors.append(new_monitor)
-        self._start_all_monitors()
+        self.start_all_monitors()
         self.monitor_sync()
-        print(self.monitors)
 
     def _on_monitor_removed(self, _, gdk_monitor, *args):
         print("monitor-removed")
         self.monitors.remove(Monitor(gdk_monitor))
-        print(self.monitors)
 
     def _on_active_changed(self, active):
         if active:
@@ -375,14 +373,14 @@ class Player:
         return True
 
     def _on_not_implemented(self, *args):
-        print('Not implemented!')
+        print("Not implemented!")
         message = Gtk.MessageDialog(type=Gtk.MessageType.INFO, buttons=Gtk.ButtonsType.OK,
                                     message_format='Not implemented!')
         message.connect("response", self._dialog_response)
         message.show()
 
     def _on_file_not_found(self, path):
-        print('File not found!')
+        print("File not found!")
         message = Gtk.MessageDialog(type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK,
                                     message_format='File {} not found!'.format(path))
         message.connect("response", self._dialog_response)
