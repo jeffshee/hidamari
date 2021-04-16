@@ -4,19 +4,20 @@ import subprocess
 import pathlib
 import gi
 import pydbus
+from pprint import pprint
 
-gi.require_version('Gtk', '3.0')
-gi.require_version('Wnck', '3.0')
+gi.require_version("Gtk", "3.0")
+gi.require_version("Wnck", '3.0')
 from gi.repository import GLib, Wnck, Gio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from PIL import Image, ImageFilter
 from types import SimpleNamespace
 
-HOME = os.environ['HOME']
-CONFIG_DIR = HOME + '/.config/hidamari'
-CONFIG_PATH = CONFIG_DIR + '/hidamari.config'
-VIDEO_WALLPAPER_DIR = HOME + '/Videos/Hidamari'
+HOME = os.environ["HOME"]
+CONFIG_DIR = HOME + "/.config/hidamari"
+CONFIG_PATH = CONFIG_DIR + "/hidamari.config"
+VIDEO_WALLPAPER_DIR = HOME + "/Videos/Hidamari"
 
 
 def create_dir(path):
@@ -29,7 +30,9 @@ def create_dir(path):
 
 def scan_dir():
     file_list = []
-    ext_list = ['m4v', 'mkv', 'mp4', 'mpg', 'mpeg', 'webm']
+    ext_list = ["3g2", "3gp", "aaf", "asf", "avchd", "avi", "drc", "flv", "m2v", "m4p", "m4v", "mkv", "mng", "mov",
+                "mp2", "mp4", "mpe", "mpeg", "mpg", "mpv", "mxf", "nsv", "ogg", "ogv", "qt", "rm", "rmvb", "roq", "svi",
+                "vob", "webm", "wmv", "yuv"]
     for file in os.listdir(VIDEO_WALLPAPER_DIR):
         path = VIDEO_WALLPAPER_DIR + '/' + file
         if os.path.isfile(path) and path.split('.')[-1].lower() in ext_list:
@@ -44,10 +47,10 @@ class ActiveHandler:
 
     def __init__(self, on_active_changed: callable):
         session_bus = pydbus.SessionBus()
-        screensaver_list = ['org.gnome.ScreenSaver',
-                            'org.cinnamon.ScreenSaver',
-                            'org.kde.screensaver',
-                            'org.freedesktop.ScreenSaver']
+        screensaver_list = ["org.gnome.ScreenSaver",
+                            "org.cinnamon.ScreenSaver",
+                            "org.kde.screensaver",
+                            "org.freedesktop.ScreenSaver"]
         for s in screensaver_list:
             try:
                 proxy = session_bus.get(s)
@@ -65,18 +68,18 @@ class WindowHandler:
         self.on_window_state_changed = on_window_state_changed
         self.screen = Wnck.Screen.get_default()
         self.screen.force_update()
-        self.screen.connect('window-opened', self.window_opened, None)
-        self.screen.connect('window-closed', self.eval, None)
-        self.screen.connect('active-workspace-changed', self.eval, None)
+        self.screen.connect("window-opened", self.window_opened, None)
+        self.screen.connect("window-closed", self.eval, None)
+        self.screen.connect("active-workspace-changed", self.eval, None)
         for window in self.screen.get_windows():
-            window.connect('state-changed', self.eval, None)
+            window.connect("state-changed", self.eval, None)
 
         self.prev_state = None
         # Initial check
         self.eval()
 
     def window_opened(self, screen, window, _):
-        window.connect('state-changed', self.eval, None)
+        window.connect("state-changed", self.eval, None)
 
     def eval(self, *args):
         is_changed = False
@@ -93,14 +96,14 @@ class WindowHandler:
             if is_fullscreen is True:
                 is_any_fullscreen = True
 
-        cur_state = {'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen}
+        cur_state = {"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen}
         if self.prev_state is None or self.prev_state != cur_state:
             is_changed = True
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed({'is_any_maximized': is_any_maximized, 'is_any_fullscreen': is_any_fullscreen})
-            print(cur_state)
+            self.on_window_state_changed({"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
+            print("WindowHandler:", cur_state)
 
 
 class WindowHandlerGnome:
@@ -148,8 +151,8 @@ class WindowHandlerGnome:
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed({'is_any_maximized': maximized != "", 'is_any_fullscreen': fullscreen != ""})
-            print(cur_state)
+            self.on_window_state_changed({"is_any_maximized": maximized != "", "is_any_fullscreen": fullscreen != ""})
+            print("WindowHandler:", cur_state)
         return True
 
 
@@ -164,9 +167,9 @@ class StaticWallpaperHandler:
         self.current_video_path = self.config.video_path
         self.current_static_wallpaper = self.config.static_wallpaper
         self.current_static_wallpaper_blur_radius = self.config.static_wallpaper_blur_radius
-        self.gso = Gio.Settings.new('org.gnome.desktop.background')
-        self.ori_wallpaper_uri = self.gso.get_string('picture-uri')
-        self.new_wallpaper_uri = '/tmp/hidamari.png'
+        self.gso = Gio.Settings.new("org.gnome.desktop.background")
+        self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
+        self.new_wallpaper_uri = "/tmp/hidamari.png"
 
     def _on_config_modified(self):
         # Get new config
@@ -195,10 +198,10 @@ class StaticWallpaperHandler:
                 blur_wallpaper = blur_wallpaper.filter(
                     ImageFilter.GaussianBlur(self.config.static_wallpaper_blur_radius))
                 blur_wallpaper.save(self.new_wallpaper_uri)
-                self.gso.set_string('picture-uri', pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+                self.gso.set_string("picture-uri", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
     def restore_ori_wallpaper(self):
-        self.gso.set_string('picture-uri', self.ori_wallpaper_uri)
+        self.gso.set_string("picture-uri", self.ori_wallpaper_uri)
         if os.path.isfile(self.new_wallpaper_uri):
             os.remove(self.new_wallpaper_uri)
 
@@ -213,22 +216,22 @@ class FileWatchdog(FileSystemEventHandler):
 
     def on_created(self, event):
         if not event.is_directory and event.src_path.endswith(self.file_name):
-            print('Watchdog:', event)
+            print("Watchdog:", event)
             self.callback()  # call callback
 
     def on_deleted(self, event):
         if not event.is_directory and event.src_path.endswith(self.file_name):
-            print('Watchdog:', event)
+            print("Watchdog:", event)
             self.callback()  # call callback
 
     def on_moved(self, event):
         if not event.is_directory and event.dest_path.endswith(self.file_name):
-            print('Watchdog:', event)
+            print("Watchdog:", event)
             self.callback()  # call callback
 
     def on_modified(self, event):
         if not event.is_directory and event.src_path.endswith(self.file_name):
-            print('Watchdog:', event)
+            print("Watchdog:", event)
             self.callback()  # call callback
 
 
@@ -240,19 +243,19 @@ class ConfigHandler:
     def __init__(self, on_config_modified: callable):
         self.on_config_modified = on_config_modified
         self.template_config = {
-            'video_path': '',
-            'mute_audio': False,
-            'audio_volume': 0.5,
-            'static_wallpaper': True,
-            'static_wallpaper_blur_radius': 5,
-            'detect_maximized': True,
+            "video_path": "",
+            "mute_audio": False,
+            "audio_volume": 0.5,
+            "static_wallpaper": True,
+            "static_wallpaper_blur_radius": 5,
+            "detect_maximized": True,
         }
         self._update()
         FileWatchdog(filepath=CONFIG_PATH, callback=self._config_modified)
 
     def _generate_template_config(self):
         create_dir(CONFIG_DIR)
-        with open(CONFIG_PATH, 'w') as f:
+        with open(CONFIG_PATH, "w") as f:
             json.dump(self.template_config, f)
         return self.template_config
 
@@ -270,17 +273,19 @@ class ConfigHandler:
 
     def _load(self):
         if os.path.isfile(CONFIG_PATH):
-            with open(CONFIG_PATH, 'r') as f:
+            with open(CONFIG_PATH, "r") as f:
                 json_str = f.read()
                 try:
                     config = json.loads(json_str)
-                    print('JSON:', json_str)
+                    print("Config JSON:")
+                    pprint(config)
                     return self._check(config), config
                 except json.decoder.JSONDecodeError:
-                    print('JSONDecodeError:', json_str)
+                    print("Config JSONDecodeError")
+                    print(json_str)
                     return False, None
         return True, self._generate_template_config()
 
     def save(self):
-        with open(CONFIG_PATH, 'w') as f:
+        with open(CONFIG_PATH, "w") as f:
             json.dump(vars(self.config), f)

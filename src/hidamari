@@ -5,6 +5,8 @@ import os
 
 # Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
 os.environ['GDK_BACKEND'] = "x11"
+# Suppress VLC Log
+os.environ["VLC_VERBOSE"] = "-1"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
