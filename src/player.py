@@ -83,9 +83,13 @@ class Monitor:
         if self.is_initialized:
             self.__vlc_widget.player.play()
 
+    def vlc_is_playing(self):
+        if self.is_initialized:
+            return self.__vlc_widget.player.is_playing()
+
     def vlc_pause(self):
         if self.is_initialized:
-            self.__vlc_widget.player.play()
+            self.__vlc_widget.player.pause()
 
     def vlc_media_new(self, *args):
         if self.is_initialized:
@@ -98,6 +102,10 @@ class Monitor:
     def vlc_audio_set_volume(self, *args):
         if self.is_initialized:
             self.__vlc_widget.player.audio_set_volume(*args)
+
+    def vlc_get_position(self, *args):
+        if self.is_initialized:
+            return self.__vlc_widget.player.get_position()
 
     def vlc_set_position(self, *args):
         if self.is_initialized:
@@ -209,12 +217,10 @@ class Player:
 
             monitor.initialize(window, vlc_widget)
 
-    def _set_volume(self, volume):
+    def set_volume(self, volume):
         for monitor in self.monitors:
             if monitor.is_primary:
                 monitor.vlc_audio_set_volume(volume)
-            else:
-                monitor.vlc_audio_set_volume(0)
 
     def pause_playback(self):
         for monitor in self.monitors:
@@ -243,6 +249,18 @@ class Player:
         display.connect("monitor-added", self._on_monitor_added)
         display.connect("monitor-removed", self._on_monitor_removed)
 
+    def monitor_sync(self):
+        primary = 0
+        for i, monitor in enumerate(self.monitors):
+            if monitor.is_primary:
+                primary = i
+                break
+        for monitor in self.monitors:
+            # `set_position()` method require the playback to be enabled before calling
+            monitor.vlc_play()
+            monitor.vlc_set_position(self.monitors[primary].vlc_get_position())
+            monitor.vlc_play() if self.monitors[primary].vlc_is_playing() else monitor.vlc_pause()
+
     def _on_size_changed(self, *args):
         print("size-changed")
         for monitor in self.monitors:
@@ -255,12 +273,13 @@ class Player:
         new_monitor = Monitor(gdk_monitor)
         self.monitors.append(new_monitor)
         self._start_all_monitors()
-        # TODO Sync
-        new_monitor.vlc_play()
+        self.monitor_sync()
+        print(self.monitors)
 
     def _on_monitor_removed(self, _, gdk_monitor, *args):
         print("monitor-removed")
         self.monitors.remove(Monitor(gdk_monitor))
+        print(self.monitors)
 
     def _on_active_changed(self, active):
         if active:
@@ -293,9 +312,9 @@ class Player:
                     monitor.vlc_set_position(0.0)
                 self.current_video_path = self.config.video_path
             if self.config.mute_audio:
-                self._set_volume(0)
+                self.set_volume(0)
             else:
-                self._set_volume(int(self.config.audio_volume * 100))
+                self.set_volume(int(self.config.audio_volume * 100))
             self.start_playback()
 
         # To ensure thread safe
