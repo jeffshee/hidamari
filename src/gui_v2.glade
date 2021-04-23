@@ -2,10 +2,53 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
+  <object class="GtkAboutDialog" id="AboutDialog">
+    <property name="can-focus">False</property>
+    <property name="type-hint">dialog</property>
+    <property name="program-name">Hidamari</property>
+    <property name="copyright" translatable="yes">Copyright © 2020 JeffShee@ねくもりそふと</property>
+    <property name="comments" translatable="yes">Video wallpaper for Linux. Minimal and written in Python.
+
+Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</property>
+    <property name="website">https://github.com/jeffshee/hidamari</property>
+    <property name="website-label" translatable="yes">GitHub</property>
+    <property name="authors">Jeff Shee</property>
+    <property name="artists">Freepik https://www.freepik.com</property>
+    <property name="logo-icon-name">hidamari</property>
+    <property name="license-type">apache-2-0</property>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can-focus">False</property>
+            <property name="layout-style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkAdjustment" id="AdjustmentVolume">
     <property name="upper">100</property>
     <property name="step-increment">1</property>
     <property name="page-increment">10</property>
+    <signal name="value-changed" handler="on_volume_changed" swapped="no"/>
   </object>
   <object class="GtkPopover" id="PopoverMain">
     <property name="can-focus">False</property>
@@ -39,12 +82,13 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToggleButton" id="ToggleAudio">
+              <object class="GtkToggleButton" id="ToggleMute">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
+                <property name="action-name">app.mute</property>
                 <child>
-                  <object class="GtkImage">
+                  <object class="GtkImage" id="ToggleMuteIcon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="icon-name">audio-volume-high</property>
@@ -81,10 +125,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton" id="ButtonAutostart">
+          <object class="GtkModelButton">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">app.autostart</property>
             <property name="text" translatable="yes">Autostart after login</property>
           </object>
           <packing>
@@ -94,10 +139,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton" id="ButtonStaticWallpaper">
+          <object class="GtkModelButton">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">app.static_wallpaper</property>
             <property name="text" translatable="yes">Apply static wallpaper</property>
           </object>
           <packing>
@@ -107,10 +153,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton" id="ButtonDetectMaximized">
+          <object class="GtkModelButton">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">app.detect_maximized</property>
             <property name="text" translatable="yes">Detect maximized window</property>
           </object>
           <packing>
@@ -131,10 +178,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton" id="ButtonPreference">
+          <object class="GtkModelButton">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">app.preferences</property>
             <property name="text" translatable="yes">Preferences</property>
           </object>
           <packing>
@@ -144,10 +192,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton" id="ButtonAbout">
+          <object class="GtkModelButton">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">app.about</property>
             <property name="text" translatable="yes">About Hidamari</property>
           </object>
           <packing>
@@ -159,7 +208,12 @@
       </object>
     </child>
   </object>
-  <object class="GtkApplicationWindow">
+  <object class="GtkFileFilter" id="filefilter1">
+    <mime-types>
+      <mime-type>text/html</mime-type>
+    </mime-types>
+  </object>
+  <object class="GtkApplicationWindow" id="ApplicationWindow">
     <property name="can-focus">False</property>
     <property name="default-width">1024</property>
     <property name="default-height">576</property>
@@ -204,6 +258,7 @@ Videos located in ~/Videos/Hidamari/</property>
                     <property name="receives-default">True</property>
                     <property name="halign">center</property>
                     <property name="valign">center</property>
+                    <property name="action-name">app.local_video_refresh</property>
                     <property name="always-show-image">True</property>
                     <child>
                       <object class="GtkImage" id="image2">
@@ -227,6 +282,7 @@ Videos located in ~/Videos/Hidamari/</property>
                     <property name="receives-default">True</property>
                     <property name="halign">center</property>
                     <property name="valign">center</property>
+                    <property name="action-name">app.local_video_dir</property>
                     <property name="always-show-image">True</property>
                     <child>
                       <object class="GtkImage" id="image1">
@@ -276,6 +332,7 @@ Videos located in ~/Videos/Hidamari/</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
                 <property name="halign">end</property>
+                <property name="action-name">app.local_video_apply</property>
                 <style>
                   <class name="suggested-action"/>
                 </style>
@@ -321,6 +378,7 @@ Videos from streaming services</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
                 <property name="halign">end</property>
+                <property name="action-name">app.streaming_apply</property>
                 <style>
                   <class name="suggested-action"/>
                 </style>
@@ -371,6 +429,8 @@ Videos from streaming services</property>
                     <property name="can-focus">True</property>
                     <property name="secondary-icon-name">view-refresh-symbolic</property>
                     <property name="input-purpose">url</property>
+                    <signal name="activate" handler="on_streaming_activate" swapped="no"/>
+                    <signal name="icon-press" handler="on_streaming_refresh" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -487,6 +547,7 @@ Set a web page as wallpaper</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
                 <property name="halign">end</property>
+                <property name="action-name">app.web_page_apply</property>
                 <style>
                   <class name="suggested-action"/>
                 </style>
@@ -526,6 +587,8 @@ Set a web page as wallpaper</property>
                     <property name="can-focus">True</property>
                     <property name="secondary-icon-name">view-refresh-symbolic</property>
                     <property name="input-purpose">url</property>
+                    <signal name="activate" handler="on_web_page_activate" swapped="no"/>
+                    <signal name="icon-press" handler="on_web_page_refresh" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -664,12 +727,13 @@ Set a web page as wallpaper</property>
           </packing>
         </child>
         <child>
-          <object class="GtkButton">
+          <object class="GtkButton" id="ButtonPlayPause">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">app.play_pause</property>
             <child>
-              <object class="GtkImage">
+              <object class="GtkImage" id="ButtonPlayPauseIcon">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="icon-name">player_play</property>
@@ -682,52 +746,5 @@ Set a web page as wallpaper</property>
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkAboutDialog">
-    <property name="can-focus">False</property>
-    <property name="type-hint">dialog</property>
-    <property name="program-name">Hidamari</property>
-    <property name="copyright" translatable="yes">Copyright © 2020 JeffShee@ねくもりそふと</property>
-    <property name="comments" translatable="yes">Video wallpaper for Linux. Minimal and written in Python.
-
-Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</property>
-    <property name="website">https://github.com/jeffshee/hidamari</property>
-    <property name="website-label" translatable="yes">GitHub</property>
-    <property name="authors">Jeff Shee</property>
-    <property name="artists">Freepik https://www.freepik.com</property>
-    <property name="logo-icon-name">hidamari</property>
-    <property name="license-type">apache-2-0</property>
-    <child internal-child="vbox">
-      <object class="GtkBox">
-        <property name="can-focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox">
-            <property name="can-focus">False</property>
-            <property name="layout-style">end</property>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-    </child>
-  </object>
-  <object class="GtkFileFilter" id="filefilter1">
-    <mime-types>
-      <mime-type>text/html</mime-type>
-    </mime-types>
   </object>
 </interface>
