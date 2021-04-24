@@ -1,5 +1,7 @@
 import os
 import sys
+import threading
+
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -24,6 +26,8 @@ class GUI(Gtk.Application):
         self.builder.connect_signals(signals)
 
         self.window = None
+        self.local_video_icon_view = None
+        self.local_video_list = None
 
         self.mute = False
         self.autostart = False
@@ -47,12 +51,8 @@ class GUI(Gtk.Application):
         action.connect("activate", self.on_local_video_apply)
         self.add_action(action)
 
-        action = Gio.SimpleAction.new("streaming_apply", None)
-        action.connect("activate", self.on_streaming_apply)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("web_page_apply", None)
-        action.connect("activate", self.on_web_page_apply)
+        action = Gio.SimpleAction.new("local_web_page_apply", None)
+        action.connect("activate", self.on_local_web_page_apply)
         self.add_action(action)
 
         action = Gio.SimpleAction.new("play_pause", None)
@@ -85,6 +85,12 @@ class GUI(Gtk.Application):
         action.connect("activate", self.on_preferences)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new("quit", None)
+        action.connect("activate", self.on_quit)
+        self.add_action(action)
+
+        self._reload_all_widgets()
+
     def do_activate(self):
         if not self.window:
             self.window: Gtk.ApplicationWindow = self.builder.get_object("ApplicationWindow")
@@ -94,19 +100,22 @@ class GUI(Gtk.Application):
         self.window.present()
 
     def on_local_video_dir(self, action, param):
-        print(action.get_name(), param)
+        from utils_v2 import xdg_open_video_dir
+        xdg_open_video_dir()
 
     def on_local_video_refresh(self, action, param):
-        print(action.get_name(), param)
+        self._reload_local_video_icon_view()
 
     def on_local_video_apply(self, action, param):
-        print(action.get_name(), param)
+        selected = self.local_video_icon_view.get_selected_items()
+        if len(selected) != 0:
+            index = selected[0].get_indices()[0]
+            print("Local Video", self.local_video_list[index])
 
-    def on_streaming_apply(self, action, param):
-        print(action.get_name(), param)
-
-    def on_web_page_apply(self, action, param):
-        print(action.get_name(), param)
+    def on_local_web_page_apply(self, action, param):
+        file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
+        choose: Gio.File = file_chooser.get_file()
+        print("Local Web Page", choose.get_path())
 
     def set_play_pause_icon(self):
         play_pause_icon: Gtk.Image = self.builder.get_object("ButtonPlayPauseIcon")
@@ -142,7 +151,7 @@ class GUI(Gtk.Application):
 
     def on_volume_changed(self, adjustment):
         self.volume = adjustment.get_value()
-        print("volume", self.volume)
+        print("Volume", self.volume)
         self.set_mute_toggle_icon()
 
     def on_mute(self, action, state):
@@ -178,17 +187,45 @@ class GUI(Gtk.Application):
     def on_preferences(self, action, param):
         print(action.get_name(), param)
 
-    def on_streaming_activate(self, entry):
-        print(entry)
+    def on_streaming_activate(self, entry: Gtk.Entry):
+        url = entry.get_text()
+        print("Streaming", url)
 
-    def on_streaming_refresh(self, entry, *args):
-        print(entry)
+    def on_streaming_refresh(self, entry: Gtk.Entry, *args):
+        url = entry.get_text()
+        print("Streaming", url)
 
-    def on_web_page_activate(self, entry):
-        print(entry)
+    def on_web_page_activate(self, entry: Gtk.Entry):
+        url = entry.get_text()
+        print("Web Page", url)
 
-    def on_web_page_refresh(self, entry, *args):
-        print(entry)
+    def on_web_page_refresh(self, entry: Gtk.Entry, *args):
+        url = entry.get_text()
+        print("Web Page", url)
+
+    def on_quit(self, action, param):
+        self.quit()
+
+    def _reload_all_widgets(self):
+        self._reload_local_video_icon_view()
+
+    def _reload_local_video_icon_view(self):
+        from utils_v2 import list_local_video_dir, get_thumbnail_gnome
+        from gi.repository.GdkPixbuf import Pixbuf
+        list_store = Gtk.ListStore(Pixbuf, str)
+
+        self.local_video_list = list_local_video_dir()
+        self.local_video_icon_view: Gtk.IconView = self.builder.get_object("IconView")
+        self.local_video_icon_view.set_model(list_store)
+        self.local_video_icon_view.set_pixbuf_column(0)
+        self.local_video_icon_view.set_text_column(1)
+        for idx, video in enumerate(self.local_video_list):
+            icon_theme = Gtk.IconTheme().get_default()
+            pixbuf = icon_theme.load_icon("video-x-generic", 96, 0)
+            list_store.append([pixbuf, os.path.basename(video)])
+            thread = threading.Thread(target=get_thumbnail_gnome, args=(video, list_store, idx))
+            thread.daemon = True
+            thread.start()
 
 
 if __name__ == "__main__":

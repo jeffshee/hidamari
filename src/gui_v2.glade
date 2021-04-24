@@ -205,6 +205,20 @@ Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</pr
             <property name="position">7</property>
           </packing>
         </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">app.quit</property>
+            <property name="text" translatable="yes">Quit Hidamari</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">8</property>
+          </packing>
+        </child>
       </object>
     </child>
   </object>
@@ -217,6 +231,7 @@ Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</pr
     <property name="can-focus">False</property>
     <property name="default-width">1024</property>
     <property name="default-height">576</property>
+    <property name="icon-name">hidamari</property>
     <child>
       <object class="GtkStack" id="stack1">
         <property name="visible">True</property>
@@ -312,10 +327,14 @@ Videos located in ~/Videos/Hidamari/</property>
                 <property name="can-focus">True</property>
                 <property name="shadow-type">in</property>
                 <child>
-                  <object class="GtkIconView">
+                  <object class="GtkIconView" id="IconView">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="margin">6</property>
+                    <property name="item-width">96</property>
+                    <property name="row-spacing">8</property>
+                    <property name="column-spacing">8</property>
+                    <property name="item-padding">8</property>
                   </object>
                 </child>
               </object>
@@ -369,25 +388,6 @@ Videos from streaming services</property>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="ButtonApply1">
-                <property name="label">Apply</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="halign">end</property>
-                <property name="action-name">app.streaming_apply</property>
-                <style>
-                  <class name="suggested-action"/>
-                </style>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="pack-type">end</property>
-                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -541,25 +541,6 @@ Set a web page as wallpaper</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="ButtonApply2">
-                <property name="label">Apply</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="halign">end</property>
-                <property name="action-name">app.web_page_apply</property>
-                <style>
-                  <class name="suggested-action"/>
-                </style>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="pack-type">end</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkBox">
                 <property name="width-request">512</property>
                 <property name="visible">True</property>
@@ -666,11 +647,42 @@ Set a web page as wallpaper</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFileChooserButton">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="filter">filefilter1</property>
-                    <property name="title" translatable="yes"/>
+                    <property name="spacing">8</property>
+                    <child>
+                      <object class="GtkFileChooserButton" id="FileChooser">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="filter">filefilter1</property>
+                        <property name="title" translatable="yes"/>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="ButtonApply2">
+                        <property name="label">Apply</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="receives-default">True</property>
+                        <property name="halign">end</property>
+                        <property name="action-name">app.local_web_page_apply</property>
+                        <style>
+                          <class name="suggested-action"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="pack-type">end</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
