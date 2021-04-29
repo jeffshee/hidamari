@@ -89,7 +89,7 @@ class Monitor:
 
     def vlc_pause(self):
         if self.is_initialized:
-            self.__vlc_widget.player.pause()
+            self.__vlc_widget.player.pause_playback()
 
     def vlc_media_new(self, *args):
         if self.is_initialized:
@@ -189,7 +189,7 @@ class Player:
 
     def start_all_monitors(self):
         for monitor in self.monitors:
-            if monitor.is_initialized:
+            if monitor.is_vlc_initialized:
                 continue
             # Setup a VLC widget given the provided width and height.
             vlc_widget = VLCWidget(monitor.width, monitor.height)

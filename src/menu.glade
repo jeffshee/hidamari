@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <object class="GtkMenu" id="menu">
+  <object class="GtkMenu" id="Menu">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <child>
@@ -11,16 +11,14 @@
         <property name="can-focus">False</property>
         <property name="label" translatable="yes">Show Hidamari</property>
         <property name="use-underline">True</property>
-        <signal name="activate" handler="_on_menuitem_main_gui" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkCheckMenuItem" id="menuitem_mute_audio">
+      <object class="GtkCheckMenuItem">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="label" translatable="yes">Mute Audio</property>
         <property name="use-underline">True</property>
-        <signal name="toggled" handler="_on_menuitem_mute_audio" swapped="no"/>
       </object>
     </child>
     <child>
@@ -29,7 +27,6 @@
         <property name="can-focus">False</property>
         <property name="label" translatable="yes">Pause Playback</property>
         <property name="use-underline">True</property>
-        <signal name="toggled" handler="_on_menuitem_pause_playback" swapped="no"/>
       </object>
     </child>
     <child>
@@ -38,7 +35,6 @@
         <property name="can-focus">False</property>
         <property name="label" translatable="yes">I'm Feeling Lucky</property>
         <property name="use-underline">True</property>
-        <signal name="activate" handler="_on_menuitem_feeling_lucky" swapped="no"/>
       </object>
     </child>
     <child>
@@ -47,20 +43,18 @@
         <property name="can-focus">False</property>
         <property name="label" translatable="yes">Quit Hidamari</property>
         <property name="use-underline">True</property>
-        <signal name="activate" handler="_on_menuitem_quit" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkSeparatorMenuItem" id="menuitem_separator">
+      <object class="GtkSeparatorMenuItem">
         <property name="can-focus">False</property>
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem_gnome_settings">
+      <object class="GtkMenuItem">
         <property name="can-focus">False</property>
         <property name="label" translatable="yes">GNOME Settings</property>
         <property name="use-underline">True</property>
-        <signal name="activate" handler="_on_menuitem_gnome_settings" swapped="no"/>
       </object>
     </child>
   </object>

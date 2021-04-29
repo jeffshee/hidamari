@@ -1,0 +1,26 @@
+<node>
+    <interface name='io.github.jeffshee.hidamari'>
+        <method name='Hello'>
+            <arg type='s' name='response' direction='out'/>
+        </method>
+        <method name='EchoString'>
+            <arg type='s' name='a' direction='in'/>
+            <arg type='s' name='response' direction='out'/>
+        </method>
+
+        <method name='video'>
+            <arg type='s' name='video_path' direction='in'/>
+        </method>
+        <method name='stream'>
+            <arg type='s' name='stream_url' direction='in'/>
+        </method>
+        <method name='webpage'>
+            <arg type='s' name='webpage_url' direction='in'/>
+        </method>
+        <method name='quit'/>
+
+        <property name="SomeProperty" type="s" access="readwrite">
+            <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+        </property>
+    </interface>
+</node>
