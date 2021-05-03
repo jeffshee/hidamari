@@ -99,6 +99,10 @@ class Monitor:
         if self.is_webview_initialized:
             self.__webview.set_is_muted(is_mute)
 
+    def web_reload(self):
+        if self.is_webview_initialized:
+            self.__webview.reload()
+
     def win_move(self, *args):
         if self.is_vlc_initialized or self.is_webview_initialized:
             self.__window.move(*args)

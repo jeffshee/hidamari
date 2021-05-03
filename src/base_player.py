@@ -1,3 +1,4 @@
+import sys
 import os
 import gi
 import subprocess
@@ -13,7 +14,6 @@ else:
     from utils_v2 import WindowHandler
 
 from monitor_v2 import Monitor
-from gui_v2 import GUI
 
 
 class BasePlayer:
@@ -61,9 +61,11 @@ class BasePlayer:
     def _build_context_menu(self):
         # TODO will use Gtk.Popover instead with Gtk4 (aesthetic!)
         self.menu = Gtk.Menu()
-        items = [('Show Hidamari', lambda *_: GUI().run(), Gtk.MenuItem),
+        # Idk, if I don't use Popen to launch GUI, the pydbus just don't work (it freeze)... ¯\_(ツ)_/¯
+        items = [('Show Hidamari', lambda *_: subprocess.Popen([sys.executable, "gui_v2.py"]), Gtk.MenuItem),
                  ('Mute Audio', self._on_menuitem_mute_audio, Gtk.CheckMenuItem),
                  ('Pause Playback', self._on_menuitem_pause_playback, Gtk.CheckMenuItem),
+                 ('Reload', self._on_menuitem_reload, Gtk.MenuItem),
                  ('I\'m Feeling Lucky', self._on_menuitem_feeling_lucky, Gtk.MenuItem),
                  ('Quit Hidamari', self.quit, Gtk.MenuItem)]
         self.menuitem = {}
@@ -137,6 +139,9 @@ class BasePlayer:
 
     def _on_menuitem_feeling_lucky(self, *args):
         # TODO call dbus
+        pass
+
+    def _on_menuitem_reload(self, *args):
         pass
 
     def release(self):

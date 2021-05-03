@@ -54,6 +54,7 @@ config = {
 #     "static_wallpaper_blur_radius": 5,
 #     "detect_maximized": True
 # }
+
 # config = {
 #     "version": VERSION,
 #     "mode": MODE_WEBPAGE,
@@ -153,11 +154,13 @@ class HidamariService(object):
             self.player.mode = MODE_WEBPAGE
             self.player.data_source = self.config["data_source"]
 
-    def pause(self):
-        pass
+    def pause_playback(self):
+        if self.player is not None:
+            self.player.pause_playback()
 
-    def play(self):
-        pass
+    def start_playback(self):
+        if self.player is not None:
+            self.player.start_playback()
 
     def quit(self, *args):
         """removes this object from the DBUS connection and exits"""
@@ -165,6 +168,32 @@ class HidamariService(object):
             self.player.quit()
         else:
             loop.quit()
+
+    @property
+    def volume(self):
+        if self.player is not None:
+            return self.player.volume
+        else:
+            return None
+
+    @volume.setter
+    def volume(self, volume):
+        self.config["audio_volume"] = volume
+        if self.player is not None:
+            self.player.volume = volume
+
+    @property
+    def is_mute(self):
+        if self.player is not None:
+            return self.player.is_mute
+        else:
+            return None
+
+    @is_mute.setter
+    def is_mute(self, is_mute):
+        self.config["mute_audio"] = is_mute
+        if self.player is not None:
+            self.player.is_mute = is_mute
 
     @property
     def SomeProperty(self):

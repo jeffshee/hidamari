@@ -1,14 +1,15 @@
 import os
 import sys
 import threading
-
 import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GLib
+from pydbus import SessionBus
 
 GUI_GLADE_PATH = os.path.join(sys.path[0], "gui_v2.glade")
-APPLICATION_ID = "io.github.jeffshee.hidamari"
+APPLICATION_ID = "io.github.jeffshee.hidamari.gui"
+DBUS_NAME = "io.github.jeffshee.hidamari"
 
 
 class GUI(Gtk.Application):
@@ -35,6 +36,12 @@ class GUI(Gtk.Application):
         self.detect_maximized = False
         self.volume = 0
         self.is_playing = True
+
+        bus = SessionBus()
+        try:
+            self.server = bus.get(DBUS_NAME)
+        except GLib.Error:
+            print("Couldn't connect to server")
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -111,11 +118,13 @@ class GUI(Gtk.Application):
         if len(selected) != 0:
             index = selected[0].get_indices()[0]
             print("Local Video", self.local_video_list[index])
+            self.server.video(self.local_video_list[index])
 
     def on_local_web_page_apply(self, action, param):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
         choose: Gio.File = file_chooser.get_file()
         print("Local Web Page", choose.get_path())
+        self.server.webpage(choose.get_path())
 
     def set_play_pause_icon(self):
         play_pause_icon: Gtk.Image = self.builder.get_object("ButtonPlayPauseIcon")
@@ -129,6 +138,10 @@ class GUI(Gtk.Application):
         self.is_playing = not self.is_playing
         print(action.get_name(), self.is_playing)
         self.set_play_pause_icon()
+        if self.is_playing:
+            self.server.start_playback()
+        else:
+            self.server.pause_playback()
 
     def set_mute_toggle_icon(self):
         toggle_icon: Gtk.Image = self.builder.get_object("ToggleMuteIcon")
@@ -153,6 +166,7 @@ class GUI(Gtk.Application):
         self.volume = adjustment.get_value()
         print("Volume", self.volume)
         self.set_mute_toggle_icon()
+        self.server.volume = int(self.volume)
 
     def on_mute(self, action, state):
         action.set_state(state)
@@ -160,6 +174,7 @@ class GUI(Gtk.Application):
         print(action.get_name(), state)
         self.set_mute_toggle_icon()
         self.set_scale_volume_sensitive()
+        self.server.is_mute = state
 
     def on_autostart(self, action, state):
         action.set_state(state)
@@ -190,18 +205,22 @@ class GUI(Gtk.Application):
     def on_streaming_activate(self, entry: Gtk.Entry):
         url = entry.get_text()
         print("Streaming", url)
+        self.server.stream(url)
 
     def on_streaming_refresh(self, entry: Gtk.Entry, *args):
         url = entry.get_text()
         print("Streaming", url)
+        self.server.stream(url)
 
     def on_web_page_activate(self, entry: Gtk.Entry):
         url = entry.get_text()
         print("Web Page", url)
+        self.server.webpage(url)
 
     def on_web_page_refresh(self, entry: Gtk.Entry, *args):
         url = entry.get_text()
         print("Web Page", url)
+        self.server.webpage(url)
 
     def on_quit(self, action, param):
         self.quit()

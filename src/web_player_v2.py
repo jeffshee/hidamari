@@ -17,6 +17,10 @@ class WebPlayer(BasePlayer):
         # For some weird reason the context menu must be built here but not at the base class.
         # Otherwise it freezes your PC and you will need a reboot ¯\_(ツ)_/¯
         self.menu = self._build_context_menu()
+        for child in self.menu.get_children():
+            # Remove unsupported action
+            if child.get_label() == "Pause Playback":
+                self.menu.remove(child)
         self.menu.show_all()
 
     @property
@@ -47,7 +51,8 @@ class WebPlayer(BasePlayer):
             raise ValueError("Invalid mode")
 
         # Convert to uri if necessary
-        if not data_source.startswith("http://") or not data_source.startswith("file://"):
+        if not data_source.startswith("http://") or \
+                not data_source.startswith("https://") or not data_source.startswith("file://"):
             data_source = pathlib.Path(data_source).resolve().as_uri()
 
         for monitor in self.monitors:
@@ -79,7 +84,6 @@ class WebPlayer(BasePlayer):
             if monitor.is_vlc_initialized:
                 continue
             webview = WebKit2.WebView()
-            # TODO override webview right-click
 
             # Window settings
             window = Gtk.Window()
@@ -104,3 +108,7 @@ class WebPlayer(BasePlayer):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
             self.menu.popup_at_pointer()
         return True
+
+    def _on_menuitem_reload(self, *args):
+        for monitor in self.monitors:
+            monitor.web_reload()

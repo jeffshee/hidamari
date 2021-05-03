@@ -62,6 +62,10 @@ class Player(BasePlayer):
         # For some weird reason the context menu must be built here but not at the base class.
         # Otherwise it freezes your PC and you will need a reboot ¯\_(ツ)_/¯
         self.menu = self._build_context_menu()
+        for child in self.menu.get_children():
+            # Remove unsupported action
+            if child.get_label() == "Reload":
+                self.menu.remove(child)
         self.menu.show_all()
 
     @property

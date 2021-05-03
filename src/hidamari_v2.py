@@ -1,15 +1,9 @@
-import os
 import time
 from pydbus import SessionBus
 from gi.repository import GLib
 
 DBUS_NAME = "io.github.jeffshee.hidamari"
 SERVER = "server_v2.py"
-
-# Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
-os.environ['GDK_BACKEND'] = "x11"
-# Suppress VLC Log
-os.environ["VLC_VERBOSE"] = "-1"
 
 loop = GLib.MainLoop()
 
@@ -38,6 +32,7 @@ server.PropertiesChanged.connect(print)
 
 reply = server.Hello()
 print(reply)
+
 #
 # reply = server.EchoString("test 123")
 # print(reply)
