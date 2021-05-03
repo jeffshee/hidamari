@@ -1,4 +1,7 @@
 import os
+import subprocess
+import json
+from pprint import pprint
 
 import gi
 import pydbus
@@ -9,8 +12,10 @@ from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 from gi.repository.GdkPixbuf import Pixbuf
 
 HOME = os.environ["HOME"]
-CONFIG_DIR = HOME + "/.config/hidamari"
-VIDEO_WALLPAPER_DIR = HOME + "/Videos/Hidamari"
+CONFIG_VERSION = 2
+CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
+CONFIG_PATH = os.path.join(CONFIG_DIR, "hidamari.config")
+VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Videos", "Hidamari")
 
 
 def list_local_video_dir():
@@ -26,7 +31,6 @@ def list_local_video_dir():
 
 
 def xdg_open_video_dir():
-    import subprocess
     subprocess.call(["xdg-open", os.path.realpath(VIDEO_WALLPAPER_DIR)])
 
 
@@ -179,3 +183,55 @@ class WindowHandlerGnome:
             self.on_window_state_changed({"is_any_maximized": maximized != "", "is_any_fullscreen": fullscreen != ""})
             print("WindowHandler:", cur_state)
         return True
+
+
+class ConfigUtil:
+    def __init__(self):
+        self.template_config = {
+            "version": CONFIG_VERSION,
+            "mode": None,
+            "data_source": None,
+            "mute_audio": False,
+            "audio_volume": 50,
+            "static_wallpaper": True,
+            "static_wallpaper_blur_radius": 5,
+            "detect_maximized": True
+        }
+
+    def _generate_template(self):
+        os.makedirs(CONFIG_DIR, exist_ok=True)
+        self.save(self.template_config)
+
+    def _check(self, config: dict):
+        """Check if the config is valid"""
+        is_all_keys_match = all(key in config for key in self.template_config)
+        is_version_match = config.get("version") == CONFIG_VERSION
+        return is_all_keys_match and is_version_match
+
+    def load(self):
+        if os.path.isfile(CONFIG_PATH):
+            with open(CONFIG_PATH, "r") as f:
+                json_str = f.read()
+                try:
+                    config = json.loads(json_str)
+                    if self._check(config):
+                        print("Config JSON:")
+                        pprint(config)
+                        return config
+                    else:
+                        print("Config is invalid, generate new config")
+                        self._generate_template()
+                        return self.template_config
+                except json.decoder.JSONDecodeError:
+                    print("Config JSONDecodeError, generate new config")
+                    self._generate_template()
+                    return self.template_config
+        else:
+            print("Config not found, generate new config")
+            self._generate_template()
+            return self.template_config
+
+    def save(self, config):
+        with open(CONFIG_PATH, "w") as f:
+            json_str = json.dumps(config, indent=4)
+            print(json_str, file=f)
