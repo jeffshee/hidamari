@@ -6,6 +6,8 @@ from pydbus import SessionBus
 from pydbus.generic import signal as dbus_signal
 import pkg_resources
 
+from utils_v2 import ConfigUtil
+
 DBUS_NAME = "io.github.jeffshee.hidamari"
 VIDEO_WALLPAPER_PATH = os.environ["HOME"] + "/Videos/Hidamari"
 
@@ -16,23 +18,24 @@ os.environ["VLC_VERBOSE"] = "-1"
 
 loop = GLib.MainLoop()
 
-VERSION = 2
+# VERSION = 2
 
 MODE_VIDEO = "video"
 MODE_STREAM = "stream"
 MODE_WEBPAGE = "webpage"
 
-# Dummy
-config = {
-    "version": VERSION,
-    "mode": MODE_VIDEO,
-    "data_source": "/home/jeffshee/Videos/Hidamari/Rem.mp4",
-    "mute_audio": False,
-    "audio_volume": 50,
-    "static_wallpaper": True,
-    "static_wallpaper_blur_radius": 5,
-    "detect_maximized": True
-}
+
+# # Dummy
+# config = {
+#     "version": VERSION,
+#     "mode": MODE_VIDEO,
+#     "data_source": "/home/jeffshee/Videos/Hidamari/Rem.mp4",
+#     "mute_audio": False,
+#     "audio_volume": 50,
+#     "static_wallpaper": True,
+#     "static_wallpaper_blur_radius": 5,
+#     "detect_maximized": True
+# }
 # config = {
 #     "version": VERSION,
 #     "mode": MODE_STREAM,
@@ -74,13 +77,17 @@ class HidamariService(object):
         signal.signal(signal.SIGSEGV, self.quit)
 
         self._someProperty = "initial value"
-        self.config = config
+        self.config = ConfigUtil().load()
         self.player = None
-        if config["mode"] == MODE_VIDEO:
+        if self.config["mode"] is None:
+            # Welcome to Hidamari, first time user ;)
+            from gui_v2 import GUI
+            GUI().run()
+        elif self.config["mode"] == MODE_VIDEO:
             self.video()
-        elif config["mode"] == MODE_STREAM:
+        elif self.config["mode"] == MODE_STREAM:
             self.stream()
-        elif config["mode"] == MODE_WEBPAGE:
+        elif self.config["mode"] == MODE_WEBPAGE:
             self.webpage()
         else:
             raise ValueError("Unknown mode")
