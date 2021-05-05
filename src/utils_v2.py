@@ -231,7 +231,9 @@ class ConfigUtil:
             self._generate_template()
             return self.template_config
 
-    def save(self, config):
+    @staticmethod
+    def save(config):
+        print("save")
         with open(CONFIG_PATH, "w") as f:
             json_str = json.dumps(config, indent=4)
             print(json_str, file=f)

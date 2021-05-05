@@ -14,6 +14,7 @@ else:
     from utils_v2 import WindowHandler
 
 from monitor_v2 import Monitor
+from utils_v2 import ConfigUtil
 
 
 class BasePlayer:
@@ -50,6 +51,10 @@ class BasePlayer:
 
     @is_mute.setter
     def is_mute(self, is_mute: bool):
+        raise NotImplementedError
+
+    @property
+    def is_playing(self):
         raise NotImplementedError
 
     def pause_playback(self):
@@ -138,7 +143,6 @@ class BasePlayer:
         self.pause_playback() if self.user_pause_playback else self.start_playback()
 
     def _on_menuitem_feeling_lucky(self, *args):
-        # TODO call dbus
         pass
 
     def _on_menuitem_reload(self, *args):
@@ -152,5 +156,6 @@ class BasePlayer:
     def quit(self, *args):
         """Quit everything"""
         print("quit")
+        ConfigUtil.save(self.config)
         self.release()
         exit(0)

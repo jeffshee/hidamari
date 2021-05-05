@@ -57,6 +57,7 @@ class Player(BasePlayer):
         self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
         self.new_wallpaper_uri = "/tmp/hidamari.png"
 
+        self._is_playing = False
         self.start_all_monitors()
 
         # For some weird reason the context menu must be built here but not at the base class.
@@ -86,6 +87,10 @@ class Player(BasePlayer):
         for monitor in self.monitors:
             if monitor.is_primary:
                 monitor.vlc_audio_set_volume(volume)
+
+    @property
+    def is_playing(self):
+        return self._is_playing
 
     @property
     def data_source(self):
@@ -149,11 +154,13 @@ class Player(BasePlayer):
     def pause_playback(self):
         for monitor in self.monitors:
             monitor.vlc_pause()
+            self._is_playing = False
 
     def start_playback(self):
         if not self.user_pause_playback:
             for monitor in self.monitors:
                 monitor.vlc_play()
+                self._is_playing = True
 
     def start_all_monitors(self):
         for monitor in self.monitors:

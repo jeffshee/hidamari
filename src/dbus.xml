@@ -24,6 +24,9 @@
 
         <property name="volume" type="i" access="readwrite"/>
         <property name="is_mute" type="b" access="readwrite"/>
+        <property name="is_playing" type="b" access="read"/>
+        <property name="is_static_wallpaper" type="b" access="readwrite"/>
+        <property name="is_detect_maximized" type="b" access="readwrite"/>
 
         <property name="SomeProperty" type="s" access="readwrite">
             <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>

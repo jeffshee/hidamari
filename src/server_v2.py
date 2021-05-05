@@ -1,3 +1,5 @@
+import sys
+import subprocess
 import signal
 
 import os
@@ -16,58 +18,9 @@ os.environ['GDK_BACKEND'] = "x11"
 # Suppress VLC Log
 os.environ["VLC_VERBOSE"] = "-1"
 
-loop = GLib.MainLoop()
-
-# VERSION = 2
-
 MODE_VIDEO = "video"
 MODE_STREAM = "stream"
 MODE_WEBPAGE = "webpage"
-
-
-# # Dummy
-# config = {
-#     "version": VERSION,
-#     "mode": MODE_VIDEO,
-#     "data_source": "/home/jeffshee/Videos/Hidamari/Rem.mp4",
-#     "mute_audio": False,
-#     "audio_volume": 50,
-#     "static_wallpaper": True,
-#     "static_wallpaper_blur_radius": 5,
-#     "detect_maximized": True
-# }
-# config = {
-#     "version": VERSION,
-#     "mode": MODE_STREAM,
-#     "data_source": "https://www.youtube.com/watch?v=Y-lYuGIWqu0&list=LL&index=6",
-#     "mute_audio": False,
-#     "audio_volume": 50,
-#     "static_wallpaper": True,
-#     "static_wallpaper_blur_radius": 5,
-#     "detect_maximized": True
-# }
-
-# config = {
-#     "version": VERSION,
-#     "mode": MODE_WEBPAGE,
-#     "data_source": "https://alteredqualia.com/three/examples/webgl_pasta.html",
-#     "mute_audio": False,
-#     "audio_volume": 50,
-#     "static_wallpaper": True,
-#     "static_wallpaper_blur_radius": 5,
-#     "detect_maximized": True
-# }
-
-# config = {
-#     "version": VERSION,
-#     "mode": MODE_WEBPAGE,
-#     "data_source": "/home/jeffshee/test.html",
-#     "mute_audio": False,
-#     "audio_volume": 50,
-#     "static_wallpaper": True,
-#     "static_wallpaper_blur_radius": 5,
-#     "detect_maximized": True
-# }
 
 
 class HidamariService(object):
@@ -82,14 +35,13 @@ class HidamariService(object):
         self.player = None
         if self.config["mode"] is None:
             # Welcome to Hidamari, first time user ;)
-            from gui_v2 import GUI
-            GUI().run()
+            self.dbus_published_callback = self.base
         elif self.config["mode"] == MODE_VIDEO:
-            self.video()
+            self.dbus_published_callback = self.video
         elif self.config["mode"] == MODE_STREAM:
-            self.stream()
+            self.dbus_published_callback = self.stream
         elif self.config["mode"] == MODE_WEBPAGE:
-            self.webpage()
+            self.dbus_published_callback = self.webpage
         else:
             raise ValueError("Unknown mode")
 
@@ -98,16 +50,19 @@ class HidamariService(object):
     # Signals
     PropertiesChanged = dbus_signal()
 
+    def base(self):
+        subprocess.Popen([sys.executable, "gui_v2.py"])
+
     def video(self, video_path=None):
         print("video")
+        self.config["mode"] = MODE_VIDEO
 
         # Set data source if specified
         if video_path is not None:
             self.config["data_source"] = video_path
 
         # Quit current player if different
-        if self.config["mode"] == MODE_WEBPAGE:
-            self.config["mode"] = MODE_VIDEO
+        if self.config["mode"] == MODE_WEBPAGE and self.player is not None:
             self.player.release()
             self.player = None
 
@@ -121,6 +76,7 @@ class HidamariService(object):
 
     def stream(self, stream_url=None):
         print("stream")
+        self.config["mode"] = MODE_STREAM
 
         # Set data source if specified
         if stream_url is not None:
@@ -128,7 +84,6 @@ class HidamariService(object):
 
         # Quit current player if different
         if self.config["mode"] == MODE_WEBPAGE and self.player is not None:
-            self.config["mode"] = MODE_STREAM
             self.player.release()
             self.player = None
 
@@ -142,6 +97,7 @@ class HidamariService(object):
 
     def webpage(self, webpage_url=None):
         print("webpage")
+        self.config["mode"] = MODE_WEBPAGE
 
         # Set data source if specified
         if webpage_url is not None:
@@ -149,7 +105,6 @@ class HidamariService(object):
 
         # Quit current player if different
         if self.config["mode"] != MODE_WEBPAGE and self.player is not None:
-            self.config["mode"] = MODE_WEBPAGE
             self.player.release()
             self.player = None
 
@@ -178,10 +133,7 @@ class HidamariService(object):
 
     @property
     def volume(self):
-        if self.player is not None:
-            return self.player.volume
-        else:
-            return None
+        return self.config["audio_volume"]
 
     @volume.setter
     def volume(self, volume):
@@ -191,16 +143,29 @@ class HidamariService(object):
 
     @property
     def is_mute(self):
-        if self.player is not None:
-            return self.player.is_mute
-        else:
-            return None
+        return self.config["mute_audio"]
 
     @is_mute.setter
     def is_mute(self, is_mute):
         self.config["mute_audio"] = is_mute
         if self.player is not None:
             self.player.is_mute = is_mute
+
+    @property
+    def is_playing(self):
+        if self.player is not None:
+            return self.player.is_playing
+        return False
+
+    @property
+    def is_static_wallpaper(self):
+        # TODO
+        return True
+
+    @property
+    def is_detect_maximized(self):
+        # TODO
+        return True
 
     @property
     def SomeProperty(self):
@@ -220,9 +185,13 @@ class HidamariService(object):
         return s
 
 
-bus = SessionBus()
-try:
-    bus.publish(DBUS_NAME, HidamariService())
-    loop.run()
-except RuntimeError:
-    pass
+if __name__ == "__main__":
+    loop = GLib.MainLoop()
+    bus = SessionBus()
+    try:
+        hidamari = HidamariService()
+        bus.publish(DBUS_NAME, hidamari)
+        hidamari.dbus_published_callback()
+        loop.run()
+    except RuntimeError:
+        pass

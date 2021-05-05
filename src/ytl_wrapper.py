@@ -8,38 +8,38 @@ def get_formats(raw_url):
 
 
 def filter_audio(formats):
-    return filter(lambda x: x["acodec"] != "none" and x["vcodec"] == "none", formats)
+    return filter(lambda x: x.get("acodec") != "none" and x.get("vcodec") == "none", formats)
 
 
 def filter_video(formats):
-    return filter(lambda x: x["acodec"] == "none" and x["vcodec"] != "none", formats)
+    return filter(lambda x: x.get("acodec") == "none" and x.get("vcodec") != "none", formats)
 
 
 def filter_audio_video(formats):
-    return filter(lambda x: x["acodec"] != "none" and x["vcodec"] != "none", formats)
+    return filter(lambda x: x.get("acodec") != "none" and x.get("vcodec") != "none", formats)
 
 
 def get_best(formats):
     filtered = list(filter_audio_video(formats))
-    best = max(filtered, key=lambda x: x["quality"])
+    best = max(filtered, key=lambda x: x.get("quality", -1))
     return best["url"]
 
 
 def get_best_audio(formats):
     filtered = list(filter_audio(formats))
-    best = max(filtered, key=lambda x: x["quality"])
+    best = max(filtered, key=lambda x: x.get("quality", -1))
     return best["url"]
 
 
 def get_best_video(formats):
     filtered = list(filter_video(formats))
-    best = max(filtered, key=lambda x: x["quality"])
+    best = max(filtered, key=lambda x: x.get("quality", -1))
     return best["url"]
 
 
 def get_optimal_video(formats, height):
     filtered = list(filter_video(formats))
-    best = min(filtered, key=lambda x: abs(x["height"] - height))
+    best = min(filtered, key=lambda x: abs(x.get("height", 0) - height))
     return best["url"]
 
 

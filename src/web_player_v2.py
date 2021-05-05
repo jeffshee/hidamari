@@ -73,6 +73,10 @@ class WebPlayer(BasePlayer):
             if monitor.is_primary:
                 monitor.web_set_is_mute(is_mute)
 
+    @property
+    def is_playing(self):
+        return True
+
     def pause_playback(self):
         pass
 

@@ -10,6 +10,18 @@ from pydbus import SessionBus
 GUI_GLADE_PATH = os.path.join(sys.path[0], "gui_v2.glade")
 APPLICATION_ID = "io.github.jeffshee.hidamari.gui"
 DBUS_NAME = "io.github.jeffshee.hidamari"
+AUTOSTART_DESKTOP_PATH = os.path.join(os.environ["HOME"], ".config", "autostart", "hidamari.desktop")
+AUTOSTART_DESKTOP_CONTENT = \
+    """
+    [Desktop Entry]
+    Type=Application
+    Name=Hidamari
+    Exec=hidamari
+    StartupNotify=false
+    Terminal=false
+    Icon=hidamari
+    Categories=System;Monitor;
+    """
 
 
 class GUI(Gtk.Application):
@@ -30,12 +42,7 @@ class GUI(Gtk.Application):
         self.local_video_icon_view = None
         self.local_video_list = None
 
-        self.mute = False
-        self.autostart = False
-        self.static_wallpaper = False
-        self.detect_maximized = False
-        self.volume = 0
-        self.is_playing = True
+        self.is_autostart = os.path.isfile(AUTOSTART_DESKTOP_PATH)
 
         bus = SessionBus()
         try:
@@ -66,21 +73,21 @@ class GUI(Gtk.Application):
         action.connect("activate", self.on_play_pause)
         self.add_action(action)
 
-        action = Gio.SimpleAction.new_stateful("mute", None, GLib.Variant.new_boolean(self.mute))
+        action = Gio.SimpleAction.new_stateful("mute", None, GLib.Variant.new_boolean(self.server.is_mute))
         action.connect("change-state", self.on_mute)
         self.add_action(action)
 
-        action = Gio.SimpleAction.new_stateful("autostart", None, GLib.Variant.new_boolean(self.autostart))
+        action = Gio.SimpleAction.new_stateful("autostart", None, GLib.Variant.new_boolean(self.is_autostart))
         action.connect("change-state", self.on_autostart)
         self.add_action(action)
 
         action = Gio.SimpleAction.new_stateful("static_wallpaper", None,
-                                               GLib.Variant.new_boolean(self.static_wallpaper))
+                                               GLib.Variant.new_boolean(self.server.is_static_wallpaper))
         action.connect("change-state", self.on_static_wallpaper)
         self.add_action(action)
 
         action = Gio.SimpleAction.new_stateful("detect_maximized", None,
-                                               GLib.Variant.new_boolean(self.detect_maximized))
+                                               GLib.Variant.new_boolean(self.server.is_detect_maximized))
         action.connect("change-state", self.on_detect_maximized)
         self.add_action(action)
 
@@ -128,28 +135,27 @@ class GUI(Gtk.Application):
 
     def set_play_pause_icon(self):
         play_pause_icon: Gtk.Image = self.builder.get_object("ButtonPlayPauseIcon")
-        if self.is_playing:
+        if self.server.is_playing:
             icon_name = "player_pause"
         else:
             icon_name = "player_play"
         play_pause_icon.set_from_icon_name(icon_name=icon_name, size=0)
 
     def on_play_pause(self, action, param):
-        self.is_playing = not self.is_playing
-        print(action.get_name(), self.is_playing)
-        self.set_play_pause_icon()
-        if self.is_playing:
-            self.server.start_playback()
-        else:
+        print(action.get_name())
+        if self.server.is_playing:
             self.server.pause_playback()
+        else:
+            self.server.start_playback()
+        self.set_play_pause_icon()
 
     def set_mute_toggle_icon(self):
         toggle_icon: Gtk.Image = self.builder.get_object("ToggleMuteIcon")
-        if self.volume == 0 or self.mute:
+        if self.server.volume == 0 or self.server.is_mute:
             icon_name = "audio-volume-muted"
-        elif self.volume < 30:
+        elif self.server.volume < 30:
             icon_name = "audio-volume-low"
-        elif self.volume < 60:
+        elif self.server.volume < 60:
             icon_name = "audio-volume-medium"
         else:
             icon_name = "audio-volume-high"
@@ -157,38 +163,37 @@ class GUI(Gtk.Application):
 
     def set_scale_volume_sensitive(self):
         scale = self.builder.get_object("ScaleVolume")
-        if self.mute:
+        if self.server.is_mute:
             scale.set_sensitive(False)
         else:
             scale.set_sensitive(True)
 
     def on_volume_changed(self, adjustment):
-        self.volume = adjustment.get_value()
-        print("Volume", self.volume)
+        if not self.server.is_mute:
+            self.server.volume = int(adjustment.get_value())
+            print("Volume", self.server.volume)
         self.set_mute_toggle_icon()
-        self.server.volume = int(self.volume)
 
     def on_mute(self, action, state):
         action.set_state(state)
-        self.mute = state
+        self.server.is_mute = state
         print(action.get_name(), state)
         self.set_mute_toggle_icon()
         self.set_scale_volume_sensitive()
-        self.server.is_mute = state
 
     def on_autostart(self, action, state):
         action.set_state(state)
-        self.autostart = state
+        self.is_autostart = state
         print(action.get_name(), state)
 
     def on_static_wallpaper(self, action, state):
         action.set_state(state)
-        self.static_wallpaper = state
+        self.server.is_static_wallpaper = state
         print(action.get_name(), state)
 
     def on_detect_maximized(self, action, state):
         action.set_state(state)
-        self.detect_maximized = state
+        self.server.is_detect_maximized = state
         print(action.get_name(), state)
 
     def on_about(self, action, param):
@@ -223,10 +228,22 @@ class GUI(Gtk.Application):
         self.server.webpage(url)
 
     def on_quit(self, action, param):
+        try:
+            # Ignore NoReply error
+            self.server.quit()
+        except GLib.Error:
+            pass
         self.quit()
 
     def _reload_all_widgets(self):
         self._reload_local_video_icon_view()
+        self.set_play_pause_icon()
+        self.set_mute_toggle_icon()
+        self.set_scale_volume_sensitive()
+        toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleMute")
+        toggle_mute.set_state = self.server.is_mute
+        scale_volume: Gtk.Scale = self.builder.get_object("ScaleVolume")
+        scale_volume.set_value(self.server.volume)
 
     def _reload_local_video_icon_view(self):
         from utils_v2 import list_local_video_dir, get_thumbnail_gnome
