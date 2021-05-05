@@ -16,7 +16,18 @@ CONFIG_VERSION = 2
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "hidamari.config")
 VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Videos", "Hidamari")
-
+AUTOSTART_DESKTOP_PATH = os.path.join(os.environ["HOME"], ".config", "autostart", "hidamari.desktop")
+AUTOSTART_DESKTOP_CONTENT = \
+    """
+    [Desktop Entry]
+    Type=Application
+    Name=Hidamari
+    Exec=hidamari
+    StartupNotify=false
+    Terminal=false
+    Icon=hidamari
+    Categories=System;Monitor;
+    """
 
 def list_local_video_dir():
     file_list = []
@@ -68,7 +79,15 @@ def get_thumbnail_gnome(video_path, list_store, idx):
     else:
         generate_thumbnail_gnome(video_path)
 
-
+def setup_autostart(autostart):
+    if autostart:
+        with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
+            f.write(AUTOSTART_DESKTOP_CONTENT)
+    else:
+        try:
+            os.remove(AUTOSTART_DESKTOP_PATH)
+        except OSError:
+            pass
 class ActiveHandler:
     """
     Handler for monitoring screen lock

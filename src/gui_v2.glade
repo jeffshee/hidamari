@@ -125,7 +125,7 @@ Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</pr
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton">
+          <object class="GtkModelButton" id="ToggleAutostart">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>

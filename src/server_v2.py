@@ -1,12 +1,10 @@
-import sys
-import subprocess
+import os
 import signal
 
-import os
+import pkg_resources
 from gi.repository import GLib
 from pydbus import SessionBus
 from pydbus.generic import signal as dbus_signal
-import pkg_resources
 
 from utils_v2 import ConfigUtil
 
@@ -23,6 +21,10 @@ MODE_STREAM = "stream"
 MODE_WEBPAGE = "webpage"
 
 
+# TODO
+# rename some variables in config, etc. to make everything more consistent
+# debug mode
+
 class HidamariService(object):
     def __init__(self):
         signal.signal(signal.SIGINT, self.quit)
@@ -35,7 +37,7 @@ class HidamariService(object):
         self.player = None
         if self.config["mode"] is None:
             # Welcome to Hidamari, first time user ;)
-            self.dbus_published_callback = self.base
+            self.dbus_published_callback = self.null
         elif self.config["mode"] == MODE_VIDEO:
             self.dbus_published_callback = self.video
         elif self.config["mode"] == MODE_STREAM:
@@ -50,8 +52,17 @@ class HidamariService(object):
     # Signals
     PropertiesChanged = dbus_signal()
 
-    def base(self):
-        subprocess.Popen([sys.executable, "gui_v2.py"])
+    def null(self):
+        print("null")
+        self.config["mode"] = None
+
+        if self.player is not None:
+            self.player.release()
+            self.player = None
+
+        if self.player is None:
+            from null_player import NullPlayer
+            self.player = NullPlayer(self.config)
 
     def video(self, video_path=None):
         print("video")

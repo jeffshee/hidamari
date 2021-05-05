@@ -85,7 +85,7 @@ class WebPlayer(BasePlayer):
 
     def start_all_monitors(self):
         for monitor in self.monitors:
-            if monitor.is_vlc_initialized:
+            if monitor.is_webview_initialized:
                 continue
             webview = WebKit2.WebView()
 

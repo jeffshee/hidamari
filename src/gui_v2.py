@@ -11,17 +11,6 @@ GUI_GLADE_PATH = os.path.join(sys.path[0], "gui_v2.glade")
 APPLICATION_ID = "io.github.jeffshee.hidamari.gui"
 DBUS_NAME = "io.github.jeffshee.hidamari"
 AUTOSTART_DESKTOP_PATH = os.path.join(os.environ["HOME"], ".config", "autostart", "hidamari.desktop")
-AUTOSTART_DESKTOP_CONTENT = \
-    """
-    [Desktop Entry]
-    Type=Application
-    Name=Hidamari
-    Exec=hidamari
-    StartupNotify=false
-    Terminal=false
-    Icon=hidamari
-    Categories=System;Monitor;
-    """
 
 
 class GUI(Gtk.Application):
@@ -185,6 +174,8 @@ class GUI(Gtk.Application):
         action.set_state(state)
         self.is_autostart = state
         print(action.get_name(), state)
+        from utils_v2 import setup_autostart
+        setup_autostart(state)
 
     def on_static_wallpaper(self, action, state):
         action.set_state(state)
@@ -244,6 +235,8 @@ class GUI(Gtk.Application):
         toggle_mute.set_state = self.server.is_mute
         scale_volume: Gtk.Scale = self.builder.get_object("ScaleVolume")
         scale_volume.set_value(self.server.volume)
+        toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleAutostart")
+        toggle_mute.set_state = self.is_autostart
 
     def _reload_local_video_icon_view(self):
         from utils_v2 import list_local_video_dir, get_thumbnail_gnome

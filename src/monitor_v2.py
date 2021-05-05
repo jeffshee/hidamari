@@ -31,6 +31,10 @@ class Monitor:
         return self.__window is not None and self.__webview is not None
 
     @property
+    def is_initialized(self):
+        return self.__window is not None
+
+    @property
     def x(self):
         return self.gdk_monitor.get_geometry().x
 
@@ -121,4 +125,6 @@ class Monitor:
             self.__vlc_widget.player.release()
             self.__window.close()
         elif self.is_webview_initialized:
+            self.__window.close()
+        elif self.is_initialized:
             self.__window.close()
