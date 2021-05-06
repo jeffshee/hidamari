@@ -1,5 +1,3 @@
-import sys
-import subprocess
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -19,8 +17,13 @@ class NullPlayer(BasePlayer):
             if child.get_label() not in ["Show Hidamari", "Quit Hidamari", "GNOME Settings"]:
                 self.menu.remove(child)
         self.menu.show_all()
-
-        subprocess.Popen([sys.executable, "gui_v2.py"])
+        # Welcome dialog
+        dialog = Gtk.MessageDialog(text="Welcome to Hidamari 🤗", message_type=Gtk.MessageType.INFO,
+                                   secondary_text="<b>Right click</b> on the desktop to access the Main Menu",
+                                   secondary_use_markup=True,
+                                   buttons=Gtk.ButtonsType.OK)
+        dialog.run()
+        dialog.destroy()
 
     @property
     def mode(self):
@@ -49,10 +52,6 @@ class NullPlayer(BasePlayer):
     @property
     def is_mute(self):
         return self.config["mute_audio"]
-
-    # @is_mute.setter
-    # def is_mute(self, is_mute):
-    #     self.config["mute_audio"] = is_mute
 
     @property
     def is_playing(self):

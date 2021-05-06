@@ -61,7 +61,6 @@ class HidamariService(object):
 
     def _setup_player(self, mode, data_source=None):
         self.config["mode"] = mode
-
         # Set data source if specified
         if data_source is not None:
             self.config["data_source"] = data_source
@@ -107,8 +106,7 @@ class HidamariService(object):
         """removes this object from the DBUS connection and exits"""
         if self.player is not None:
             self.player.quit()
-        else:
-            loop.quit()
+        loop.quit()
 
     @property
     def volume(self):
