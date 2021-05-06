@@ -18,6 +18,7 @@ AUTOSTART_DESKTOP_CONTENT = \
     Icon=hidamari
     Categories=System;Monitor;
     """
+GUI_SCRIPT_PATH = os.path.join(sys.path[0], "gui.py")
 GUI_GLADE_PATH = os.path.join(sys.path[0], "gui_v2.glade")
 APPLICATION_ID = "io.github.jeffshee.hidamari.gui"
 

@@ -68,7 +68,7 @@ class BasePlayer:
         # TODO will use Gtk.Popover instead with Gtk4 (aesthetic!)
         self.menu = Gtk.Menu()
         # Idk, if I don't use Popen to launch GUI, the pydbus just don't work (it freeze)... ¯\_(ツ)_/¯
-        items = [('Show Hidamari', lambda *_: subprocess.Popen([sys.executable, "gui.py"]), Gtk.MenuItem),
+        items = [('Show Hidamari', lambda *_: subprocess.Popen([sys.executable, GUI_SCRIPT_PATH]), Gtk.MenuItem),
                  ('Mute Audio', self._on_menuitem_mute_audio, Gtk.CheckMenuItem),
                  ('Pause Playback', self._on_menuitem_pause_playback, Gtk.CheckMenuItem),
                  ('Reload', self._on_menuitem_reload, Gtk.MenuItem),
