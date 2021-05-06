@@ -158,9 +158,8 @@ class GUI(Gtk.Application):
             scale.set_sensitive(True)
 
     def on_volume_changed(self, adjustment):
-        if not self.server.is_mute:
-            self.server.volume = int(adjustment.get_value())
-            print("Volume", self.server.volume)
+        self.server.volume = int(adjustment.get_value())
+        print("Volume", self.server.volume)
         self.set_mute_toggle_icon()
 
     def on_mute(self, action, state):
@@ -233,8 +232,14 @@ class GUI(Gtk.Application):
         self.set_scale_volume_sensitive()
         toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleMute")
         toggle_mute.set_state = self.server.is_mute
+
         scale_volume: Gtk.Scale = self.builder.get_object("ScaleVolume")
+        adjustment_volume: Gtk.Adjustment = self.builder.get_object("AdjustmentVolume")
+        # Temporary block signal
+        adjustment_volume.handler_block_by_func(self.on_volume_changed)
         scale_volume.set_value(self.server.volume)
+        adjustment_volume.handler_unblock_by_func(self.on_volume_changed)
+
         toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleAutostart")
         toggle_mute.set_state = self.is_autostart
 

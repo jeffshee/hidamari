@@ -73,7 +73,6 @@ class BasePlayer:
                  ('Reload', self._on_menuitem_reload, Gtk.MenuItem),
                  ('I\'m Feeling Lucky', self._on_menuitem_feeling_lucky, Gtk.MenuItem),
                  ('Quit Hidamari', self.quit, Gtk.MenuItem)]
-        self.menuitem = {}
         if 'gnome' in os.environ['XDG_CURRENT_DESKTOP'].lower():
             items += [(None, None, Gtk.SeparatorMenuItem),
                       ('GNOME Settings', lambda *_: subprocess.Popen("gnome-control-center"), Gtk.MenuItem)]
@@ -86,7 +85,6 @@ class BasePlayer:
                 menuitem = item_type.new_with_label(label)
                 menuitem.connect('activate', handler)
                 self.menu.append(menuitem)
-                self.menuitem[label] = menuitem
         return self.menu
 
     def _monitor_detect(self):

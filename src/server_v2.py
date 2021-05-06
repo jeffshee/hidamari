@@ -22,8 +22,10 @@ MODE_WEBPAGE = "webpage"
 
 
 # TODO
-# rename some variables in config, etc. to make everything more consistent
-# debug mode
+# Complete GUI
+# Rename some variables in config, etc. to make everything more consistent
+# Debug mode
+# Context menu may cause system freeze
 
 class HidamariService(object):
     def __init__(self):
@@ -54,78 +56,44 @@ class HidamariService(object):
 
     def null(self):
         print("null")
-        self.config["mode"] = None
+        from null_player import NullPlayer
+        self.player = NullPlayer(self.config)
 
+    def _setup_player(self, mode, data_source=None):
+        self.config["mode"] = mode
+
+        # Set data source if specified
+        if data_source is not None:
+            self.config["data_source"] = data_source
+
+        # Quit current player
         if self.player is not None:
             self.player.release()
             self.player = None
 
         if self.player is None:
-            from null_player import NullPlayer
-            self.player = NullPlayer(self.config)
+            # Create new player
+            if mode in [MODE_VIDEO, MODE_STREAM]:
+                from player_v2 import Player
+                self.player = Player(self.config)
+            elif mode == MODE_WEBPAGE:
+                from web_player_v2 import WebPlayer
+                self.player = WebPlayer(self.config)
+        else:
+            self.player.mode = mode
+            self.player.data_source = self.config["data_source"]
 
     def video(self, video_path=None):
         print("video")
-        self.config["mode"] = MODE_VIDEO
-
-        # Set data source if specified
-        if video_path is not None:
-            self.config["data_source"] = video_path
-
-        # Quit current player if different
-        if self.config["mode"] == MODE_WEBPAGE and self.player is not None:
-            self.player.release()
-            self.player = None
-
-        if self.player is None:
-            # Create new player
-            from player_v2 import Player
-            self.player = Player(self.config)
-        else:
-            self.player.mode = MODE_VIDEO
-            self.player.data_source = self.config["data_source"]
+        self._setup_player(MODE_VIDEO, video_path)
 
     def stream(self, stream_url=None):
         print("stream")
-        self.config["mode"] = MODE_STREAM
-
-        # Set data source if specified
-        if stream_url is not None:
-            self.config["data_source"] = stream_url
-
-        # Quit current player if different
-        if self.config["mode"] == MODE_WEBPAGE and self.player is not None:
-            self.player.release()
-            self.player = None
-
-        if self.player is None:
-            # Create new player
-            from player_v2 import Player
-            self.player = Player(self.config)
-        else:
-            self.player.mode = MODE_STREAM
-            self.player.data_source = self.config["data_source"]
+        self._setup_player(MODE_STREAM, stream_url)
 
     def webpage(self, webpage_url=None):
         print("webpage")
-        self.config["mode"] = MODE_WEBPAGE
-
-        # Set data source if specified
-        if webpage_url is not None:
-            self.config["data_source"] = webpage_url
-
-        # Quit current player if different
-        if self.config["mode"] != MODE_WEBPAGE and self.player is not None:
-            self.player.release()
-            self.player = None
-
-        if self.player is None:
-            # Create new player
-            from web_player_v2 import WebPlayer
-            self.player = WebPlayer(self.config)
-        else:
-            self.player.mode = MODE_WEBPAGE
-            self.player.data_source = self.config["data_source"]
+        self._setup_player(MODE_WEBPAGE, webpage_url)
 
     def pause_playback(self):
         if self.player is not None:
@@ -170,13 +138,23 @@ class HidamariService(object):
 
     @property
     def is_static_wallpaper(self):
-        # TODO
-        return True
+        return self.config["static_wallpaper"]
+
+    @is_static_wallpaper.setter
+    def is_static_wallpaper(self, is_static_wallpaper):
+        self.config["static_wallpaper"] = is_static_wallpaper
+        if self.player is not None:
+            self.player.config = self.config
 
     @property
     def is_detect_maximized(self):
-        # TODO
-        return True
+        return self.config["detect_maximized"]
+
+    @is_detect_maximized.setter
+    def is_detect_maximized(self, is_detect_maximized):
+        self.config["detect_maximized"] = is_detect_maximized
+        if self.player is not None:
+            self.player.config = self.config
 
     @property
     def SomeProperty(self):

@@ -110,7 +110,14 @@ class WebPlayer(BasePlayer):
 
     def _on_button_press_event(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            for child in self.menu.get_children():
+                if child.get_label() == "Mute Audio":
+                    child.set_active(self.is_mute)
+                if child.get_label() == "Pause Playback":
+                    child.set_active(not self.is_playing)
+
             self.menu.popup_at_pointer()
+
         return True
 
     def _on_menuitem_reload(self, *args):
