@@ -5,7 +5,7 @@ INSTALL_DIR="$HOME/.hidamari"
 BIN_DIR="$HOME/bin"
 APPLICATIONS_DIR="$HOME/.local/share/applications/"
 ICONS_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
-BRANCH="v2"
+BRANCH="master"
 
 clear_old() {
   if [ -d "$INSTALL_DIR" ]; then
