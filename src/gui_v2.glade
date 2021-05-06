@@ -12,7 +12,10 @@
 Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</property>
     <property name="website">https://github.com/jeffshee/hidamari</property>
     <property name="website-label" translatable="yes">GitHub</property>
-    <property name="authors">Jeff Shee</property>
+    <property name="authors">Jeff Shee https://github.com/jeffshee
+All Contributors
+94824 https://github.com/94824
+xenoney https://github.com/xenoney</property>
     <property name="artists">Freepik https://www.freepik.com</property>
     <property name="logo-icon-name">hidamari</property>
     <property name="license-type">apache-2-0</property>

@@ -51,8 +51,8 @@ class WebPlayer(BasePlayer):
             raise ValueError("Invalid mode")
 
         # Convert to uri if necessary
-        if not data_source.startswith("http://") or \
-                not data_source.startswith("https://") or not data_source.startswith("file://"):
+        if not data_source.startswith("http://") and \
+                not data_source.startswith("https://") and not data_source.startswith("file://"):
             data_source = pathlib.Path(data_source).resolve().as_uri()
 
         for monitor in self.monitors:
