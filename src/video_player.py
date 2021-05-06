@@ -1,7 +1,8 @@
 import ctypes
-import os
 import pathlib
+import random
 import subprocess
+import tempfile
 
 import gi
 import vlc
@@ -11,6 +12,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 
 from base_player import BasePlayer
+from utils import list_local_video_dir
+from commons import *
 
 
 class VLCWidget(Gtk.DrawingArea):
@@ -36,7 +39,7 @@ class VLCWidget(Gtk.DrawingArea):
         self.set_size_request(width, height)
 
 
-class Player(BasePlayer):
+class VideoPlayer(BasePlayer):
     def __init__(self, config):
         super().__init__(config)
 
@@ -55,7 +58,7 @@ class Player(BasePlayer):
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
         self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
-        self.new_wallpaper_uri = "/tmp/hidamari.png"
+        self.new_wallpaper_uri = os.path.join(tempfile.gettempdir(), "hidamari.png")
 
         self._is_playing = False
         self.start_all_monitors()
@@ -67,39 +70,42 @@ class Player(BasePlayer):
             # Remove unsupported action
             if child.get_label() == "Reload":
                 self.menu.remove(child)
+            if child.get_label() == "I'm Feeling Lucky" and self.mode != MODE_VIDEO:
+                self.menu.remove(child)
         self.menu.show_all()
 
     @property
     def mode(self):
-        return self.config["mode"]
+        return self.config[CONFIG_KEY_MODE]
 
     @mode.setter
     def mode(self, mode):
-        self.config["mode"] = mode
+        self.config[CONFIG_KEY_MODE] = mode
 
     @property
     def volume(self):
-        return self.config["audio_volume"]
+        return self.config[CONFIG_KEY_VOLUME]
 
     @volume.setter
     def volume(self, volume):
-        self.config["audio_volume"] = volume
+        self.config[CONFIG_KEY_VOLUME] = volume
         for monitor in self.monitors:
             if monitor.is_primary:
                 monitor.vlc_audio_set_volume(volume)
 
     @property
     def is_playing(self):
-        return self._is_playing
+        # return self._is_playing
+        return not self.user_pause_playback
 
     @property
     def data_source(self):
-        return self.config["data_source"]
+        return self.config[CONFIG_KEY_DATA_SOURCE]
 
     @data_source.setter
     def data_source(self, data_source):
-        self.config["data_source"] = data_source
-        if self.mode == "video":
+        self.config[CONFIG_KEY_DATA_SOURCE] = data_source
+        if self.mode == MODE_VIDEO:
             for monitor in self.monitors:
                 media = monitor.vlc_media_new(data_source)
                 """
@@ -113,7 +119,7 @@ class Player(BasePlayer):
                     media.add_option("no-audio")
                 monitor.vlc_set_media(media)
                 monitor.vlc_set_position(0.0)
-        elif self.mode == "stream":
+        elif self.mode == MODE_STREAM:
             from ytl_wrapper import get_formats, get_best_audio, get_optimal_video
             formats = get_formats(data_source)
             max_height = max(self.monitors, key=lambda x: x.height).height
@@ -130,23 +136,23 @@ class Player(BasePlayer):
         else:
             raise ValueError("Invalid mode")
 
-        self.volume = self.config["audio_volume"]
-        self.is_mute = self.config["mute_audio"]
+        self.volume = self.config[CONFIG_KEY_VOLUME]
+        self.is_mute = self.config[CONFIG_KEY_MUTE]
         self.start_playback()
 
-        if self.config["static_wallpaper"] and self.mode == "video":
-            # TODO currently only support static wallpaper when mode=="video"
+        if self.config[CONFIG_KEY_STATIC_WALLPAPER] and self.mode == MODE_VIDEO:
+            # TODO currently only support static wallpaper when mode==MODE_VIDEO
             self.set_static_wallpaper()
         else:
             self.restore_original_wallpaper()
 
     @property
     def is_mute(self):
-        return self.config["mute_audio"]
+        return self.config[CONFIG_KEY_MUTE]
 
     @is_mute.setter
     def is_mute(self, is_mute):
-        self.config["mute_audio"] = is_mute
+        self.config[CONFIG_KEY_MUTE] = is_mute
         for monitor in self.monitors:
             if monitor.is_primary:
                 monitor.vlc_audio_set_volume(0) if is_mute else monitor.vlc_audio_set_volume(self.volume)
@@ -187,7 +193,7 @@ class Player(BasePlayer):
 
             monitor.initialize(window, vlc_widget=vlc_widget)
 
-        self.data_source = self.config["data_source"]
+        self.data_source = self.config[CONFIG_KEY_DATA_SOURCE]
 
     def monitor_sync(self):
         primary = 0
@@ -218,20 +224,13 @@ class Player(BasePlayer):
             os.remove(self.new_wallpaper_uri)
 
     def _on_monitor_added(self, _, gdk_monitor, *args):
-        super(Player, self)._on_monitor_added(_, gdk_monitor, *args)
+        super(VideoPlayer, self)._on_monitor_added(_, gdk_monitor, *args)
         self.start_all_monitors()
         self.monitor_sync()
 
-    def _on_button_press_event(self, widget, event):
-        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
-            self.menu.popup_at_pointer()
-            for child in self.menu.get_children():
-                if child.get_label() == "Mute Audio":
-                    child.set_active(self.is_mute)
-                if child.get_label() == "Pause Playback":
-                    child.set_active(not self.is_playing)
-        return True
+    def _on_menuitem_feeling_lucky(self, *args):
+        self.data_source = random.choice(list_local_video_dir())
 
     def release(self):
         self.restore_original_wallpaper()
-        super(Player, self).release()
+        super(VideoPlayer, self).release()

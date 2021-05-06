@@ -1,13 +1,5 @@
 <node>
     <interface name='io.github.jeffshee.hidamari'>
-        <method name='Hello'>
-            <arg type='s' name='response' direction='out'/>
-        </method>
-        <method name='EchoString'>
-            <arg type='s' name='a' direction='in'/>
-            <arg type='s' name='response' direction='out'/>
-        </method>
-
         <method name='video'>
             <arg type='s' name='video_path' direction='in'/>
         </method>
@@ -17,19 +9,14 @@
         <method name='webpage'>
             <arg type='s' name='webpage_url' direction='in'/>
         </method>
-
         <method name='pause_playback'/>
         <method name='start_playback'/>
         <method name='quit'/>
-
         <property name="volume" type="i" access="readwrite"/>
+        <property name="blur_radius" type="i" access="readwrite"/>
         <property name="is_mute" type="b" access="readwrite"/>
-        <property name="is_playing" type="b" access="read"/>
+        <property name="is_playing" type="b" access="readwrite"/>
         <property name="is_static_wallpaper" type="b" access="readwrite"/>
         <property name="is_detect_maximized" type="b" access="readwrite"/>
-
-        <property name="SomeProperty" type="s" access="readwrite">
-            <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
-        </property>
     </interface>
 </node>

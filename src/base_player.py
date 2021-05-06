@@ -1,20 +1,21 @@
-import sys
 import os
-import gi
 import subprocess
+
+import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
-from utils_v2 import ActiveHandler
+from utils import ActiveHandler
 
 if os.environ["DESKTOP_SESSION"] in ["gnome", "gnome-xorg"]:
-    from utils_v2 import WindowHandlerGnome as WindowHandler
+    from utils import WindowHandlerGnome as WindowHandler
 else:
-    from utils_v2 import WindowHandler
+    from utils import WindowHandler
 
-from monitor_v2 import Monitor
-from utils_v2 import ConfigUtil
+from monitor import Monitor
+from utils import ConfigUtil
+from commons import *
 
 
 class BasePlayer:
@@ -67,7 +68,7 @@ class BasePlayer:
         # TODO will use Gtk.Popover instead with Gtk4 (aesthetic!)
         self.menu = Gtk.Menu()
         # Idk, if I don't use Popen to launch GUI, the pydbus just don't work (it freeze)... ¯\_(ツ)_/¯
-        items = [('Show Hidamari', lambda *_: subprocess.Popen([sys.executable, "gui_v2.py"]), Gtk.MenuItem),
+        items = [('Show Hidamari', lambda *_: subprocess.Popen([sys.executable, "gui.py"]), Gtk.MenuItem),
                  ('Mute Audio', self._on_menuitem_mute_audio, Gtk.CheckMenuItem),
                  ('Pause Playback', self._on_menuitem_pause_playback, Gtk.CheckMenuItem),
                  ('Reload', self._on_menuitem_reload, Gtk.MenuItem),
@@ -101,40 +102,44 @@ class BasePlayer:
         display.connect("monitor-removed", self._on_monitor_removed)
 
     def _on_size_changed(self, *args):
-        print("size-changed")
+        print("Player: size-changed")
         for monitor in self.monitors:
             monitor.win_resize(monitor.width, monitor.height)
             monitor.win_move(monitor.x, monitor.y)
             print(monitor.x, monitor.y, monitor.width, monitor.height)
 
     def _on_monitor_added(self, _, gdk_monitor, *args):
-        print("monitor-added")
+        print("Player: monitor-added")
         new_monitor = Monitor(gdk_monitor)
         self.monitors.append(new_monitor)
 
     def _on_monitor_removed(self, _, gdk_monitor, *args):
-        print("monitor-removed")
+        print("Player: monitor-removed")
         self.monitors.remove(Monitor(gdk_monitor))
 
     def _on_active_changed(self, active):
         if active:
             self.pause_playback()
         else:
-            if (self.is_any_maximized and self.config["detect_maximized"]) or self.is_any_fullscreen:
+            if (self.is_any_maximized and self.config[CONFIG_KEY_DETECT_MAXIMIZED]) or self.is_any_fullscreen:
                 self.pause_playback()
             else:
                 self.start_playback()
 
     def _on_window_state_changed(self, state):
         self.is_any_maximized, self.is_any_fullscreen = state["is_any_maximized"], state["is_any_fullscreen"]
-        if (self.is_any_maximized and self.config["detect_maximized"]) or self.is_any_fullscreen:
-            self.pause_playback()
-        else:
-            self.start_playback()
+        # Ignore a weird error (everything is actually working fine...)
+        try:
+            if (self.is_any_maximized and self.config[CONFIG_KEY_DETECT_MAXIMIZED]) or self.is_any_fullscreen:
+                self.pause_playback()
+            else:
+                self.start_playback()
+        except AttributeError:
+            pass
 
     def _on_menuitem_mute_audio(self, item):
-        self.config["mute_audio"] = item.get_active()
-        self.is_mute = self.config["mute_audio"]
+        self.config[CONFIG_KEY_MUTE] = item.get_active()
+        self.is_mute = self.config[CONFIG_KEY_MUTE]
 
     def _on_menuitem_pause_playback(self, item):
         self.user_pause_playback = item.get_active()
@@ -146,14 +151,28 @@ class BasePlayer:
     def _on_menuitem_reload(self, *args):
         pass
 
+    def _on_button_press_event(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            for child in self.menu.get_children():
+                if child.get_label() == "Mute Audio":
+                    child.handler_block_by_func(self._on_menuitem_mute_audio)
+                    child.set_active(self.is_mute)
+                    child.handler_unblock_by_func(self._on_menuitem_mute_audio)
+                if child.get_label() == "Pause Playback":
+                    child.handler_block_by_func(self._on_menuitem_pause_playback)
+                    child.set_active(not self.is_playing)
+                    child.handler_block_by_func(self._on_menuitem_pause_playback)
+            self.menu.popup_at_pointer()
+        return True
+
     def release(self):
         """Release the player"""
-        print("release")
+        print("Player: Release")
         del self.monitors
 
     def quit(self, *args):
         """Quit everything"""
-        print("quit")
+        print("Player: Quit")
         ConfigUtil.save(self.config)
         self.release()
         exit(0)

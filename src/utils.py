@@ -1,6 +1,5 @@
-import os
-import subprocess
 import json
+import subprocess
 from pprint import pprint
 
 import gi
@@ -10,24 +9,8 @@ gi.require_version("GnomeDesktop", "3.0")
 gi.require_version("Wnck", "3.0")
 from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 from gi.repository.GdkPixbuf import Pixbuf
+from commons import *
 
-HOME = os.environ["HOME"]
-CONFIG_VERSION = 2
-CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
-CONFIG_PATH = os.path.join(CONFIG_DIR, "hidamari.config")
-VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Videos", "Hidamari")
-AUTOSTART_DESKTOP_PATH = os.path.join(os.environ["HOME"], ".config", "autostart", "hidamari.desktop")
-AUTOSTART_DESKTOP_CONTENT = \
-    """
-    [Desktop Entry]
-    Type=Application
-    Name=Hidamari
-    Exec=hidamari
-    StartupNotify=false
-    Terminal=false
-    Icon=hidamari
-    Categories=System;Monitor;
-    """
 
 def list_local_video_dir():
     file_list = []
@@ -79,6 +62,7 @@ def get_thumbnail_gnome(video_path, list_store, idx):
     else:
         generate_thumbnail_gnome(video_path)
 
+
 def setup_autostart(autostart):
     if autostart:
         with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
@@ -88,6 +72,8 @@ def setup_autostart(autostart):
             os.remove(AUTOSTART_DESKTOP_PATH)
         except OSError:
             pass
+
+
 class ActiveHandler:
     """
     Handler for monitoring screen lock
@@ -205,25 +191,13 @@ class WindowHandlerGnome:
 
 
 class ConfigUtil:
-    def __init__(self):
-        self.template_config = {
-            "version": CONFIG_VERSION,
-            "mode": None,
-            "data_source": None,
-            "mute_audio": False,
-            "audio_volume": 50,
-            "static_wallpaper": True,
-            "static_wallpaper_blur_radius": 5,
-            "detect_maximized": True
-        }
-
     def _generate_template(self):
         os.makedirs(CONFIG_DIR, exist_ok=True)
-        self.save(self.template_config)
+        self.save(CONFIG_TEMPLATE)
 
     def _check(self, config: dict):
         """Check if the config is valid"""
-        is_all_keys_match = all(key in config for key in self.template_config)
+        is_all_keys_match = all(key in config for key in CONFIG_TEMPLATE)
         is_version_match = config.get("version") == CONFIG_VERSION
         return is_all_keys_match and is_version_match
 
@@ -240,19 +214,19 @@ class ConfigUtil:
                     else:
                         print("Config is invalid, generate new config")
                         self._generate_template()
-                        return self.template_config
+                        return CONFIG_TEMPLATE
                 except json.decoder.JSONDecodeError:
                     print("Config JSONDecodeError, generate new config")
                     self._generate_template()
-                    return self.template_config
+                    return CONFIG_TEMPLATE
         else:
             print("Config not found, generate new config")
             self._generate_template()
-            return self.template_config
+            return CONFIG_TEMPLATE
 
     @staticmethod
     def save(config):
-        print("save")
+        print("Save config JSON")
         with open(CONFIG_PATH, "w") as f:
-            json_str = json.dumps(config, indent=4)
+            json_str = json.dumps(config, indent=3)
             print(json_str, file=f)

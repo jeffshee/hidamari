@@ -1,16 +1,11 @@
-import os
-import sys
 import threading
+
 import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GLib
 from pydbus import SessionBus
-
-GUI_GLADE_PATH = os.path.join(sys.path[0], "gui_v2.glade")
-APPLICATION_ID = "io.github.jeffshee.hidamari.gui"
-DBUS_NAME = "io.github.jeffshee.hidamari"
-AUTOSTART_DESKTOP_PATH = os.path.join(os.environ["HOME"], ".config", "autostart", "hidamari.desktop")
+from commons import *
 
 
 class GUI(Gtk.Application):
@@ -24,7 +19,8 @@ class GUI(Gtk.Application):
                    "on_streaming_activate": self.on_streaming_activate,
                    "on_streaming_refresh": self.on_streaming_refresh,
                    "on_web_page_activate": self.on_web_page_activate,
-                   "on_web_page_refresh": self.on_web_page_refresh}
+                   "on_web_page_refresh": self.on_web_page_refresh,
+                   "on_blur_radius_changed": self.on_blur_radius_changed}
         self.builder.connect_signals(signals)
 
         self.window = None
@@ -37,7 +33,12 @@ class GUI(Gtk.Application):
         try:
             self.server = bus.get(DBUS_NAME)
         except GLib.Error:
-            print("Couldn't connect to server")
+            dialog = Gtk.MessageDialog(text="Oops!", message_type=Gtk.MessageType.ERROR,
+                                       secondary_text="Couldn't connect to server",
+                                       buttons=Gtk.ButtonsType.OK)
+            dialog.run()
+            dialog.destroy()
+            print("Error: Couldn't connect to server")
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -103,7 +104,7 @@ class GUI(Gtk.Application):
         self.window.present()
 
     def on_local_video_dir(self, action, param):
-        from utils_v2 import xdg_open_video_dir
+        from utils import xdg_open_video_dir
         xdg_open_video_dir()
 
     def on_local_video_refresh(self, action, param):
@@ -113,13 +114,13 @@ class GUI(Gtk.Application):
         selected = self.local_video_icon_view.get_selected_items()
         if len(selected) != 0:
             index = selected[0].get_indices()[0]
-            print("Local Video", self.local_video_list[index])
+            print("Local Video:", self.local_video_list[index])
             self.server.video(self.local_video_list[index])
 
     def on_local_web_page_apply(self, action, param):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
         choose: Gio.File = file_chooser.get_file()
-        print("Local Web Page", choose.get_path())
+        print("Local Webpage:", choose.get_path())
         self.server.webpage(choose.get_path())
 
     def set_play_pause_icon(self):
@@ -131,8 +132,9 @@ class GUI(Gtk.Application):
         play_pause_icon.set_from_icon_name(icon_name=icon_name, size=0)
 
     def on_play_pause(self, action, param):
-        print(action.get_name())
-        if self.server.is_playing:
+        is_playing = self.server.is_playing
+        self.server.is_playing = not is_playing
+        if is_playing:
             self.server.pause_playback()
         else:
             self.server.start_playback()
@@ -157,34 +159,46 @@ class GUI(Gtk.Application):
         else:
             scale.set_sensitive(True)
 
+    def set_spin_blur_radius_sensitive(self):
+        spin = self.builder.get_object("SpinBlurRadius")
+        if self.server.is_static_wallpaper:
+            spin.set_sensitive(True)
+        else:
+            spin.set_sensitive(False)
+
     def on_volume_changed(self, adjustment):
         self.server.volume = int(adjustment.get_value())
-        print("Volume", self.server.volume)
+        print("Volume:", self.server.volume)
         self.set_mute_toggle_icon()
+
+    def on_blur_radius_changed(self, adjustment):
+        self.server.blur_radius = int(adjustment.get_value())
+        print("Blur radius:", self.server.blur_radius)
 
     def on_mute(self, action, state):
         action.set_state(state)
         self.server.is_mute = state
-        print(action.get_name(), state)
+        print("GUI:", action.get_name(), state)
         self.set_mute_toggle_icon()
         self.set_scale_volume_sensitive()
 
     def on_autostart(self, action, state):
         action.set_state(state)
         self.is_autostart = state
-        print(action.get_name(), state)
-        from utils_v2 import setup_autostart
+        print("GUI:", action.get_name(), state)
+        from utils import setup_autostart
         setup_autostart(state)
 
     def on_static_wallpaper(self, action, state):
         action.set_state(state)
         self.server.is_static_wallpaper = state
-        print(action.get_name(), state)
+        print("GUI:", action.get_name(), state)
+        self.set_spin_blur_radius_sensitive()
 
     def on_detect_maximized(self, action, state):
         action.set_state(state)
         self.server.is_detect_maximized = state
-        print(action.get_name(), state)
+        print("GUI:", action.get_name(), state)
 
     def on_about(self, action, param):
         builder = Gtk.Builder()
@@ -199,22 +213,22 @@ class GUI(Gtk.Application):
 
     def on_streaming_activate(self, entry: Gtk.Entry):
         url = entry.get_text()
-        print("Streaming", url)
+        print("Streaming:", url)
         self.server.stream(url)
 
     def on_streaming_refresh(self, entry: Gtk.Entry, *args):
         url = entry.get_text()
-        print("Streaming", url)
+        print("Streaming:", url)
         self.server.stream(url)
 
     def on_web_page_activate(self, entry: Gtk.Entry):
         url = entry.get_text()
-        print("Web Page", url)
+        print("Webpage:", url)
         self.server.webpage(url)
 
     def on_web_page_refresh(self, entry: Gtk.Entry, *args):
         url = entry.get_text()
-        print("Web Page", url)
+        print("Webpage:", url)
         self.server.webpage(url)
 
     def on_quit(self, action, param):
@@ -230,6 +244,7 @@ class GUI(Gtk.Application):
         self.set_play_pause_icon()
         self.set_mute_toggle_icon()
         self.set_scale_volume_sensitive()
+        self.set_spin_blur_radius_sensitive()
         toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleMute")
         toggle_mute.set_state = self.server.is_mute
 
@@ -240,11 +255,17 @@ class GUI(Gtk.Application):
         scale_volume.set_value(self.server.volume)
         adjustment_volume.handler_unblock_by_func(self.on_volume_changed)
 
+        spin_blur_radius: Gtk.Scale = self.builder.get_object("SpinBlurRadius")
+        adjustment_blur: Gtk.Adjustment = self.builder.get_object("AdjustmentBlur")
+        adjustment_blur.handler_block_by_func(self.on_blur_radius_changed)
+        spin_blur_radius.set_value(self.server.blur_radius)
+        adjustment_blur.handler_unblock_by_func(self.on_blur_radius_changed)
+
         toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleAutostart")
         toggle_mute.set_state = self.is_autostart
 
     def _reload_local_video_icon_view(self):
-        from utils_v2 import list_local_video_dir, get_thumbnail_gnome
+        from utils import list_local_video_dir, get_thumbnail_gnome
         from gi.repository.GdkPixbuf import Pixbuf
         list_store = Gtk.ListStore(Pixbuf, str)
 

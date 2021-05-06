@@ -7,13 +7,13 @@ gi.require_version("WebKit2", "4.0")
 from gi.repository import Gtk, Gdk, WebKit2
 
 from base_player import BasePlayer
+from commons import *
 
 
 class WebPlayer(BasePlayer):
     def __init__(self, config):
         super().__init__(config)
         self.start_all_monitors()
-
         # For some weird reason the context menu must be built here but not at the base class.
         # Otherwise it freezes your PC and you will need a reboot ¯\_(ツ)_/¯
         self.menu = self._build_context_menu()
@@ -25,29 +25,29 @@ class WebPlayer(BasePlayer):
 
     @property
     def mode(self):
-        return self.config["mode"]
+        return self.config[CONFIG_KEY_MODE]
 
     @mode.setter
     def mode(self, mode):
-        self.config["mode"] = mode
+        self.config[CONFIG_KEY_MODE] = mode
 
     @property
     def volume(self):
-        return self.config["audio_volume"]
+        return self.config[CONFIG_KEY_VOLUME]
 
     @volume.setter
     def volume(self, volume):
-        self.config["audio_volume"] = volume
         # TODO can we set volume of webview?
+        self.config[CONFIG_KEY_VOLUME] = volume
 
     @property
     def data_source(self):
-        return self.config["data_source"]
+        return self.config[CONFIG_KEY_DATA_SOURCE]
 
     @data_source.setter
     def data_source(self, data_source: str):
-        self.config["data_source"] = data_source
-        if self.mode != "webpage":
+        self.config[CONFIG_KEY_DATA_SOURCE] = data_source
+        if self.mode != MODE_WEBPAGE:
             raise ValueError("Invalid mode")
 
         # Convert to uri if necessary
@@ -59,16 +59,16 @@ class WebPlayer(BasePlayer):
             monitor.web_load_uri(data_source)
             if not monitor.is_primary:
                 monitor.web_set_is_mute(True)
-        self.volume = self.config["audio_volume"]
-        self.is_mute = self.config["mute_audio"]
+        self.volume = self.config[CONFIG_KEY_VOLUME]
+        self.is_mute = self.config[CONFIG_KEY_MUTE]
 
     @property
     def is_mute(self):
-        return self.config["mute_audio"]
+        return self.config[CONFIG_KEY_MUTE]
 
     @is_mute.setter
     def is_mute(self, is_mute):
-        self.config["mute_audio"] = is_mute
+        self.config[CONFIG_KEY_MUTE] = is_mute
         for monitor in self.monitors:
             if monitor.is_primary:
                 monitor.web_set_is_mute(is_mute)
@@ -102,21 +102,11 @@ class WebPlayer(BasePlayer):
 
             monitor.initialize(window, webview=webview)
 
-        self.data_source = self.config["data_source"]
+        self.data_source = self.config[CONFIG_KEY_DATA_SOURCE]
 
     def _on_monitor_added(self, _, gdk_monitor, *args):
         super(WebPlayer, self)._on_monitor_added(_, gdk_monitor, *args)
         self.start_all_monitors()
-
-    def _on_button_press_event(self, widget, event):
-        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
-            self.menu.popup_at_pointer()
-            for child in self.menu.get_children():
-                if child.get_label() == "Mute Audio":
-                    child.set_active(self.is_mute)
-                if child.get_label() == "Pause Playback":
-                    child.set_active(not self.is_playing)
-        return True
 
     def _on_menuitem_reload(self, *args):
         for monitor in self.monitors:
