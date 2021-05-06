@@ -12,6 +12,7 @@
         <method name='pause_playback'/>
         <method name='start_playback'/>
         <method name='quit'/>
+        <property name="mode" type="i" access="read"/>
         <property name="volume" type="i" access="readwrite"/>
         <property name="blur_radius" type="i" access="readwrite"/>
         <property name="is_mute" type="b" access="readwrite"/>

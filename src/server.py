@@ -94,6 +94,10 @@ class HidamariService(object):
         loop.quit()
 
     @property
+    def mode(self):
+        return self.config[CONFIG_KEY_MODE]
+
+    @property
     def volume(self):
         return self.config[CONFIG_KEY_VOLUME]
 
