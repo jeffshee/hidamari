@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Hidamari
-Exec=hidamari -p 1
+Exec=hidamari
 StartupNotify=false
 Terminal=false
 Icon=hidamari

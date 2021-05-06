@@ -1,43 +1,77 @@
-import os
 import json
 import subprocess
-import pathlib
-import gi
-import pydbus
 from pprint import pprint
 
-gi.require_version("Gtk", "3.0")
-gi.require_version("Wnck", '3.0')
-from gi.repository import GLib, Wnck, Gio
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from PIL import Image, ImageFilter
-from types import SimpleNamespace
+import gi
+import pydbus
 
-HOME = os.environ["HOME"]
-CONFIG_DIR = HOME + "/.config/hidamari"
-CONFIG_PATH = CONFIG_DIR + "/hidamari.config"
-VIDEO_WALLPAPER_DIR = HOME + "/Videos/Hidamari"
+gi.require_version("GnomeDesktop", "3.0")
+gi.require_version("Wnck", "3.0")
+from gi.repository import Gio, GnomeDesktop, GLib, Wnck
+from gi.repository.GdkPixbuf import Pixbuf
+from commons import *
 
 
-def create_dir(path):
-    if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-        except OSError:
-            pass
-
-
-def scan_dir():
+def list_local_video_dir():
     file_list = []
     ext_list = ["3g2", "3gp", "aaf", "asf", "avchd", "avi", "drc", "flv", "m2v", "m4p", "m4v", "mkv", "mng", "mov",
                 "mp2", "mp4", "mpe", "mpeg", "mpg", "mpv", "mxf", "nsv", "ogg", "ogv", "qt", "rm", "rmvb", "roq", "svi",
                 "vob", "webm", "wmv", "yuv"]
-    for file in os.listdir(VIDEO_WALLPAPER_DIR):
-        path = VIDEO_WALLPAPER_DIR + '/' + file
-        if os.path.isfile(path) and path.split('.')[-1].lower() in ext_list:
-            file_list.append(path)
-    return file_list
+    for filename in os.listdir(VIDEO_WALLPAPER_DIR):
+        filepath = os.path.join(VIDEO_WALLPAPER_DIR, filename)
+        if os.path.isfile(filepath) and filename.split(".")[-1].lower() in ext_list:
+            file_list.append(filepath)
+    return sorted(file_list)
+
+
+def xdg_open_video_dir():
+    subprocess.call(["xdg-open", os.path.realpath(VIDEO_WALLPAPER_DIR)])
+
+
+def generate_thumbnail_gnome(filename):
+    factory = GnomeDesktop.DesktopThumbnailFactory()
+    mtime = os.path.getmtime(filename)
+    # Use Gio to determine the URI and mime type
+    f = Gio.file_new_for_path(filename)
+    uri = f.get_uri()
+    info = f.query_info(
+        "standard::content-type", Gio.FileQueryInfoFlags.NONE, None)
+    mime_type = info.get_content_type()
+
+    if factory.lookup(uri, mtime) is not None:
+        return False
+
+    if not factory.can_thumbnail(uri, mime_type, mtime):
+        return False
+
+    thumbnail = factory.generate_thumbnail(uri, mime_type)
+    if thumbnail is None:
+        return False
+
+    factory.save_thumbnail(thumbnail, uri, mtime)
+    return True
+
+
+def get_thumbnail_gnome(video_path, list_store, idx):
+    file = Gio.File.new_for_path(video_path)
+    info = file.query_info("*", 0, None)
+    thumbnail = info.get_attribute_byte_string("thumbnail::path")
+    if thumbnail is not None:
+        new_pixbuf = Pixbuf.new_from_file_at_size(thumbnail, -1, 96)
+        list_store[idx][0] = new_pixbuf
+    else:
+        generate_thumbnail_gnome(video_path)
+
+
+def setup_autostart(autostart):
+    if autostart:
+        with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
+            f.write(AUTOSTART_DESKTOP_CONTENT)
+    else:
+        try:
+            os.remove(AUTOSTART_DESKTOP_PATH)
+        except OSError:
+            pass
 
 
 class ActiveHandler:
@@ -156,136 +190,43 @@ class WindowHandlerGnome:
         return True
 
 
-class StaticWallpaperHandler:
-    """
-    Handler for setting the static wallpaper
-    """
-
-    def __init__(self):
-        self.config_handler = ConfigHandler(self._on_config_modified)
-        self.config = self.config_handler.config
-        self.current_video_path = self.config.video_path
-        self.current_static_wallpaper = self.config.static_wallpaper
-        self.current_static_wallpaper_blur_radius = self.config.static_wallpaper_blur_radius
-        self.gso = Gio.Settings.new("org.gnome.desktop.background")
-        self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
-        self.new_wallpaper_uri = "/tmp/hidamari.png"
-
-    def _on_config_modified(self):
-        # Get new config
-        self.config = self.config_handler.config
-        if self.current_static_wallpaper != self.config.static_wallpaper:
-            if self.config.static_wallpaper:
-                self.set_static_wallpaper()
-            else:
-                self.restore_ori_wallpaper()
-        elif ((self.current_video_path != self.config.video_path or
-               self.current_static_wallpaper_blur_radius != self.config.static_wallpaper_blur_radius) and
-              self.config.static_wallpaper):
-            self.set_static_wallpaper()
-        self.current_video_path = self.config.video_path
-        self.current_static_wallpaper = self.config.static_wallpaper
-        self.current_static_wallpaper_blur_radius = self.config.static_wallpaper_blur_radius
-
-    def set_static_wallpaper(self):
-        # Extract first frame (use ffmpeg)
-        if self.config.static_wallpaper:
-            subprocess.call(
-                'ffmpeg -y -i "{}" -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
-                    self.config.video_path, self.new_wallpaper_uri), shell=True)
-            if os.path.isfile(self.new_wallpaper_uri):
-                blur_wallpaper = Image.open(self.new_wallpaper_uri)
-                blur_wallpaper = blur_wallpaper.filter(
-                    ImageFilter.GaussianBlur(self.config.static_wallpaper_blur_radius))
-                blur_wallpaper.save(self.new_wallpaper_uri)
-                self.gso.set_string("picture-uri", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
-
-    def restore_ori_wallpaper(self):
-        self.gso.set_string("picture-uri", self.ori_wallpaper_uri)
-        if os.path.isfile(self.new_wallpaper_uri):
-            os.remove(self.new_wallpaper_uri)
-
-
-class FileWatchdog(FileSystemEventHandler):
-    def __init__(self, filepath, callback: callable):
-        self.file_name = os.path.basename(filepath)
-        self.callback = callback
-        self.observer = Observer()
-        self.observer.schedule(self, os.path.dirname(filepath), recursive=False)
-        self.observer.start()
-
-    def on_created(self, event):
-        if not event.is_directory and event.src_path.endswith(self.file_name):
-            print("Watchdog:", event)
-            self.callback()  # call callback
-
-    def on_deleted(self, event):
-        if not event.is_directory and event.src_path.endswith(self.file_name):
-            print("Watchdog:", event)
-            self.callback()  # call callback
-
-    def on_moved(self, event):
-        if not event.is_directory and event.dest_path.endswith(self.file_name):
-            print("Watchdog:", event)
-            self.callback()  # call callback
-
-    def on_modified(self, event):
-        if not event.is_directory and event.src_path.endswith(self.file_name):
-            print("Watchdog:", event)
-            self.callback()  # call callback
-
-
-class ConfigHandler:
-    """
-    Handler for monitoring changes on configuration file
-    """
-
-    def __init__(self, on_config_modified: callable):
-        self.on_config_modified = on_config_modified
-        self.template_config = {
-            "video_path": "",
-            "mute_audio": False,
-            "audio_volume": 0.5,
-            "static_wallpaper": True,
-            "static_wallpaper_blur_radius": 5,
-            "detect_maximized": True,
-        }
-        self._update()
-        FileWatchdog(filepath=CONFIG_PATH, callback=self._config_modified)
-
-    def _generate_template_config(self):
-        create_dir(CONFIG_DIR)
-        with open(CONFIG_PATH, "w") as f:
-            json.dump(self.template_config, f)
-        return self.template_config
-
-    def _update(self):
-        status, config = self._load()
-        if status:
-            self.config = SimpleNamespace(**config)
-
-    def _config_modified(self):
-        self._update()
-        self.on_config_modified()
+class ConfigUtil:
+    def _generate_template(self):
+        os.makedirs(CONFIG_DIR, exist_ok=True)
+        self.save(CONFIG_TEMPLATE)
 
     def _check(self, config: dict):
-        return all(key in config for key in self.template_config)
+        """Check if the config is valid"""
+        is_all_keys_match = all(key in config for key in CONFIG_TEMPLATE)
+        is_version_match = config.get("version") == CONFIG_VERSION
+        return is_all_keys_match and is_version_match
 
-    def _load(self):
+    def load(self):
         if os.path.isfile(CONFIG_PATH):
             with open(CONFIG_PATH, "r") as f:
                 json_str = f.read()
                 try:
                     config = json.loads(json_str)
-                    print("Config JSON:")
-                    pprint(config)
-                    return self._check(config), config
+                    if self._check(config):
+                        print("Config JSON:")
+                        pprint(config)
+                        return config
+                    else:
+                        print("Config is invalid, generate new config")
+                        self._generate_template()
+                        return CONFIG_TEMPLATE
                 except json.decoder.JSONDecodeError:
-                    print("Config JSONDecodeError")
-                    print(json_str)
-                    return False, None
-        return True, self._generate_template_config()
+                    print("Config JSONDecodeError, generate new config")
+                    self._generate_template()
+                    return CONFIG_TEMPLATE
+        else:
+            print("Config not found, generate new config")
+            self._generate_template()
+            return CONFIG_TEMPLATE
 
-    def save(self):
+    @staticmethod
+    def save(config):
+        print("Save config JSON")
         with open(CONFIG_PATH, "w") as f:
-            json.dump(vars(self.config), f)
+            json_str = json.dumps(config, indent=3)
+            print(json_str, file=f)

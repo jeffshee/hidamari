@@ -1,198 +1,288 @@
-import os
-import sys
-from collections import defaultdict
-from types import SimpleNamespace
-import subprocess
-import time
 import threading
 
 import gi
 
-gi.require_version('Gtk', '3.0')
-gi.require_version('GnomeDesktop', '3.0')
-from gi.repository import Gtk, Gio, GLib, GnomeDesktop
-from gi.repository.GdkPixbuf import Pixbuf
-
-GUI_GLADE_FILENAME = sys.path[0] + '/gui.glade'
-AUTOSTART_DESKTOP_PATH = os.environ['HOME'] + '/.config/autostart/hidamari.desktop'
-AUTOSTART_DESKTOP_CONTENT = \
-    '''[Desktop Entry]
-Type=Application
-Name=Hidamari
-Exec=hidamari -p 1
-StartupNotify=false
-Terminal=false
-Icon=hidamari
-Categories=System;Monitor;
-    '''
-
-from utils import ConfigHandler, create_dir, scan_dir
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gio, GLib
+from pydbus import SessionBus
+from commons import *
 
 
-def setup_autostart(autostart):
-    if autostart:
-        with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
-            f.write(AUTOSTART_DESKTOP_CONTENT)
-    else:
-        try:
-            os.remove(AUTOSTART_DESKTOP_PATH)
-        except OSError:
-            pass
-
-
-def get_length(filename):
-    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
-                             "format=duration", "-of",
-                             "default=noprint_wrappers=1:nokey=1", filename],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-    return float(result.stdout)
-
-
-def generate_thumbnail_gnome(filename):
-    factory = GnomeDesktop.DesktopThumbnailFactory()
-    mtime = os.path.getmtime(filename)
-    # Use Gio to determine the URI and mime type
-    f = Gio.file_new_for_path(filename)
-    uri = f.get_uri()
-    info = f.query_info(
-        'standard::content-type', Gio.FileQueryInfoFlags.NONE, None)
-    mime_type = info.get_content_type()
-
-    if factory.lookup(uri, mtime) is not None:
-        return False
-
-    if not factory.can_thumbnail(uri, mime_type, mtime):
-        return False
-
-    thumbnail = factory.generate_thumbnail(uri, mime_type)
-    if thumbnail is None:
-        return False
-
-    factory.save_thumbnail(thumbnail, uri, mtime)
-    return True
-
-
-def get_thumbnail_gnome(video_path, list_store, idx):
-    file = Gio.File.new_for_path(video_path)
-    info = file.query_info('*', 0, None)
-    thumbnail = info.get_attribute_byte_string('thumbnail::path')
-    if thumbnail is not None:
-        new_pixbuf = Pixbuf.new_from_file_at_size(thumbnail, -1, 96)
-        list_store[idx][0] = new_pixbuf
-    else:
-        generate_thumbnail_gnome(video_path)
-
-
-def get_thumbnail(video_path, list_store, idx):
-    # TODO too resource intensive, looking for a better approach
-    root_path = os.path.dirname(video_path) + '/.thumbnails'
-    file_path = '{}/{}.png'.format(root_path, os.path.basename(video_path))
-    if not os.path.exists(file_path):
-        create_dir(root_path)
-        sec = get_length(video_path) / 3
-        subprocess.call(
-            'ffmpeg -y -i "{}" -ss {}.000 -vf scale=96:-1 -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
-                video_path, time.strftime('%H:%M:%S', time.gmtime(sec)), file_path), shell=True)
-    new_pixbuf = Pixbuf.new_from_file_at_size(file_path, -1, 96)
-    list_store[idx][0] = new_pixbuf
-
-
-class ControlPanel(Gtk.Application):
+class GUI(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id='io.github.jeffshee.hidamari.gui')
-
-        self.config_handler = ConfigHandler(self._on_config_modified)
-        self.config = self.config_handler.config
-
-        # Builder Initialization
+        super(GUI, self).__init__(application_id=APPLICATION_ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(GUI_GLADE_FILENAME)
-        object_list = ['window', 'icon_view', 'volume', 'volume_adjustment', 'autostart', 'mute_audio',
-                       'detect_maximized', 'static_wallpaper', 'blur_adjustment', 'blur_radius', 'apply']
-        object_dict = defaultdict()
-        for obj in object_list:
-            object_dict[obj] = self.builder.get_object(obj)
-        self.object = SimpleNamespace(**object_dict)
+        self.builder.set_application(self)
+        self.builder.add_from_file(GUI_GLADE_PATH)
+
+        signals = {"on_volume_changed": self.on_volume_changed,
+                   "on_streaming_activate": self.on_streaming_activate,
+                   "on_streaming_refresh": self.on_streaming_refresh,
+                   "on_web_page_activate": self.on_web_page_activate,
+                   "on_web_page_refresh": self.on_web_page_refresh,
+                   "on_blur_radius_changed": self.on_blur_radius_changed}
+        self.builder.connect_signals(signals)
+
+        self.window = None
+        self.local_video_icon_view = None
+        self.local_video_list = None
+
+        self.is_autostart = os.path.isfile(AUTOSTART_DESKTOP_PATH)
+
+        bus = SessionBus()
+        try:
+            self.server = bus.get(DBUS_NAME)
+        except GLib.Error:
+            dialog = Gtk.MessageDialog(text="Oops!", message_type=Gtk.MessageType.ERROR,
+                                       secondary_text="Couldn't connect to server",
+                                       buttons=Gtk.ButtonsType.OK)
+            dialog.run()
+            dialog.destroy()
+            print("Error: Couldn't connect to server")
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
 
-        # Object Initialization
-        self.object.window.connect('destroy', Gtk.main_quit)
-        self.object.window.show_all()
-        self._reload_icon_view()
-        self._reload_widget()
+        action = Gio.SimpleAction.new("local_video_dir", None)
+        action.connect("activate", self.on_local_video_dir)
+        self.add_action(action)
 
-        self.builder.connect_signals(
-            {'on_apply_clicked': self._on_apply_clicked, 'on_cancel_clicked': self._on_cancel_clicked,
-             'on_value_changed': self._on_value_changed, 'on_refresh_clicked': self._on_refresh_clicked})
+        action = Gio.SimpleAction.new("local_video_refresh", None)
+        action.connect("activate", self.on_local_video_refresh)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("local_video_apply", None)
+        action.connect("activate", self.on_local_video_apply)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("local_web_page_apply", None)
+        action.connect("activate", self.on_local_web_page_apply)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("play_pause", None)
+        action.connect("activate", self.on_play_pause)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new_stateful("mute", None, GLib.Variant.new_boolean(self.server.is_mute))
+        action.connect("change-state", self.on_mute)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new_stateful("autostart", None, GLib.Variant.new_boolean(self.is_autostart))
+        action.connect("change-state", self.on_autostart)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new_stateful("static_wallpaper", None,
+                                               GLib.Variant.new_boolean(self.server.is_static_wallpaper))
+        action.connect("change-state", self.on_static_wallpaper)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new_stateful("detect_maximized", None,
+                                               GLib.Variant.new_boolean(self.server.is_detect_maximized))
+        action.connect("change-state", self.on_detect_maximized)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("about", None)
+        action.connect("activate", self.on_about)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("preferences", None)
+        action.connect("activate", self.on_preferences)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("quit", None)
+        action.connect("activate", self.on_quit)
+        self.add_action(action)
+
+        self._reload_all_widgets()
 
     def do_activate(self):
-        Gtk.main()
+        if not self.window:
+            self.window: Gtk.ApplicationWindow = self.builder.get_object("ApplicationWindow")
+            self.window.set_title("Hidamari")
+            self.window.set_application(self)
+            self.window.set_position(Gtk.WindowPosition.CENTER)
+        self.window.present()
 
-    def _on_config_modified(self):
-        def _run():
-            self.config = self.config_handler.config
-            self._reload_widget()
+    def on_local_video_dir(self, action, param):
+        from utils import xdg_open_video_dir
+        xdg_open_video_dir()
 
-        # To ensure thread safe
-        GLib.idle_add(_run)
+    def on_local_video_refresh(self, action, param):
+        self._reload_local_video_icon_view()
 
-    def _on_apply_clicked(self, *args):
-        selected = self.object.icon_view.get_selected_items()
+    def on_local_video_apply(self, action, param):
+        selected = self.local_video_icon_view.get_selected_items()
         if len(selected) != 0:
-            icon_view_selection = selected[0].get_indices()[0]
-            self.config.video_path = self.file_list[icon_view_selection]
-        #
-        setup_autostart(self.object.autostart.get_active())
-        self.config.static_wallpaper = self.object.static_wallpaper.get_active()
-        self.config.detect_maximized = self.object.detect_maximized.get_active()
-        self.config.mute_audio = self.object.mute_audio.get_active()
-        self.config.static_wallpaper_blur_radius = self.object.blur_adjustment.get_value()
-        self.config.audio_volume = self.object.volume_adjustment.get_value() / 100
-        self.config_handler.save()
-        self.object.apply.set_sensitive(False)
+            index = selected[0].get_indices()[0]
+            print("Local Video:", self.local_video_list[index])
+            self.server.video(self.local_video_list[index])
 
-    def _on_cancel_clicked(self, *args):
-        self._reload_widget()
+    def on_local_web_page_apply(self, action, param):
+        file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
+        choose: Gio.File = file_chooser.get_file()
+        print("Local Webpage:", choose.get_path())
+        self.server.webpage(choose.get_path())
 
-    def _on_refresh_clicked(self, *args):
-        self._reload_icon_view()
+    def set_play_pause_icon(self):
+        play_pause_icon: Gtk.Image = self.builder.get_object("ButtonPlayPauseIcon")
+        if self.server.is_playing:
+            icon_name = "player_pause"
+        else:
+            icon_name = "player_play"
+        play_pause_icon.set_from_icon_name(icon_name=icon_name, size=0)
 
-    def _on_value_changed(self, *args):
-        self.object.volume.set_sensitive(not self.object.mute_audio.get_active())
-        self.object.blur_radius.set_sensitive(self.object.static_wallpaper.get_active())
-        self.object.apply.set_sensitive(True)
+    def on_play_pause(self, action, param):
+        is_playing = self.server.is_playing
+        self.server.is_playing = not is_playing
+        if is_playing:
+            self.server.pause_playback()
+        else:
+            self.server.start_playback()
+        self.set_play_pause_icon()
 
-    def _reload_icon_view(self):
-        self.file_list = scan_dir()
+    def set_mute_toggle_icon(self):
+        toggle_icon: Gtk.Image = self.builder.get_object("ToggleMuteIcon")
+        if self.server.volume == 0 or self.server.is_mute:
+            icon_name = "audio-volume-muted"
+        elif self.server.volume < 30:
+            icon_name = "audio-volume-low"
+        elif self.server.volume < 60:
+            icon_name = "audio-volume-medium"
+        else:
+            icon_name = "audio-volume-high"
+        toggle_icon.set_from_icon_name(icon_name=icon_name, size=0)
+
+    def set_scale_volume_sensitive(self):
+        scale = self.builder.get_object("ScaleVolume")
+        if self.server.is_mute:
+            scale.set_sensitive(False)
+        else:
+            scale.set_sensitive(True)
+
+    def set_spin_blur_radius_sensitive(self):
+        spin = self.builder.get_object("SpinBlurRadius")
+        if self.server.is_static_wallpaper:
+            spin.set_sensitive(True)
+        else:
+            spin.set_sensitive(False)
+
+    def on_volume_changed(self, adjustment):
+        self.server.volume = int(adjustment.get_value())
+        print("Volume:", self.server.volume)
+        self.set_mute_toggle_icon()
+
+    def on_blur_radius_changed(self, adjustment):
+        self.server.blur_radius = int(adjustment.get_value())
+        print("Blur radius:", self.server.blur_radius)
+
+    def on_mute(self, action, state):
+        action.set_state(state)
+        self.server.is_mute = state
+        print("GUI:", action.get_name(), state)
+        self.set_mute_toggle_icon()
+        self.set_scale_volume_sensitive()
+
+    def on_autostart(self, action, state):
+        action.set_state(state)
+        self.is_autostart = state
+        print("GUI:", action.get_name(), state)
+        from utils import setup_autostart
+        setup_autostart(state)
+
+    def on_static_wallpaper(self, action, state):
+        action.set_state(state)
+        self.server.is_static_wallpaper = state
+        print("GUI:", action.get_name(), state)
+        self.set_spin_blur_radius_sensitive()
+
+    def on_detect_maximized(self, action, state):
+        action.set_state(state)
+        self.server.is_detect_maximized = state
+        print("GUI:", action.get_name(), state)
+
+    def on_about(self, action, param):
+        builder = Gtk.Builder()
+        builder.add_from_file(GUI_GLADE_PATH)
+        about_dialog: Gtk.AboutDialog = builder.get_object("AboutDialog")
+        about_dialog.set_transient_for(self.window)
+        about_dialog.set_modal(True)
+        about_dialog.present()
+
+    def on_preferences(self, action, param):
+        print(action.get_name(), param)
+
+    def on_streaming_activate(self, entry: Gtk.Entry):
+        url = entry.get_text()
+        print("Streaming:", url)
+        self.server.stream(url)
+
+    def on_streaming_refresh(self, entry: Gtk.Entry, *args):
+        url = entry.get_text()
+        print("Streaming:", url)
+        self.server.stream(url)
+
+    def on_web_page_activate(self, entry: Gtk.Entry):
+        url = entry.get_text()
+        print("Webpage:", url)
+        self.server.webpage(url)
+
+    def on_web_page_refresh(self, entry: Gtk.Entry, *args):
+        url = entry.get_text()
+        print("Webpage:", url)
+        self.server.webpage(url)
+
+    def on_quit(self, action, param):
+        try:
+            # Ignore NoReply error
+            self.server.quit()
+        except GLib.Error:
+            pass
+        self.quit()
+
+    def _reload_all_widgets(self):
+        self._reload_local_video_icon_view()
+        self.set_play_pause_icon()
+        self.set_mute_toggle_icon()
+        self.set_scale_volume_sensitive()
+        self.set_spin_blur_radius_sensitive()
+        toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleMute")
+        toggle_mute.set_state = self.server.is_mute
+
+        scale_volume: Gtk.Scale = self.builder.get_object("ScaleVolume")
+        adjustment_volume: Gtk.Adjustment = self.builder.get_object("AdjustmentVolume")
+        # Temporary block signal
+        adjustment_volume.handler_block_by_func(self.on_volume_changed)
+        scale_volume.set_value(self.server.volume)
+        adjustment_volume.handler_unblock_by_func(self.on_volume_changed)
+
+        spin_blur_radius: Gtk.Scale = self.builder.get_object("SpinBlurRadius")
+        adjustment_blur: Gtk.Adjustment = self.builder.get_object("AdjustmentBlur")
+        adjustment_blur.handler_block_by_func(self.on_blur_radius_changed)
+        spin_blur_radius.set_value(self.server.blur_radius)
+        adjustment_blur.handler_unblock_by_func(self.on_blur_radius_changed)
+
+        toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleAutostart")
+        toggle_mute.set_state = self.is_autostart
+
+    def _reload_local_video_icon_view(self):
+        from utils import list_local_video_dir, get_thumbnail_gnome
+        from gi.repository.GdkPixbuf import Pixbuf
         list_store = Gtk.ListStore(Pixbuf, str)
-        self.object.icon_view.set_model(list_store)
-        self.object.icon_view.set_pixbuf_column(0)
-        self.object.icon_view.set_text_column(1)
-        for idx, video in enumerate(self.file_list):
+
+        self.local_video_list = list_local_video_dir()
+        self.local_video_icon_view: Gtk.IconView = self.builder.get_object("IconView")
+        self.local_video_icon_view.set_model(list_store)
+        self.local_video_icon_view.set_pixbuf_column(0)
+        self.local_video_icon_view.set_text_column(1)
+        for idx, video in enumerate(self.local_video_list):
             icon_theme = Gtk.IconTheme().get_default()
-            pixbuf = icon_theme.load_icon('video-x-generic', 96, 0)
+            pixbuf = icon_theme.load_icon("video-x-generic", 96, 0)
             list_store.append([pixbuf, os.path.basename(video)])
             thread = threading.Thread(target=get_thumbnail_gnome, args=(video, list_store, idx))
             thread.daemon = True
             thread.start()
 
-    def _reload_widget(self):
-        self.object.autostart.set_active(os.path.isfile(AUTOSTART_DESKTOP_PATH))
-        self.object.static_wallpaper.set_active(self.config.static_wallpaper)
-        self.object.detect_maximized.set_active(self.config.detect_maximized)
-        self.object.mute_audio.set_active(self.config.mute_audio)
-        self.object.volume_adjustment.set_value(self.config.audio_volume * 100)
-        self.object.blur_adjustment.set_value(self.config.static_wallpaper_blur_radius)
-        #
-        self.object.icon_view.unselect_all()
-        #
-        self.object.volume.set_sensitive(not self.object.mute_audio.get_active())
-        self.object.blur_radius.set_sensitive(self.object.static_wallpaper.get_active())
-        self.object.apply.set_sensitive(False)
 
-
-if __name__ == '__main__':
-    ControlPanel()
+if __name__ == "__main__":
+    app = GUI()
+    app.run(sys.argv)
