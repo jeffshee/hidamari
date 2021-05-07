@@ -1,10 +1,10 @@
-%global tag 2.0
+%global tag 2.0-2
 %global debug_package %{nil}
 %global project hidamari
 %undefine _disable_source_fetch
 
 Name:           hidamari
-Version:        %{tag}
+Version:        2.0
 Release:        2%{?dist}
 Summary:        Video wallpaper for Linux
 
