@@ -5,7 +5,7 @@
 
 Name:           hidamari
 Version:        %{tag}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Video wallpaper for Linux
 
 License:        Apache-2.0
@@ -52,4 +52,4 @@ EOT
 
 %changelog
 * Fri May 7 2021 jeffshee <jeffshee8969@gmail.com>
-Initial release
+2nd release, add vlc dependency. Bug fix.
