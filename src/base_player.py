@@ -161,7 +161,7 @@ class BasePlayer:
                 if child.get_label() == "Pause Playback":
                     child.handler_block_by_func(self._on_menuitem_pause_playback)
                     child.set_active(not self.is_playing)
-                    child.handler_block_by_func(self._on_menuitem_pause_playback)
+                    child.handler_unblock_by_func(self._on_menuitem_pause_playback)
             self.menu.popup_at_pointer()
         return True
 

@@ -36,10 +36,10 @@ Hidamari offers similar feature as above, with additional features listed below:
 
 ## Installation (Fedora) ⏬
 
-1. Enable Copr `sudo dnf copr enable jeffshee/hidamari`
-2. Install `sudo dnf install hidamari`
-3. Multimedia codecs, refer
+1. Multimedia codecs, refer
    to [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
+2. Enable Copr `sudo dnf copr enable jeffshee/hidamari`
+3. Install `sudo dnf install hidamari`
 
 ## Installation (Other linux) ⏬
 
@@ -48,7 +48,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 1. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
 2. Pillow, pydbus, youtube-dl `pip3 install pillow pydbus python-vlc youtube-dl`
 3. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
-4. FFmpeg
+4. FFmpeg, VLC player (For Ubuntu `sudo apt-get install ffmpeg vlc`)
 
 ### Installation
 
