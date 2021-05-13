@@ -46,7 +46,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 1. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
 2. Download the `.deb` file from release section
 3. Install `sudo apt install ./path/to/hidamari*.deb`
-4. (Recommended) Replace `youtube-dl` to the latest version:  
+4. (Recommended) Upgrade `youtube-dl` to the latest version:  
    `pip3 install --upgrade youtube-dl`
 
 ## Installation (Other linux) ⏬
