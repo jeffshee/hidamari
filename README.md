@@ -47,7 +47,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 2. Download the `.deb` file from release section
 3. Install `sudo apt install ./path/to/hidamari*.deb`
 4. (Recommended) Upgrade `youtube-dl` to the latest version:  
-   `pip3 install --upgrade youtube-dl`
+   `sudo pip3 install --upgrade youtube-dl`
 
 ## Installation (Other linux) ⏬
 
@@ -56,7 +56,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 1. python3, pip3, git, ffmpeg, vlc, libx11
 2. Multimedia codecs, please refer to your distribution for installation guide
 3. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
-4. Pillow, pydbus, youtube-dl `pip3 install pillow pydbus python-vlc youtube-dl`
+4. Pillow, pydbus, youtube-dl `sudo pip3 install pillow pydbus python-vlc youtube-dl`
 
 ### Installation
 
