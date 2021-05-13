@@ -45,11 +45,12 @@ Hidamari offers similar feature as above, with additional features listed below:
 
 ### Prerequisite
 
-1. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
-2. Pillow, pydbus, youtube-dl `pip3 install pillow pydbus python-vlc youtube-dl`
-3. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
-4. FFmpeg, VLC player, libx11  
-   (For Ubuntu, `sudo apt-get install ffmpeg vlc libx11-6`)
+1. Python3, pip and git
+2. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
+3. Pillow, pydbus, youtube-dl `pip3 install pillow pydbus python-vlc youtube-dl`
+4. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
+5. FFmpeg, VLC player, libx11  
+   (For Ubuntu, `sudo apt install ffmpeg vlc libx11-6`)
 
 ### Installation
 
