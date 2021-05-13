@@ -34,23 +34,29 @@ Hidamari offers similar feature as above, with additional features listed below:
 <sup>4</sup> Use <i>youtube-dl</i> as backend, tested with YouTube videos  
 <sup>5</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
 
-## Installation (Fedora) ⏬
+## Installation (Fedora, RPM) ⏬
 
 1. Multimedia codecs, refer
    to [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
 2. Enable Copr `sudo dnf copr enable jeffshee/hidamari`
 3. Install `sudo dnf install hidamari`
 
+## Installation (Ubuntu, DEB) ⏬
+
+1. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
+2. Download the `.deb` file from release section
+3. Install `sudo apt install ./path/to/hidamari*.deb`
+4. (Recommended) Replace `youtube-dl` to the latest version:  
+   `pip3 install --upgrade youtube-dl`
+
 ## Installation (Other linux) ⏬
 
 ### Prerequisite
 
-1. Python3, pip and git
-2. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
-3. Pillow, pydbus, youtube-dl `pip3 install pillow pydbus python-vlc youtube-dl`
-4. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
-5. FFmpeg, VLC player, libx11  
-   (For Ubuntu, `sudo apt install ffmpeg vlc libx11-6`)
+1. python3, pip3, git, ffmpeg, vlc, libx11
+2. Multimedia codecs, please refer to your distribution for installation guide
+3. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
+4. Pillow, pydbus, youtube-dl `pip3 install pillow pydbus python-vlc youtube-dl`
 
 ### Installation
 
