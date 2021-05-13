@@ -16,6 +16,8 @@ class Monitor:
         self.__window = None
         self.__vlc_widget = None
         self.__webview = None
+        print("Monitor:", "width", self.gdk_monitor.get_geometry().width,
+              "height", self.gdk_monitor.get_geometry().width)
 
     def initialize(self, window: Gtk.Window, vlc_widget=None, webview=None):
         self.__window = window
@@ -44,11 +46,11 @@ class Monitor:
 
     @property
     def width(self):
-        return self.gdk_monitor.get_geometry().width * self.gdk_monitor.get_scale_factor()
+        return self.gdk_monitor.get_geometry().width
 
     @property
     def height(self):
-        return self.gdk_monitor.get_geometry().height * self.gdk_monitor.get_scale_factor()
+        return self.gdk_monitor.get_geometry().height
 
     @property
     def is_primary(self):

@@ -21,6 +21,9 @@ class HidamariService(object):
         signal.signal(signal.SIGTERM, self.quit)
         # SIGSEGV as a fail-safe
         signal.signal(signal.SIGSEGV, self.quit)
+        # Ignore SIGHUP to handle shutdown event correctly
+        # https://askubuntu.com/questions/819730/no-sigterm-before-sigkill-shutdown-with-systemd-on-ubuntu-16-04
+        signal.signal(signal.SIGHUP, lambda *args: None)
 
         self.config = ConfigUtil().load()
         self.player = None
