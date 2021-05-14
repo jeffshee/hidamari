@@ -3,7 +3,7 @@
 TEMP_DIR="$HOME/hidamari_temp"
 INSTALL_DIR="$HOME/.hidamari"
 BIN_DIR="$HOME/bin"
-APPLICATIONS_DIR="$HOME/.local/share/applications/"
+APPLICATIONS_DIR="$HOME/.local/share/applications"
 ICONS_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
 BRANCH="master"
 
