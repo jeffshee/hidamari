@@ -30,6 +30,8 @@ class HidamariService(object):
         if self.config[CONFIG_KEY_MODE] is None:
             # Welcome to Hidamari, first time user ;)
             self.dbus_published_callback = self.null
+            # Setup
+            os.makedirs(VIDEO_WALLPAPER_DIR, exist_ok=True)
         elif self.config[CONFIG_KEY_MODE] == MODE_VIDEO:
             self.dbus_published_callback = self.video
         elif self.config[CONFIG_KEY_MODE] == MODE_STREAM:
