@@ -11,6 +11,23 @@ from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 from gi.repository.GdkPixbuf import Pixbuf
 from commons import *
 
+def is_gnome():
+    """
+    Check if current DE is GNOME or not.
+    On Ubuntu 20.04, $XDG_CURRENT_DESKTOP = ubuntu:GNOME
+    On Fedora 34, $XDG_CURRENT_DESKTOP = GNOME
+    Hence we do the detection by looking for the word "gnome"
+    """
+    return "gnome" in os.environ["XDG_CURRENT_DESKTOP"].lower()
+
+
+def is_wayland():
+    """
+    Check if current session is Wayland or not.
+    $XDG_SESSION_TYPE = x11 | wayland
+    """
+    return os.environ["XDG_SESSION_TYPE"] == "wayland"
+
 
 def list_local_video_dir():
     file_list = []
@@ -230,3 +247,9 @@ class ConfigUtil:
         with open(CONFIG_PATH, "w") as f:
             json_str = json.dumps(config, indent=3)
             print(json_str, file=f)
+
+
+if __name__ == "__main__":
+    # Debug
+    print(is_gnome())
+    print(is_wayland())

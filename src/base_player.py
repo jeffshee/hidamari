@@ -1,4 +1,3 @@
-import os
 import subprocess
 
 import gi
@@ -6,12 +5,19 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
-from utils import ActiveHandler
+from utils import ActiveHandler, is_gnome, is_wayland
 
-if os.environ["DESKTOP_SESSION"] in ["gnome", "gnome-xorg"]:
-    from utils import WindowHandlerGnome as WindowHandler
+if is_wayland():
+    if is_gnome():
+        from utils import WindowHandlerGnome as WindowHandler
+    else:
+        # Dummy class as not currently supported.
+        class WindowHandler:
+            def __init__(self, _: callable):
+                pass
 else:
     from utils import WindowHandler
+
 
 from monitor import Monitor
 from utils import ConfigUtil
