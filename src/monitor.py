@@ -67,7 +67,8 @@ class Monitor:
 
     def vlc_pause(self):
         if self.is_vlc_initialized:
-            self.__vlc_widget.player.pause()
+            if self.vlc_is_playing():
+                self.__vlc_widget.player.pause()
 
     def vlc_media_new(self, *args):
         if self.is_vlc_initialized:

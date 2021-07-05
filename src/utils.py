@@ -11,6 +11,7 @@ from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 from gi.repository.GdkPixbuf import Pixbuf
 from commons import *
 
+
 def is_gnome():
     """
     Check if current DE is GNOME or not.
