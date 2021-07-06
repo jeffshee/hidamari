@@ -12,7 +12,7 @@ AUTOSTART_DESKTOP_CONTENT = \
     [Desktop Entry]
     Type=Application
     Name=Hidamari
-    Exec=hidamari
+    Exec=hidamari --p 5
     StartupNotify=false
     Terminal=false
     Icon=hidamari

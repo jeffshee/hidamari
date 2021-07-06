@@ -1,11 +1,33 @@
 #!/usr/bin/env python3
+import argparse
+import logging
 import os
+import time
 
 # Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
-os.environ['GDK_BACKEND'] = "x11"
+os.environ["GDK_BACKEND"] = "x11"
 # Suppress VLC Log
 os.environ["VLC_VERBOSE"] = "-1"
 
+parser = argparse.ArgumentParser(description="Hidamari launcher")
+parser.add_argument("--p", dest="p", type=int, default=0, help="Add pause before launching Hidamari. (in sec)")
+parser.add_argument("--debug", action="store_true")
+args = parser.parse_args()
+
+# Setup logger
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("Hidamari")
+
+# Log system information
+logger.debug(f"[Desktop] {os.environ.get('XDG_CURRENT_DESKTOP', 'Not found')}")
+logger.debug(f"[Display Server] {os.environ.get('XDG_SESSION_TYPE', 'Not found')}")
+logger.debug(f"[Args] {vars(args)}")
+
+# Pause before launching
+time.sleep(args.p)
+
+# Launch Hidamari
 import server
 
 server.run()
