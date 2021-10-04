@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/jeffshee/hidamari/v2/res/hidamari.svg" width="256"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/jeffshee/hidamari/master/res/hidamari.svg" width="256"></p>
 
 <p align="center">Video wallpaper for Linux. Minimal and written in Python.</p>  
 <p align="center">Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
