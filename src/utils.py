@@ -1,6 +1,7 @@
 import json
+import logging
 import subprocess
-from pprint import pprint
+from pprint import pformat, pprint
 
 import gi
 import pydbus
@@ -10,6 +11,8 @@ gi.require_version("Wnck", "3.0")
 from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 from gi.repository.GdkPixbuf import Pixbuf
 from commons import *
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def is_gnome():
@@ -263,11 +266,17 @@ class ConfigUtil:
         os.makedirs(CONFIG_DIR, exist_ok=True)
         self.save(CONFIG_TEMPLATE)
 
-    def _check(self, config: dict):
+    @staticmethod
+    def _check(config: dict):
         """Check if the config is valid"""
         is_all_keys_match = all(key in config for key in CONFIG_TEMPLATE)
         is_version_match = config.get("version") == CONFIG_VERSION
         return is_all_keys_match and is_version_match
+
+    def _invalid(self):
+        logger.debug(f"[Config] Invalid. A new config will be generated.")
+        self._generate_template()
+        return CONFIG_TEMPLATE
 
     def load(self):
         if os.path.isfile(CONFIG_PATH):
@@ -276,28 +285,18 @@ class ConfigUtil:
                 try:
                     config = json.loads(json_str)
                     if self._check(config):
-                        print("Config JSON:")
-                        pprint(config)
+                        logger.debug(f"[Config] Loaded\n{pformat(config)}")
                         return config
-                    else:
-                        print("Config is invalid, generate new config")
-                        self._generate_template()
-                        return CONFIG_TEMPLATE
                 except json.decoder.JSONDecodeError:
-                    print("Config JSONDecodeError, generate new config")
-                    self._generate_template()
-                    return CONFIG_TEMPLATE
-        else:
-            print("Config not found, generate new config")
-            self._generate_template()
-            return CONFIG_TEMPLATE
+                    logger.debug(f"[Config] JSONDecodeError")
+        return self._invalid()
 
     @staticmethod
     def save(config):
-        print("Save config JSON")
         with open(CONFIG_PATH, "w") as f:
             json_str = json.dumps(config, indent=3)
             print(json_str, file=f)
+            logger.debug(f"[Config] Saved\n{pformat(config)}")
 
 
 if __name__ == "__main__":
