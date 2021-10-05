@@ -1,3 +1,4 @@
+import logging
 import signal
 
 import pkg_resources
@@ -7,12 +8,8 @@ from pydbus import SessionBus
 from commons import *
 from utils import ConfigUtil
 
-# Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
-os.environ['GDK_BACKEND'] = "x11"
-# Suppress VLC Log
-os.environ["VLC_VERBOSE"] = "-1"
-
 loop = GLib.MainLoop()
+logger = logging.getLogger(LOGGER_NAME)
 
 
 class HidamariService(object):
@@ -21,11 +18,8 @@ class HidamariService(object):
         signal.signal(signal.SIGTERM, self.quit)
         # SIGSEGV as a fail-safe
         signal.signal(signal.SIGSEGV, self.quit)
-        # Ignore SIGHUP to handle shutdown event correctly
-        # https://askubuntu.com/questions/819730/no-sigterm-before-sigkill-shutdown-with-systemd-on-ubuntu-16-04
-        signal.signal(signal.SIGHUP, lambda *args: None)
 
-        self.config = ConfigUtil().load()
+        self._load_config()
         self.player = None
         if self.config[CONFIG_KEY_MODE] is None:
             # Welcome to Hidamari, first time user ;)
@@ -44,19 +38,22 @@ class HidamariService(object):
     # Load dbus xml
     dbus = pkg_resources.resource_string(__name__, "dbus.xml").decode("utf-8")
 
-    def null(self):
-        print("Mode: Null")
-        from null_player import NullPlayer
-        self.player = NullPlayer(self.config)
+    def _load_config(self):
+        self.config = ConfigUtil().load()
+
+    def _save_config(self):
+        ConfigUtil().save(self.config)
 
     def _setup_player(self, mode, data_source=None):
+        logger.info(f"[Mode] {mode}")
         self.config[CONFIG_KEY_MODE] = mode
         # Set data source if specified
-        if data_source is not None:
+        if data_source:
             self.config[CONFIG_KEY_DATA_SOURCE] = data_source
+        self._save_config()
 
         # Quit current player
-        if self.player is not None:
+        if self.player:
             self.player.release()
             self.player = None
 
@@ -72,29 +69,31 @@ class HidamariService(object):
             self.player.mode = mode
             self.player.data_source = self.config[CONFIG_KEY_DATA_SOURCE]
 
+    def null(self):
+        logger.info(f"[Mode] {MODE_NULL}")
+        from null_player import NullPlayer
+        self.player = NullPlayer(self.config)
+
     def video(self, video_path=None):
-        print("Mode: Video")
         self._setup_player(MODE_VIDEO, video_path)
 
     def stream(self, stream_url=None):
-        print("Mode: Stream")
         self._setup_player(MODE_STREAM, stream_url)
 
     def webpage(self, webpage_url=None):
-        print("Mode: Webpage")
         self._setup_player(MODE_WEBPAGE, webpage_url)
 
     def pause_playback(self):
-        if self.player is not None:
+        if self.player:
             self.player.pause_playback()
 
     def start_playback(self):
-        if self.player is not None:
+        if self.player:
             self.player.start_playback()
 
     def quit(self, *args):
         """removes this object from the DBUS connection and exits"""
-        if self.player is not None:
+        if self.player:
             self.player.quit()
         loop.quit()
 
@@ -109,7 +108,8 @@ class HidamariService(object):
     @volume.setter
     def volume(self, volume):
         self.config[CONFIG_KEY_VOLUME] = volume
-        if self.player is not None:
+        self._save_config()
+        if self.player:
             self.player.volume = volume
 
     @property
@@ -119,7 +119,8 @@ class HidamariService(object):
     @blur_radius.setter
     def blur_radius(self, blur_radius):
         self.config[CONFIG_KEY_BLUR_RADIUS] = blur_radius
-        if self.player is not None:
+        self._save_config()
+        if self.player:
             self.player.config = self.config
 
     @property
@@ -129,18 +130,19 @@ class HidamariService(object):
     @is_mute.setter
     def is_mute(self, is_mute):
         self.config[CONFIG_KEY_MUTE] = is_mute
-        if self.player is not None:
+        self._save_config()
+        if self.player:
             self.player.is_mute = is_mute
 
     @property
     def is_playing(self):
-        if self.player is not None:
+        if self.player:
             return self.player.is_playing
         return False
 
     @is_playing.setter
     def is_playing(self, is_playing):
-        if self.player is not None:
+        if self.player:
             self.player.user_pause_playback = not is_playing
 
     @property
@@ -150,7 +152,8 @@ class HidamariService(object):
     @is_static_wallpaper.setter
     def is_static_wallpaper(self, is_static_wallpaper):
         self.config[CONFIG_KEY_STATIC_WALLPAPER] = is_static_wallpaper
-        if self.player is not None:
+        self._save_config()
+        if self.player:
             self.player.config = self.config
 
     @property
@@ -160,7 +163,8 @@ class HidamariService(object):
     @is_detect_maximized.setter
     def is_detect_maximized(self, is_detect_maximized):
         self.config[CONFIG_KEY_DETECT_MAXIMIZED] = is_detect_maximized
-        if self.player is not None:
+        self._save_config()
+        if self.player:
             self.player.config = self.config
 
 
@@ -172,7 +176,7 @@ def run():
         hidamari.dbus_published_callback()
         loop.run()
     except RuntimeError:
-        print("Error: Failed to create server")
+        raise Exception("Failed to create server")
 
 
 if __name__ == "__main__":

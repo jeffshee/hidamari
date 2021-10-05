@@ -2,6 +2,9 @@ import os
 import sys
 
 DBUS_NAME = "io.github.jeffshee.hidamari"
+APP_INDICATOR_ID = "io.github.jeffshee.hidamari"
+ICON_NAME = "hidamari"
+LOGGER_NAME = "hidamari"
 HOME = os.environ["HOME"]
 VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Videos", "Hidamari")
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
@@ -22,6 +25,7 @@ GUI_SCRIPT_PATH = os.path.join(sys.path[0], "gui.py")
 GUI_GLADE_PATH = os.path.join(sys.path[0], "gui_v2.glade")
 APPLICATION_ID = "io.github.jeffshee.hidamari.gui"
 
+MODE_NULL = "MODE_NULL"
 MODE_VIDEO = "MODE_VIDEO"
 MODE_STREAM = "MODE_STREAM"
 MODE_WEBPAGE = "MODE_WEBPAGE"

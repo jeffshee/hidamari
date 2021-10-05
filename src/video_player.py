@@ -184,6 +184,7 @@ class VideoPlayer(BasePlayer):
             window = Gtk.Window()
             window.add(vlc_widget)
             window.set_type_hint(Gdk.WindowTypeHint.DESKTOP)
+            window.set_keep_below(True)
             window.set_size_request(monitor.width, monitor.height)
             window.move(monitor.x, monitor.y)
 

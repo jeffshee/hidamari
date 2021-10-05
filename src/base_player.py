@@ -18,9 +18,7 @@ if is_wayland():
 else:
     from utils import WindowHandler
 
-
 from monitor import Monitor
-from utils import ConfigUtil
 from commons import *
 
 
@@ -180,6 +178,5 @@ class BasePlayer:
     def quit(self, *args):
         """Quit everything"""
         print("Player: Quit")
-        ConfigUtil.save(self.config)
         self.release()
         exit(0)

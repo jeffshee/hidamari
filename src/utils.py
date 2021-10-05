@@ -1,7 +1,7 @@
 import json
 import logging
 import subprocess
-from pprint import pformat, pprint
+from pprint import pformat
 
 import gi
 import pydbus
@@ -291,8 +291,20 @@ class ConfigUtil:
                     logger.debug(f"[Config] JSONDecodeError")
         return self._invalid()
 
-    @staticmethod
-    def save(config):
+    def save(self, config):
+        old_config = None
+        if os.path.isfile(CONFIG_PATH):
+            with open(CONFIG_PATH, "r") as f:
+                json_str = f.read()
+                try:
+                    old_config = json.loads(json_str)
+                    if not self._check(old_config):
+                        old_config = None
+                except json.decoder.JSONDecodeError:
+                    old_config = None
+        # Skip if the config is identical
+        if old_config == config:
+            return
         with open(CONFIG_PATH, "w") as f:
             json_str = json.dumps(config, indent=3)
             print(json_str, file=f)
