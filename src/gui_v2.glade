@@ -813,7 +813,7 @@ Set a web page as wallpaper</property>
               <object class="GtkImage" id="ButtonPlayPauseIcon">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="icon-name">player_play</property>
+                <property name="icon-name">media-playback-start</property>
               </object>
             </child>
           </object>

@@ -126,9 +126,9 @@ class GUI(Gtk.Application):
     def set_play_pause_icon(self):
         play_pause_icon: Gtk.Image = self.builder.get_object("ButtonPlayPauseIcon")
         if self.server.is_playing:
-            icon_name = "player_pause"
+            icon_name = "media-playback-pause"
         else:
-            icon_name = "player_play"
+            icon_name = "media-playback-start"
         play_pause_icon.set_from_icon_name(icon_name=icon_name, size=0)
 
     def on_play_pause(self, action, param):
