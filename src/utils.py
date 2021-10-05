@@ -92,6 +92,55 @@ def setup_autostart(autostart):
             pass
 
 
+"""
+GNOME extension utils
+"""
+
+
+def gnome_extension_is_enabled(extension_name: str):
+    gnome_ext = pydbus.SessionBus().get("org.gnome.Shell.Extensions")
+    info: dict = gnome_ext.GetExtensionInfo(extension_name)
+    return info["state"] == 1  # ENABLE = 1
+
+
+def gnome_extension_set_enable(extension_name: str):
+    gnome_ext = pydbus.SessionBus().get("org.gnome.Shell.Extensions")
+    success: bool = gnome_ext.EnableExtension(extension_name)
+    return success
+
+
+def gnome_extension_set_disable(extension_name: str):
+    gnome_ext = pydbus.SessionBus().get("org.gnome.Shell.Extensions")
+    success: bool = gnome_ext.DisableExtension(extension_name)
+    return success
+
+
+def gnome_extension_is_installed(extension_name: str):
+    gnome_ext = pydbus.SessionBus().get("org.gnome.Shell.Extensions")
+    installed: dict = gnome_ext.ListExtensions()
+    return extension_name in installed.keys()
+
+
+def gnome_desktop_icon_workaround():
+    """
+    Workaround for GNOME desktop icon extensions not displaying the icons on top of Hidamari.
+    Call this right after the wallpaper is shown.
+    """
+    assert is_gnome()
+    extension_list = ["ding@rastersoft.com", "desktopicons-neo@darkdemon"]
+    for ext in extension_list:
+        # Check if installed and enabled
+        if gnome_extension_is_installed(ext) and gnome_extension_is_enabled(ext):
+            # Reload the extension
+            gnome_extension_set_disable(ext)
+            gnome_extension_set_enable(ext)
+
+
+"""
+Handlers
+"""
+
+
 class ActiveHandler:
     """
     Handler for monitoring screen lock
@@ -175,7 +224,8 @@ class WindowHandlerGnome:
         ret1, workspace = self.gnome_shell.Eval("""
                         global.workspace_manager.get_active_workspace_index()
                         """)
-
+        # TODO:
+        # window.meta_window.get_monitor()
         ret2, maximized = self.gnome_shell.Eval(f"""
                 var window_list = global.get_window_actors().find(window =>
                     window.meta_window.maximized_horizontally &
@@ -254,3 +304,4 @@ if __name__ == "__main__":
     # Debug
     print(is_gnome())
     print(is_wayland())
+    gnome_desktop_icon_workaround()
