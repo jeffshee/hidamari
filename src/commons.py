@@ -1,10 +1,14 @@
 import os
 import sys
 
-DBUS_NAME = "io.github.jeffshee.hidamari"
-APP_INDICATOR_ID = "io.github.jeffshee.hidamari"
+PROJECT_NAME = APP_INDICATOR_ID = "io.github.jeffshee.Hidamari"
+PROJECT_NAME_SHORT = LOGGER_NAME = "Hidamari"
+DBUS_NAME_SERVER = f"{PROJECT_NAME}.server"
+DBUS_NAME_PLAYER = f"{PROJECT_NAME}.player"
+APPLICATION_ID_GUI = f"{PROJECT_NAME}.gui"
+APPLICATION_ID_PLAYER = f"{PROJECT_NAME}.player"
+
 ICON_NAME = "hidamari"
-LOGGER_NAME = "hidamari"
 HOME = os.environ["HOME"]
 VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Videos", "Hidamari")
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
@@ -15,15 +19,14 @@ AUTOSTART_DESKTOP_CONTENT = \
     [Desktop Entry]
     Type=Application
     Name=Hidamari
-    Exec=hidamari --p 5
+    Exec=hidamari -p 0 -b 
     StartupNotify=false
     Terminal=false
     Icon=hidamari
     Categories=System;Monitor;
     """
-GUI_SCRIPT_PATH = os.path.join(sys.path[0], "gui.py")
-GUI_GLADE_PATH = os.path.join(sys.path[0], "gui_v2.glade")
-APPLICATION_ID = "io.github.jeffshee.hidamari.gui"
+GUI_SCRIPT_PATH = os.path.join(sys.path[0], "ui/gui.py")
+GUI_GLADE_PATH = os.path.join(sys.path[0], "ui/gui_v2.glade")
 
 MODE_NULL = "MODE_NULL"
 MODE_VIDEO = "MODE_VIDEO"
@@ -41,7 +44,7 @@ CONFIG_KEY_BLUR_RADIUS = "static_wallpaper_blur_radius"
 CONFIG_KEY_DETECT_MAXIMIZED = "is_detect_maximized"
 CONFIG_TEMPLATE = {
     CONFIG_KEY_VERSION: CONFIG_VERSION,
-    CONFIG_KEY_MODE: None,
+    CONFIG_KEY_MODE: MODE_NULL,
     CONFIG_KEY_DATA_SOURCE: None,
     CONFIG_KEY_MUTE: False,
     CONFIG_KEY_VOLUME: 50,

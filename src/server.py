@@ -1,42 +1,84 @@
+import argparse
 import logging
+import multiprocessing as mp
 import signal
+import time
+from multiprocessing import Process
 
-import pkg_resources
 from gi.repository import GLib
 from pydbus import SessionBus
 
 from commons import *
+from player.base_player import main as base_player_main
+from player.video_player import main as video_player_main
+from player.web_player import main as web_player_main
+from ui.gui import main as gui_main
 from utils import ConfigUtil
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
 
 
-class HidamariService(object):
-    def __init__(self):
-        signal.signal(signal.SIGINT, self.quit)
-        signal.signal(signal.SIGTERM, self.quit)
-        # SIGSEGV as a fail-safe
-        signal.signal(signal.SIGSEGV, self.quit)
+class HidamariServer(object):
+    """
+    <node>
+    <interface name='io.github.jeffshee.hidamari.server'>
+        <method name='null'/>
+        <method name='video'>
+            <arg type='s' name='video_path' direction='in'/>
+        </method>
+        <method name='stream'>
+            <arg type='s' name='stream_url' direction='in'/>
+        </method>
+        <method name='webpage'>
+            <arg type='s' name='webpage_url' direction='in'/>
+        </method>
+        <method name='pause_playback'/>
+        <method name='start_playback'/>
+        <method name='show_gui'/>
+        <method name='quit'/>
+        <property name="mode" type="i" access="read"/>
+        <property name="volume" type="i" access="readwrite"/>
+        <property name="blur_radius" type="i" access="readwrite"/>
+        <property name="is_mute" type="b" access="readwrite"/>
+        <property name="is_playing" type="b" access="read"/>
+        <property name="is_paused_by_user" type="b" access="readwrite"/>
+        <property name="is_static_wallpaper" type="b" access="readwrite"/>
+        <property name="is_detect_maximized" type="b" access="readwrite"/>
+    </interface>
+    </node>
+    """
 
+    def __init__(self, args):
+        signal.signal(signal.SIGINT, lambda *_: self.quit())
+        signal.signal(signal.SIGTERM, lambda *_: self.quit())
+        # SIGSEGV as a fail-safe
+        signal.signal(signal.SIGSEGV, lambda *_: self.quit())
+
+        os.makedirs(VIDEO_WALLPAPER_DIR, exist_ok=True)
         self._load_config()
-        self.player = None
-        if self.config[CONFIG_KEY_MODE] is None:
+
+        mp.set_start_method("spawn")
+        self.gui_process = None
+        self.player_process = None
+
+        # Player
+        if self.config[CONFIG_KEY_MODE] == MODE_NULL:
             # Welcome to Hidamari, first time user ;)
-            self.dbus_published_callback = self.null
-            # Setup
-            os.makedirs(VIDEO_WALLPAPER_DIR, exist_ok=True)
+            self.null()
         elif self.config[CONFIG_KEY_MODE] == MODE_VIDEO:
-            self.dbus_published_callback = self.video
+            self.video()
         elif self.config[CONFIG_KEY_MODE] == MODE_STREAM:
-            self.dbus_published_callback = self.stream
+            self.stream()
         elif self.config[CONFIG_KEY_MODE] == MODE_WEBPAGE:
-            self.dbus_published_callback = self.webpage
+            self.webpage()
         else:
             raise ValueError("Unknown mode")
 
-    # Load dbus xml
-    dbus = pkg_resources.resource_string(__name__, "dbus.xml").decode("utf-8")
+        if args and not args.background:
+            self.show_gui()
+
+        logger.info("[Server] Started")
 
     def _load_config(self):
         self.config = ConfigUtil().load()
@@ -45,6 +87,7 @@ class HidamariService(object):
         ConfigUtil().save(self.config)
 
     def _setup_player(self, mode, data_source=None):
+        """Setup and run player"""
         logger.info(f"[Mode] {mode}")
         self.config[CONFIG_KEY_MODE] = mode
         # Set data source if specified
@@ -52,27 +95,26 @@ class HidamariService(object):
             self.config[CONFIG_KEY_DATA_SOURCE] = data_source
         self._save_config()
 
-        # Quit current player
-        if self.player:
-            self.player.release()
-            self.player = None
+        self._quit_player()
 
-        if self.player is None:
-            # Create new player
-            if mode in [MODE_VIDEO, MODE_STREAM]:
-                from video_player import VideoPlayer
-                self.player = VideoPlayer(self.config)
-            elif mode == MODE_WEBPAGE:
-                from web_player import WebPlayer
-                self.player = WebPlayer(self.config)
+        # Create new player
+        if mode in [MODE_VIDEO, MODE_STREAM]:
+            self.player_process = Process(target=video_player_main)
+        elif mode == MODE_WEBPAGE:
+            self.player_process = Process(target=web_player_main)
         else:
-            self.player.mode = mode
-            self.player.data_source = self.config[CONFIG_KEY_DATA_SOURCE]
+            self.player_process = Process(target=base_player_main)
+        self.player_process.start()
+
+    @staticmethod
+    def _quit_player():
+        """Quit current player"""
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player:
+            player.quit_player()
 
     def null(self):
-        logger.info(f"[Mode] {MODE_NULL}")
-        from null_player import NullPlayer
-        self.player = NullPlayer(self.config)
+        self._setup_player(MODE_NULL)
 
     def video(self, video_path=None):
         self._setup_player(MODE_VIDEO, video_path)
@@ -83,19 +125,34 @@ class HidamariService(object):
     def webpage(self, webpage_url=None):
         self._setup_player(MODE_WEBPAGE, webpage_url)
 
-    def pause_playback(self):
-        if self.player:
-            self.player.pause_playback()
+    @staticmethod
+    def pause_playback():
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player:
+            player.pause_playback()
 
-    def start_playback(self):
-        if self.player:
-            self.player.start_playback()
+    @staticmethod
+    def start_playback():
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player:
+            player.start_playback()
 
-    def quit(self, *args):
-        """removes this object from the DBUS connection and exits"""
-        if self.player:
-            self.player.quit()
+    def show_gui(self):
+        """Show main GUI"""
+        self.gui_process = Process(target=gui_main)
+        self.gui_process.start()
+
+    def quit(self):
+        try:
+            self._quit_player()
+        except GLib.Error:
+            pass
+        # Quit all processes
+        for process in [self.player_process, self.gui_process]:
+            if process:
+                process.terminate()
         loop.quit()
+        logger.info("[Server] Stopped")
 
     @property
     def mode(self):
@@ -109,8 +166,9 @@ class HidamariService(object):
     def volume(self, volume):
         self.config[CONFIG_KEY_VOLUME] = volume
         self._save_config()
-        if self.player:
-            self.player.volume = volume
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player:
+            player.volume = volume
 
     @property
     def blur_radius(self):
@@ -120,8 +178,9 @@ class HidamariService(object):
     def blur_radius(self, blur_radius):
         self.config[CONFIG_KEY_BLUR_RADIUS] = blur_radius
         self._save_config()
-        if self.player:
-            self.player.config = self.config
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player and player.mode != MODE_NULL:
+            player.reload_config()
 
     @property
     def is_mute(self):
@@ -131,19 +190,29 @@ class HidamariService(object):
     def is_mute(self, is_mute):
         self.config[CONFIG_KEY_MUTE] = is_mute
         self._save_config()
-        if self.player:
-            self.player.is_mute = is_mute
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player:
+            player.is_mute = is_mute
 
     @property
     def is_playing(self):
-        if self.player:
-            return self.player.is_playing
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player:
+            return player.is_playing
         return False
 
-    @is_playing.setter
-    def is_playing(self, is_playing):
-        if self.player:
-            self.player.user_pause_playback = not is_playing
+    @property
+    def is_paused_by_user(self):
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player and player.mode in [MODE_VIDEO, MODE_STREAM]:
+            return player.is_paused_by_user
+        return None
+
+    @is_paused_by_user.setter
+    def is_paused_by_user(self, is_paused_by_user):
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player and player.mode in [MODE_VIDEO, MODE_STREAM]:
+            player.is_paused_by_user = is_paused_by_user
 
     @property
     def is_static_wallpaper(self):
@@ -153,8 +222,9 @@ class HidamariService(object):
     def is_static_wallpaper(self, is_static_wallpaper):
         self.config[CONFIG_KEY_STATIC_WALLPAPER] = is_static_wallpaper
         self._save_config()
-        if self.player:
-            self.player.config = self.config
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player and player.mode != MODE_NULL:
+            player.reload_config()
 
     @property
     def is_detect_maximized(self):
@@ -164,20 +234,58 @@ class HidamariService(object):
     def is_detect_maximized(self, is_detect_maximized):
         self.config[CONFIG_KEY_DETECT_MAXIMIZED] = is_detect_maximized
         self._save_config()
-        if self.player:
-            self.player.config = self.config
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player and player.mode != MODE_NULL:
+            player.reload_config()
 
 
-def run():
+def get_instance(dbus_name):
     bus = SessionBus()
     try:
-        hidamari = HidamariService()
-        bus.publish(DBUS_NAME, hidamari)
-        hidamari.dbus_published_callback()
-        loop.run()
-    except RuntimeError:
-        raise Exception("Failed to create server")
+        instance = bus.get(dbus_name)
+    except GLib.Error:
+        return None
+    return instance
+
+
+def main(args):
+    server = get_instance(DBUS_NAME_SERVER)
+    if server:
+        server.show_gui()
+    else:
+        # Pause before launching
+        time.sleep(args.p)
+        bus = SessionBus()
+        server = HidamariServer(args)
+        try:
+            bus.publish(DBUS_NAME_SERVER, server)
+            loop.run()
+        except RuntimeError:
+            raise Exception("Failed to create server")
 
 
 if __name__ == "__main__":
-    run()
+    # Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
+    os.environ["GDK_BACKEND"] = "x11"
+    # Suppress VLC Log
+    os.environ["VLC_VERBOSE"] = "-1"
+
+    parser = argparse.ArgumentParser(description="Hidamari launcher")
+    parser.add_argument("-p", "--pause", dest="p", type=int, default=0,
+                        help="Add pause before launching Hidamari. [sec]")
+    parser.add_argument("-b", "--background", action="store_true", help="Launch only the live wallpaper.")
+    parser.add_argument("-d", "--debug", action="store_true", help="Print debug messages.")
+    args = parser.parse_args()
+
+    # Setup logger
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
+    # Log system information
+    logger.debug(f"[Desktop] {os.environ.get('XDG_CURRENT_DESKTOP', 'Not found')}")
+    logger.debug(f"[Display Server] {os.environ.get('XDG_SESSION_TYPE', 'Not found')}")
+    logger.debug(f"[Args] {vars(args)}")
+
+    # Clear sys.argv as it has influence to the Gtk.Application
+    sys.argv = [sys.argv[0]]
+    main(args)

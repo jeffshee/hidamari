@@ -9,8 +9,13 @@ from commons import *
 
 
 class GUI(Gtk.Application):
-    def __init__(self):
-        super(GUI, self).__init__(application_id=APPLICATION_ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
+    def __init__(self, *args, **kwargs):
+        super(GUI, self).__init__(
+            *args,
+            application_id=APPLICATION_ID_GUI,
+            flags=Gio.ApplicationFlags.FLAGS_NONE,
+            **kwargs
+        )
         self.builder = Gtk.Builder()
         self.builder.set_application(self)
         self.builder.add_from_file(GUI_GLADE_PATH)
@@ -31,7 +36,7 @@ class GUI(Gtk.Application):
 
         bus = SessionBus()
         try:
-            self.server = bus.get(DBUS_NAME)
+            self.server = bus.get(DBUS_NAME_SERVER)
         except GLib.Error:
             dialog = Gtk.MessageDialog(text="Oops!", message_type=Gtk.MessageType.ERROR,
                                        secondary_text="Couldn't connect to server",
@@ -103,7 +108,8 @@ class GUI(Gtk.Application):
             self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.present()
 
-    def on_local_video_dir(self, action, param):
+    @staticmethod
+    def on_local_video_dir(action, param):
         from utils import xdg_open_video_dir
         xdg_open_video_dir()
 
@@ -125,16 +131,16 @@ class GUI(Gtk.Application):
 
     def set_play_pause_icon(self):
         play_pause_icon: Gtk.Image = self.builder.get_object("ButtonPlayPauseIcon")
-        if self.server.is_playing:
+        if not self.server.is_paused_by_user:
             icon_name = "media-playback-pause"
         else:
             icon_name = "media-playback-start"
         play_pause_icon.set_from_icon_name(icon_name=icon_name, size=0)
 
     def on_play_pause(self, action, param):
-        is_playing = self.server.is_playing
-        self.server.is_playing = not is_playing
-        if is_playing:
+        is_paused_by_user = self.server.is_paused_by_user
+        self.server.is_paused_by_user = not is_paused_by_user
+        if not is_paused_by_user:
             self.server.pause_playback()
         else:
             self.server.start_playback()
@@ -283,6 +289,10 @@ class GUI(Gtk.Application):
             thread.start()
 
 
-if __name__ == "__main__":
+def main():
     app = GUI()
     app.run(sys.argv)
+
+
+if __name__ == "__main__":
+    main()

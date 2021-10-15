@@ -179,4 +179,4 @@ class BasePlayer:
         """Quit everything"""
         print("Player: Quit")
         self.release()
-        exit(0)
+        # exit(0)
