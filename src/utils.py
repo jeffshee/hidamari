@@ -227,7 +227,7 @@ class WindowHandlerGnome:
         ret1, workspace = self.gnome_shell.Eval("""
                         global.workspace_manager.get_active_workspace_index()
                         """)
-        # TODO:
+        # TODO: get window status grouped by each monitor
         # window.meta_window.get_monitor()
         ret2, maximized = self.gnome_shell.Eval(f"""
                 var window_list = global.get_window_actors().find(window =>
