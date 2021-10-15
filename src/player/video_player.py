@@ -136,6 +136,9 @@ class PlayerWindow(Gtk.ApplicationWindow):
     def get_volume(self):
         return self.__vlc_widget.player.audio_get_volume()
 
+    def set_mute(self, is_mute):
+        return self.__vlc_widget.player.audio_set_mute(is_mute)
+
     def get_position(self):
         return self.__vlc_widget.player.get_position()
 
@@ -307,8 +310,7 @@ class VideoPlayer(BasePlayer):
         self.config[CONFIG_KEY_MUTE] = is_mute
         for monitor, window in self.windows.items():
             if monitor.is_primary():
-                volume = 0 if is_mute else self.volume
-                window.set_volume(volume)
+                window.set_mute(is_mute)
 
     @property
     def is_playing(self):
@@ -322,8 +324,7 @@ class VideoPlayer(BasePlayer):
         # if not self.is_paused_by_user:
         if self._should_playback_start():
             for monitor, window in self.windows.items():
-                volume = 0 if self.is_mute else self.volume
-                window.play_fade(target=volume)
+                window.play_fade(target=self.volume)
 
     def monitor_sync(self):
         primary_monitor = None
