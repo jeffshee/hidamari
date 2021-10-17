@@ -4,3 +4,5 @@ __pycache__/
 # Project exclude paths
 /venv/
 /flatpak/
+/src/deprecated/
+/src/test/

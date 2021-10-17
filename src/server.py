@@ -13,7 +13,7 @@ from player.base_player import main as base_player_main
 from player.video_player import main as video_player_main
 from player.web_player import main as web_player_main
 from ui.gui import main as gui_main
-from utils import ConfigUtil
+from utils import ConfigUtil, EndSessionHandler
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
@@ -54,6 +54,7 @@ class HidamariServer(object):
         signal.signal(signal.SIGTERM, lambda *_: self.quit())
         # SIGSEGV as a fail-safe
         signal.signal(signal.SIGSEGV, lambda *_: self.quit())
+        EndSessionHandler(self.quit)
 
         os.makedirs(VIDEO_WALLPAPER_DIR, exist_ok=True)
         self._load_config()

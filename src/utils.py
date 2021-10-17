@@ -163,6 +163,49 @@ class ActiveHandler:
                 pass
 
 
+class EndSessionHandler:
+    """
+    Handler for monitoring end session
+    References:
+    https://github.com/backloop/gendsession
+    https://people.gnome.org/~mccann/gnome-session/docs/gnome-session.html
+
+    PrepareForShutdown() signal from logind is not handled
+    https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/787
+    https://bugs.launchpad.net/ubuntu/+source/gdm3/+bug/1803581
+
+    """
+
+    def __init__(self, on_end_session: callable):
+        self.on_end_session = on_end_session
+
+        if is_gnome():
+            session_bus = pydbus.SessionBus()
+            proxy = session_bus.get("org.gnome.SessionManager")
+            client_id = proxy.RegisterClient("", "")
+            self.session_client = session_bus.get("org.gnome.SessionManager", client_id)
+            self.session_client.QueryEndSession.connect(self.__query_end_session_handler_gnome)
+            self.session_client.EndSession.connect(self.__end_session_handler_gnome)
+        else:
+            system_bus = pydbus.SystemBus()
+            proxy = system_bus.get(".login1")
+            proxy.PrepareForShutdown.connect(self.on_end_session)
+
+    def __end_session_response_gnome(self, ok=True):
+        if ok:
+            self.session_client.EndSessionResponse(True, "")
+        else:
+            self.session_client.EndSessionResponse(False, "Not ready")
+
+    def __query_end_session_handler_gnome(self, flags):
+        # ignore flags, always agree on the QueryEndSesion
+        self.__end_session_response_gnome(True)
+
+    def __end_session_handler_gnome(self, flags):
+        self.on_end_session()
+        self.__end_session_response_gnome(True)
+
+
 class WindowHandler:
     """
     Handler for monitoring window events (maximized and fullscreen mode)
