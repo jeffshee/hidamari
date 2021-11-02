@@ -1,3 +1,5 @@
+import threading
+
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -10,49 +12,85 @@ from pydbus import SessionBus
 from commons import *
 
 
-def on_item_mute(server, item):
-    server.is_mute = item.get_active()
-
-
-def on_item_pause(server, item):
-    prev_state = server.is_paused_by_user
-    server.is_paused_by_user = item.get_active()
-    if not prev_state:
-        server.pause_playback()
-    else:
-        server.start_playback()
-
-
-def build_menu():
+def connect():
     # Connect to server
     bus = SessionBus()
     try:
         server = bus.get(DBUS_NAME_SERVER)
+        return server
     except GLib.Error:
         print("Error: Couldn't connect to server")
-        return
+    return
+
+
+def on_item_show():
+    server = connect()
+    if server:
+        server.show_gui()
+
+
+def on_item_mute():
+    server = connect()
+    if server:
+        prev_state = server.is_mute
+        server.is_mute = not prev_state
+
+
+def on_item_pause():
+    server = connect()
+    if server:
+        prev_state = server.is_paused_by_user
+        server.is_paused_by_user = not prev_state
+        if not prev_state:
+            server.pause_playback()
+        else:
+            server.start_playback()
+
+
+def on_item_reload():
+    server = connect()
+    if server:
+        server.reload()
+
+
+def on_item_lucky():
+    server = connect()
+    if server:
+        server.feeling_lucky()
+
+
+def on_item_quit():
+    server = connect()
+    if server:
+        server.quit()
+
+
+def start_action(f: callable):
+    """Use this function to execute callback (for not blocking the UI)"""
+    t = threading.Thread(target=f)
+    t.start()
+
+
+def build_menu(mode):
     menu = Gtk.Menu()
-    mode = server.mode
     #
     item_show = Gtk.MenuItem(label="Show Hidamari")
-    item_show.connect("activate", lambda *_: server.show_gui())
+    item_show.connect("activate", lambda *_: start_action(on_item_show))
     #
-    item_mute = Gtk.CheckMenuItem(label="Mute Audio")
-    item_mute.connect("activate", lambda item: on_item_mute(server, item))
-    item_mute.set_active(server.is_mute)
+    item_mute = Gtk.MenuItem(label="Toggle Mute Audio")
+    item_mute.connect("activate", lambda *_: start_action(on_item_mute))
     #
-    item_pause = Gtk.CheckMenuItem(label="Pause Playback")
-    item_pause.connect("activate", lambda item: on_item_pause(server, item))
-    item_pause.set_active(server.is_paused_by_user)
+    item_pause = Gtk.MenuItem(label="Toggle Play/Pause")
+    item_pause.connect("activate", lambda *_: start_action(on_item_pause))
     #
     item_reload = Gtk.MenuItem(label="Reload")
-    item_reload.connect("activate", lambda *_: server.reload())
+    item_reload.connect("activate", lambda *_: start_action(on_item_reload))
     #
     item_lucky = Gtk.MenuItem(label="I'm Feeling Lucky")
-    item_lucky.connect("activate", lambda *_: server.feeling_lucky())
+    item_lucky.connect("activate", lambda *_: start_action(on_item_lucky))
     #
     item_quit = Gtk.MenuItem(label="Quit Hidamari")
-    item_quit.connect("activate", lambda *_: server.quit())
+    item_quit.connect("activate", lambda *_: start_action(on_item_quit))
     #
     # Filter out unsupported action in current mode
     if mode == MODE_NULL:
@@ -67,8 +105,8 @@ def build_menu():
     return menu
 
 
-def show_systray_icon():
-    menu = build_menu()
+def show_systray_icon(mode):
+    menu = build_menu(mode)
     indicator = AppIndicator.Indicator.new(id=APP_INDICATOR_ID, icon_name=ICON_NAME,
                                            category=AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
     indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
@@ -78,4 +116,4 @@ def show_systray_icon():
 
 
 if __name__ == "__main__":
-    show_systray_icon()
+    show_systray_icon(MODE_VIDEO)

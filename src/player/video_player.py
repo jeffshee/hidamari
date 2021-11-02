@@ -6,14 +6,16 @@ import tempfile
 from threading import Timer
 
 import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gio, Gdk
+
+from pydbus import SessionBus
 import vlc
 from PIL import Image, ImageFilter
 
 from player.base_player import BasePlayer
-
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio
-from pydbus import SessionBus
+from ui.menu import build_menu
 from commons import *
 from utils import ActiveHandler, is_gnome, is_wayland
 
@@ -82,6 +84,13 @@ class VLCWidget(Gtk.DrawingArea):
         self.set_size_request(width, height)
 
 
+def build_dummy_menu():
+    menu = Gtk.Menu()
+    menu.append(Gtk.MenuItem(label="Hello"))
+    menu.show_all()
+    return menu
+
+
 class PlayerWindow(Gtk.ApplicationWindow):
     def __init__(self, width, height, *args, **kwargs):
         super(PlayerWindow, self).__init__(*args, **kwargs)
@@ -97,6 +106,9 @@ class PlayerWindow(Gtk.ApplicationWindow):
 
         # A timer that handling fade-in/out
         self.fade = Fade()
+
+        self.menu = None
+        self.connect("button-press-event", self._on_button_press_event)
 
     def play(self):
         self.__vlc_widget.player.play()
@@ -149,6 +161,14 @@ class PlayerWindow(Gtk.ApplicationWindow):
 
     def add_audio_track(self, audio):
         self.__vlc_widget.player.add_slave(vlc.MediaSlaveType(1), audio, True)
+
+    def _on_button_press_event(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            if not self.menu:
+                self.menu = build_menu(MODE_VIDEO)
+            self.menu.popup_at_pointer()
+            return True
+        return False
 
 
 class VideoPlayer(BasePlayer):

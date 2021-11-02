@@ -108,7 +108,7 @@ class HidamariServer(object):
             # Refresh systray icon if the mode changed
             if self.sys_icon_process:
                 self.sys_icon_process.terminate()
-            self.sys_icon_process = Process(target=show_systray_icon)
+            self.sys_icon_process = Process(target=show_systray_icon, args=(mode,))
             self.sys_icon_process.start()
         self._prev_mode = self.mode
 

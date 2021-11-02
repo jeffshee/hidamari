@@ -5,20 +5,27 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("WebKit2", "4.0")
-from gi.repository import Gtk, WebKit2
+from gi.repository import Gtk, WebKit2, Gdk
+
 from pydbus import SessionBus
-from commons import *
+
 from player.base_player import BasePlayer
+from ui.menu import build_menu
+from commons import *
 
 logger = logging.getLogger(LOGGER_NAME)
 
 
+# TODO switch to chromium-based webview
 class WebWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super(WebWindow, self).__init__(*args, **kwargs)
         self.__webview = WebKit2.WebView()
         self.add(self.__webview)
         self.__webview.show()
+
+        self.menu = None
+        self.__webview.connect("button-press-event", self._on_button_press_event)
 
     def load_uri(self, uri):
         self.__webview.load_uri(uri)
@@ -28,6 +35,14 @@ class WebWindow(Gtk.ApplicationWindow):
 
     def reload(self):
         self.__webview.reload()
+
+    def _on_button_press_event(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            if not self.menu:
+                self.menu = build_menu(MODE_WEBPAGE)
+            self.menu.popup_at_pointer()
+            return True
+        return False
 
 
 class WebPlayer(BasePlayer):
