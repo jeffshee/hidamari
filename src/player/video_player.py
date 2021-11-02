@@ -34,7 +34,6 @@ FADE_DURATION_SEC = 1.5
 FADE_INTERVAL = 0.1
 
 
-# TODO move this class to utils
 class Fade:
     def __init__(self):
         self.timer = None

@@ -1,6 +1,7 @@
 import argparse
 import logging
 import multiprocessing as mp
+import random
 import signal
 import time
 from multiprocessing import Process
@@ -13,7 +14,8 @@ from player.base_player import main as base_player_main
 from player.video_player import main as video_player_main
 from player.web_player import main as web_player_main
 from ui.gui import main as gui_main
-from utils import ConfigUtil, EndSessionHandler
+from ui.menu import show_systray_icon
+from utils import ConfigUtil, EndSessionHandler, list_local_video_dir
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
@@ -35,9 +37,11 @@ class HidamariServer(object):
         </method>
         <method name='pause_playback'/>
         <method name='start_playback'/>
+        <method name="reload"/>
+        <method name="feeling_lucky"/>
         <method name='show_gui'/>
         <method name='quit'/>
-        <property name="mode" type="i" access="read"/>
+        <property name="mode" type="s" access="read"/>
         <property name="volume" type="i" access="readwrite"/>
         <property name="blur_radius" type="i" access="readwrite"/>
         <property name="is_mute" type="b" access="readwrite"/>
@@ -61,20 +65,13 @@ class HidamariServer(object):
 
         mp.set_start_method("spawn")
         self.gui_process = None
+        self.sys_icon_process = None
         self.player_process = None
 
-        # Player
-        if self.config[CONFIG_KEY_MODE] == MODE_NULL:
-            # Welcome to Hidamari, first time user ;)
-            self.null()
-        elif self.config[CONFIG_KEY_MODE] == MODE_VIDEO:
-            self.video()
-        elif self.config[CONFIG_KEY_MODE] == MODE_STREAM:
-            self.stream()
-        elif self.config[CONFIG_KEY_MODE] == MODE_WEBPAGE:
-            self.webpage()
-        else:
-            raise ValueError("Unknown mode")
+        self._prev_mode = None
+
+        # Initial loading for player process
+        self.reload()
 
         if args and not args.background:
             self.show_gui()
@@ -107,6 +104,14 @@ class HidamariServer(object):
             self.player_process = Process(target=base_player_main)
         self.player_process.start()
 
+        if self._prev_mode != self.mode:
+            # Refresh systray icon if the mode changed
+            if self.sys_icon_process:
+                self.sys_icon_process.terminate()
+            self.sys_icon_process = Process(target=show_systray_icon)
+            self.sys_icon_process.start()
+        self._prev_mode = self.mode
+
     @staticmethod
     def _quit_player():
         """Quit current player"""
@@ -138,6 +143,28 @@ class HidamariServer(object):
         if player:
             player.start_playback()
 
+    def reload(self):
+        if self.config[CONFIG_KEY_MODE] == MODE_NULL:
+            # Welcome to Hidamari, first time user ;)
+            self.null()
+        elif self.config[CONFIG_KEY_MODE] == MODE_VIDEO:
+            self.video()
+        elif self.config[CONFIG_KEY_MODE] == MODE_STREAM:
+            self.stream()
+        elif self.config[CONFIG_KEY_MODE] == MODE_WEBPAGE:
+            self.webpage()
+        else:
+            raise ValueError("Unknown mode")
+
+    def feeling_lucky(self):
+        """Random play a video from the directory"""
+        file_list = list_local_video_dir()
+        # Remove current data source from the random selection
+        if self.config[CONFIG_KEY_DATA_SOURCE] in file_list:
+            file_list.remove(self.config[CONFIG_KEY_DATA_SOURCE])
+        if file_list:
+            self.video(random.choice(file_list))
+
     def show_gui(self):
         """Show main GUI"""
         self.gui_process = Process(target=gui_main)
@@ -149,7 +176,7 @@ class HidamariServer(object):
         except GLib.Error:
             pass
         # Quit all processes
-        for process in [self.player_process, self.gui_process]:
+        for process in [self.player_process, self.gui_process, self.sys_icon_process]:
             if process:
                 process.terminate()
         loop.quit()
