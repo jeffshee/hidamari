@@ -6,3 +6,12 @@ __pycache__/
 /flatpak/
 /src/deprecated/
 /src/test/
+bin/
+dist/
+etc/
+include/
+lib/
+lib64
+pyvenv.cfg
+share/
+src/hidamari.egg-info/
