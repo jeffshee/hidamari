@@ -5,7 +5,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GLib
 from pydbus import SessionBus
-from commons import *
+from hidamari.commons import *
 
 
 class GUI(Gtk.Application):
@@ -110,7 +110,7 @@ class GUI(Gtk.Application):
 
     @staticmethod
     def on_local_video_dir(action, param):
-        from utils import xdg_open_video_dir
+        from hidamari.utils import xdg_open_video_dir
         xdg_open_video_dir()
 
     def on_local_video_refresh(self, action, param):
@@ -192,7 +192,7 @@ class GUI(Gtk.Application):
         action.set_state(state)
         self.is_autostart = state
         print("GUI:", action.get_name(), state)
-        from utils import setup_autostart
+        from hidamari.utils import setup_autostart
         setup_autostart(state)
 
     def on_static_wallpaper(self, action, state):
@@ -271,7 +271,7 @@ class GUI(Gtk.Application):
         toggle_mute.set_state = self.is_autostart
 
     def _reload_local_video_icon_view(self):
-        from utils import list_local_video_dir, get_thumbnail_gnome
+        from hidamari.utils import list_local_video_dir, get_thumbnail_gnome
         from gi.repository.GdkPixbuf import Pixbuf
         list_store = Gtk.ListStore(Pixbuf, str)
 

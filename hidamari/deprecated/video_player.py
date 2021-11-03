@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 
 from base_player import BasePlayer
-from utils import list_local_video_dir
+from hidamari.utils import list_local_video_dir
 from commons import *
 
 

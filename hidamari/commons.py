@@ -25,8 +25,10 @@ AUTOSTART_DESKTOP_CONTENT = \
     Icon=hidamari
     Categories=System;Monitor;
     """
-GUI_SCRIPT_PATH = os.path.join(sys.path[0], "ui/gui.py")
-GUI_GLADE_PATH = os.path.join(sys.path[0], "ui/gui_v2.glade")
+
+from hidamari import ui
+GUI_SCRIPT_PATH = os.path.join(*ui.__path__, "gui.py")
+GUI_GLADE_PATH = os.path.join(*ui.__path__, "gui_v2.glade")
 
 MODE_NULL = "MODE_NULL"
 MODE_VIDEO = "MODE_VIDEO"

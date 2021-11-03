@@ -5,7 +5,7 @@ from gi.repository import GLib
 from pydbus import SessionBus
 
 from commons import *
-from utils import ConfigUtil
+from hidamari.utils import ConfigUtil
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)

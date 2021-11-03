@@ -6,8 +6,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, Gdk
 from pydbus import SessionBus
-from commons import *
-from utils import gnome_desktop_icon_workaround
+from hidamari.commons import *
+from hidamari.utils import gnome_desktop_icon_workaround
 
 logger = logging.getLogger(LOGGER_NAME)
 

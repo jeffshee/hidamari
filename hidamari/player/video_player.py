@@ -14,22 +14,22 @@ from pydbus import SessionBus
 import vlc
 from PIL import Image, ImageFilter
 
-from player.base_player import BasePlayer
-from ui.menu import build_menu
-from commons import *
-from utils import ActiveHandler, is_gnome, is_wayland
+from hidamari.player.base_player import BasePlayer
+from hidamari.ui.menu import build_menu
+from hidamari.commons import *
+from hidamari.utils import ActiveHandler, is_gnome, is_wayland
 
 logger = logging.getLogger(LOGGER_NAME)
 if is_wayland():
     if is_gnome():
-        from utils import WindowHandlerGnome as WindowHandler
+        from hidamari.utils import WindowHandlerGnome as WindowHandler
     else:
         # Dummy class as not currently supported.
         class WindowHandler:
             def __init__(self, _: callable):
                 pass
 else:
-    from utils import WindowHandler
+    from hidamari.utils import WindowHandler
 
 # TODO make it configurable
 FADE_DURATION_SEC = 1.5
@@ -377,7 +377,7 @@ class VideoPlayer(BasePlayer):
             os.remove(self.new_wallpaper_uri)
 
     def reload_config(self):
-        from utils import ConfigUtil
+        from hidamari.utils import ConfigUtil
         self.config = ConfigUtil().load()
 
     def quit_player(self):

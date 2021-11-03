@@ -10,7 +10,7 @@ gi.require_version("GnomeDesktop", "3.0")
 gi.require_version("Wnck", "3.0")
 from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 from gi.repository.GdkPixbuf import Pixbuf
-from commons import *
+from hidamari.commons import *
 
 logger = logging.getLogger(LOGGER_NAME)
 
