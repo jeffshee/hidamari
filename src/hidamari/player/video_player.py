@@ -277,7 +277,7 @@ class VideoPlayer(BasePlayer):
                 window.set_position(0.0)
 
         elif self.mode == MODE_STREAM:
-            from ytl_wrapper import get_formats, get_best_audio, get_optimal_video
+            from hidamari.ytl_wrapper import get_formats, get_best_audio, get_optimal_video
             formats = get_formats(data_source)
             max_height = max(self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
             video_url = get_optimal_video(formats, max_height)

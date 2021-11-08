@@ -19,7 +19,7 @@ else:
     from hidamari.utils import WindowHandler
 
 from monitor import Monitor
-from commons import *
+from hidamari.commons import *
 
 
 class BasePlayer:

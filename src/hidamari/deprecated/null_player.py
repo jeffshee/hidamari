@@ -4,7 +4,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
 from base_player import BasePlayer
-from commons import *
+from hidamari.commons import *
 
 
 class NullPlayer(BasePlayer):
