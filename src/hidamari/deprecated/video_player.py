@@ -12,8 +12,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 
 from base_player import BasePlayer
-from utils import list_local_video_dir
-from commons import *
+from hidamari.utils import list_local_video_dir
+from hidamari.commons import *
 
 
 class VLCWidget(Gtk.DrawingArea):
@@ -120,7 +120,7 @@ class VideoPlayer(BasePlayer):
                 monitor.vlc_set_media(media)
                 monitor.vlc_set_position(0.0)
         elif self.mode == MODE_STREAM:
-            from ytl_wrapper import get_formats, get_best_audio, get_optimal_video
+            from hidamari.ytl_wrapper import get_formats, get_best_audio, get_optimal_video
             formats = get_formats(data_source)
             max_height = max(self.monitors, key=lambda x: x.height).height
             video_url = get_optimal_video(formats, max_height)

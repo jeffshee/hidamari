@@ -4,8 +4,8 @@ import signal
 from gi.repository import GLib
 from pydbus import SessionBus
 
-from commons import *
-from utils import ConfigUtil
+from hidamari.commons import *
+from hidamari.utils import ConfigUtil
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
@@ -196,7 +196,7 @@ class HidamariServer(object):
     def show_gui(self):
         import multiprocessing as mp
         from multiprocessing import Process
-        from ui.gui import main
+        from hidamari.ui.gui import main
         mp.set_start_method("spawn")
         self.gui_process = Process(target=main)
         self.gui_process.start()

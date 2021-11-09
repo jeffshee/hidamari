@@ -9,7 +9,7 @@ from gi.repository import GLib, Gtk
 from gi.repository import AppIndicator3 as AppIndicator
 
 from pydbus import SessionBus
-from commons import *
+from hidamari.commons import *
 
 
 def connect():

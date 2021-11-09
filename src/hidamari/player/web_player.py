@@ -9,9 +9,9 @@ from gi.repository import Gtk, WebKit2, Gdk
 
 from pydbus import SessionBus
 
-from player.base_player import BasePlayer
-from ui.menu import build_menu
-from commons import *
+from hidamari.player.base_player import BasePlayer
+from hidamari.ui.menu import build_menu
+from hidamari.commons import *
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -132,7 +132,7 @@ class WebPlayer(BasePlayer):
         pass
 
     def reload_config(self):
-        from utils import ConfigUtil
+        from hidamari.utils import ConfigUtil
         self.config = ConfigUtil().load()
 
 

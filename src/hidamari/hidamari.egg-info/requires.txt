@@ -1,0 +1,5 @@
+pillow
+pydbus
+python-vlc
+youtube-dl
+PyGObject

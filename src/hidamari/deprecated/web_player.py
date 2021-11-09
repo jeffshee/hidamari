@@ -7,7 +7,7 @@ gi.require_version("WebKit2", "4.0")
 from gi.repository import Gtk, Gdk, WebKit2
 
 from base_player import BasePlayer
-from commons import *
+from hidamari.commons import *
 
 
 class WebPlayer(BasePlayer):

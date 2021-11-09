@@ -6,7 +6,7 @@ gi.require_version('AppIndicator3', '0.1')
 from gi.repository import Gtk
 from gi.repository import AppIndicator3 as AppIndicator
 
-from commons import *
+from hidamari.commons import *
 
 
 def build_dummy_menu():

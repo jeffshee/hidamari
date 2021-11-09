@@ -1,0 +1,13 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+hidamari/hidamari.egg-info/PKG-INFO
+hidamari/hidamari.egg-info/SOURCES.txt
+hidamari/hidamari.egg-info/dependency_links.txt
+hidamari/hidamari.egg-info/entry_points.txt
+hidamari/hidamari.egg-info/requires.txt
+hidamari/hidamari.egg-info/top_level.txt
+hidamari/ui/__init__.py
+hidamari/ui/gui.py
+hidamari/ui/menu.py
