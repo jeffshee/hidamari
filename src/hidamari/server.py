@@ -9,9 +9,10 @@ from gi.repository import GLib
 from pydbus import SessionBus
 
 from hidamari.commons import *
-from hidamari.player.base_player import main as base_player_main
+# from hidamari.player.base_player import main as base_player_main
 from hidamari.player.video_player import main as video_player_main
 from hidamari.player.web_player import main as web_player_main
+from hidamari.player.null_player import main as null_player_main
 from hidamari.ui.gui import main as gui_main
 from hidamari.ui.menu import show_systray_icon
 from hidamari.utils import ConfigUtil, EndSessionHandler, list_local_video_dir
@@ -53,13 +54,21 @@ class HidamariServer(object):
     """
 
     def __init__(self, args):
+        self.args = args
+
         signal.signal(signal.SIGINT, lambda *_: self.quit())
         signal.signal(signal.SIGTERM, lambda *_: self.quit())
         # SIGSEGV as a fail-safe
         signal.signal(signal.SIGSEGV, lambda *_: self.quit())
+        # Monitoring EndSession (OS reboot, shutdown, etc.)
         EndSessionHandler(self.quit)
 
+        # Make Hidamari folder if not exist
         os.makedirs(VIDEO_WALLPAPER_DIR, exist_ok=True)
+        # Reset user configuration?
+        if args.reset:
+            ConfigUtil().generate_template()
+        # Load user configuration
         self._load_config()
 
         mp.set_start_method("spawn")
@@ -72,6 +81,7 @@ class HidamariServer(object):
         # Initial loading for player process
         self.reload()
 
+        # Show main GUI?
         if args and not args.background:
             self.show_gui()
 
@@ -100,8 +110,14 @@ class HidamariServer(object):
         elif mode == MODE_WEBPAGE:
             self.player_process = Process(target=web_player_main)
         else:
-            self.player_process = Process(target=base_player_main)
-        self.player_process.start()
+            self.player_process = Process(target=null_player_main)
+            # if self.args.debug:
+            #     logger.debug("[Server] Showing dummy window")
+            #     self.player_process = Process(target=base_player_main)
+            # else:
+            #     self.player_process = Process(target=null_player_main)
+        if self.player_process is not None:
+            self.player_process.start()
 
         if self._prev_mode != self.mode:
             # Refresh systray icon if the mode changed

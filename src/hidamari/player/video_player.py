@@ -2,6 +2,7 @@ import ctypes
 import logging
 import pathlib
 import subprocess
+import sys
 import tempfile
 from threading import Timer
 
@@ -28,19 +29,18 @@ if is_wayland():
         class WindowHandler:
             def __init__(self, _: callable):
                 pass
+elif is_gnome():
+    from hidamari.utils import WindowHandlerGnome as WindowHandler
 else:
     from hidamari.utils import WindowHandler
-
-# TODO make it configurable
-FADE_DURATION_SEC = 1.5
-FADE_INTERVAL = 0.1
 
 
 class Fade:
     def __init__(self):
         self.timer = None
 
-    def start(self, cur, target, step, update_callback: callable = None, complete_callback: callable = None):
+    def start(self, cur, target, step, fade_interval, update_callback: callable = None,
+              complete_callback: callable = None):
         new_cur = cur + step
         if (step < 0 and new_cur <= target) or (step > 0 and new_cur >= target):
             new_cur = target
@@ -51,8 +51,8 @@ class Fade:
         else:
             if update_callback:
                 update_callback(int(new_cur))
-            self.timer = Timer(FADE_INTERVAL, self.start,
-                               args=[new_cur, target, step, update_callback, complete_callback])
+            self.timer = Timer(fade_interval, self.start,
+                               args=[new_cur, target, step, fade_interval, update_callback, complete_callback])
             self.timer.start()
 
     def cancel(self):
@@ -113,12 +113,12 @@ class PlayerWindow(Gtk.ApplicationWindow):
     def play(self):
         self.__vlc_widget.player.play()
 
-    def play_fade(self, target):
+    def play_fade(self, target, fade_duration_sec, fade_interval):
         self.play()
         cur = 0
-        step = (target - cur) / (FADE_DURATION_SEC / FADE_INTERVAL)
+        step = (target - cur) / (fade_duration_sec / fade_interval)
         self.fade.cancel()
-        self.fade.start(cur=cur, target=target, step=step, update_callback=self.set_volume)
+        self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume)
 
     def is_playing(self):
         return self.__vlc_widget.player.is_playing()
@@ -127,12 +127,12 @@ class PlayerWindow(Gtk.ApplicationWindow):
         if self.is_playing():
             self.__vlc_widget.player.pause()
 
-    def pause_fade(self):
+    def pause_fade(self, fade_duration_sec, fade_interval):
         cur = self.get_volume()
         target = 0
-        step = (target - cur) / (FADE_DURATION_SEC / FADE_INTERVAL)
+        step = (target - cur) / (fade_duration_sec / fade_interval)
         self.fade.cancel()
-        self.fade.start(cur=cur, target=target, step=step, update_callback=self.set_volume,
+        self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume,
                         complete_callback=self.pause)
 
     def media_new(self, *args):
@@ -246,8 +246,14 @@ class VideoPlayer(BasePlayer):
             self.pause_playback()
 
     def _should_playback_start(self):
-        return not (self.is_any_maximized and self.config[CONFIG_KEY_DETECT_MAXIMIZED]) \
-               or self.is_any_fullscreen or self.is_paused_by_user
+        result = True
+        if self.config[CONFIG_KEY_DETECT_MAXIMIZED] and self.is_any_maximized:
+            result = False
+        if self.is_any_fullscreen:
+            result = False
+        if self.is_paused_by_user:
+            result = False
+        return result
 
     @property
     def mode(self):
@@ -337,13 +343,15 @@ class VideoPlayer(BasePlayer):
 
     def pause_playback(self):
         for monitor, window in self.windows.items():
-            window.pause_fade()
+            window.pause_fade(fade_duration_sec=self.config[FADE_DURATION_SEC],
+                              fade_interval=self.config[FADE_INTERVAL])
 
     def start_playback(self):
         # if not self.is_paused_by_user:
         if self._should_playback_start():
             for monitor, window in self.windows.items():
-                window.play_fade(target=self.volume)
+                window.play_fade(target=self.volume, fade_duration_sec=self.config[FADE_DURATION_SEC],
+                                 fade_interval=self.config[FADE_INTERVAL])
 
     def monitor_sync(self):
         primary_monitor = None

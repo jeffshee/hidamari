@@ -8,7 +8,7 @@ import pydbus
 
 gi.require_version("GnomeDesktop", "3.0")
 gi.require_version("Wnck", "3.0")
-from gi.repository import Gio, GnomeDesktop, GLib, Wnck
+from gi.repository import Gio, GnomeDesktop, GLib, Wnck, Gdk
 from gi.repository.GdkPixbuf import Pixbuf
 from hidamari.commons import *
 
@@ -135,6 +135,7 @@ def gnome_desktop_icon_workaround():
         # Check if installed and enabled
         if gnome_extension_is_installed(ext) and gnome_extension_is_enabled(ext):
             # Reload the extension
+            logger.info("[GNOME] Applying desktop icon workaround")
             gnome_extension_set_disable(ext)
             gnome_extension_set_enable(ext)
 
@@ -250,7 +251,7 @@ class WindowHandler:
 
         if is_changed:
             self.on_window_state_changed({"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
-            print("WindowHandler:", cur_state)
+            logger.debug(f"[WindowHandler] {cur_state}")
 
 
 class WindowHandlerGnome:
@@ -262,6 +263,8 @@ class WindowHandlerGnome:
         self.on_window_state_changed = on_window_state_changed
         self.gnome_shell = pydbus.SessionBus().get("org.gnome.Shell")
         self.prev_state = None
+        display = Gdk.Display.get_default()
+        self.num_monitor = display.get_n_monitors()
         GLib.timeout_add(500, self.eval)
 
     def eval(self):
@@ -270,42 +273,57 @@ class WindowHandlerGnome:
         ret1, workspace = self.gnome_shell.Eval("""
                         global.workspace_manager.get_active_workspace_index()
                         """)
-        # TODO: get window status grouped by each monitor
+        # NOTE: get window status grouped by each monitor
         # window.meta_window.get_monitor()
-        ret2, maximized = self.gnome_shell.Eval(f"""
-                var window_list = global.get_window_actors().find(window =>
-                    window.meta_window.maximized_horizontally &
-                    window.meta_window.maximized_vertically &
-                    !window.meta_window.minimized &
-                    window.meta_window.get_workspace().workspace_index == {workspace}
-                );
-                window_list
-                """)
+        ret2 = False
+        maximized = []
+        for monitor in range(self.num_monitor):
+            ret2, temp = self.gnome_shell.Eval(f"""
+                            var window_list = global.get_window_actors().find(window =>
+                                window.meta_window.maximized_horizontally &
+                                window.meta_window.maximized_vertically &
+                                !window.meta_window.minimized &
+                                window.meta_window.get_workspace().workspace_index == {workspace} &
+                                window.meta_window.get_monitor() == {monitor}
+                            );
+                            window_list
+                            """)
+            maximized.append(temp != "")
+        # Every monitors have a maximized window?
+        maximized = all(maximized)
 
-        ret3, fullscreen = self.gnome_shell.Eval(f"""
-                var window_list = global.get_window_actors().find(window =>
+        ret3 = False
+        fullscreen = []
+        for monitor in range(self.num_monitor):
+            ret3, temp = self.gnome_shell.Eval(f"""
+                            var window_list = global.get_window_actors().find(window =>
                     window.meta_window.is_fullscreen() &
                     !window.meta_window.minimized &
-                    window.meta_window.get_workspace().workspace_index == {workspace}
+                    window.meta_window.get_workspace().workspace_index == {workspace} &
+                    window.meta_window.get_monitor() == {monitor}
                 );
                 window_list
                 """)
-        if not all([ret1, ret2, ret3]):
-            raise RuntimeError("Cannot communicate with Gnome Shell!")
+            fullscreen.append(temp != "")
+        # Every monitors have a fullscreen window?
+        fullscreen = all(fullscreen)
 
-        cur_state = {'is_any_maximized': maximized != "", 'is_any_fullscreen': fullscreen != ""}
+        if not all([ret1, ret2, ret3]):
+            logging.error("[WindowHandlerGnome] Cannot communicate with Gnome Shell!")
+
+        cur_state = {'is_any_maximized': maximized, 'is_any_fullscreen': fullscreen}
         if self.prev_state is None or self.prev_state != cur_state:
             is_changed = True
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed({"is_any_maximized": maximized != "", "is_any_fullscreen": fullscreen != ""})
-            print("WindowHandler:", cur_state)
+            self.on_window_state_changed({"is_any_maximized": maximized, "is_any_fullscreen": fullscreen})
+            logger.debug(f"[WindowHandlerGnome] {cur_state}")
         return True
 
 
 class ConfigUtil:
-    def _generate_template(self):
+    def generate_template(self):
         os.makedirs(CONFIG_DIR, exist_ok=True)
         self.save(CONFIG_TEMPLATE)
 
@@ -318,7 +336,7 @@ class ConfigUtil:
 
     def _invalid(self):
         logger.debug(f"[Config] Invalid. A new config will be generated.")
-        self._generate_template()
+        self.generate_template()
         return CONFIG_TEMPLATE
 
     def load(self):

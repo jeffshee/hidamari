@@ -1,7 +1,10 @@
 import logging
+import sys
 from abc import abstractmethod
 
 import gi
+
+from hidamari.ui.menu import build_menu
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, Gdk
@@ -16,9 +19,20 @@ class RikaWindow(Gtk.ApplicationWindow):
     # A cute dummy window ;)
     def __init__(self, *args, **kwargs):
         super(RikaWindow, self).__init__(*args, **kwargs)
-        self.image = Gtk.Image.new_from_file("rika.gif")
+        self.image = Gtk.Image.new_from_file(RIKA_GIF_PATH)
         self.add(self.image)
         self.image.show()
+        self.connect("button-press-event", self._on_button_press_event)
+
+        self.menu = None
+
+    def _on_button_press_event(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            if not self.menu:
+                self.menu = build_menu(MODE_NULL)
+            self.menu.popup_at_pointer()
+            return True
+        return False
 
 
 class BasePlayer(Gtk.Application):

@@ -1,3 +1,5 @@
+import logging
+import sys
 import threading
 
 import gi
@@ -6,6 +8,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GLib
 from pydbus import SessionBus
 from hidamari.commons import *
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 class GUI(Gtk.Application):
@@ -43,7 +47,7 @@ class GUI(Gtk.Application):
                                        buttons=Gtk.ButtonsType.OK)
             dialog.run()
             dialog.destroy()
-            print("Error: Couldn't connect to server")
+            logging.error("[GUI] Couldn't connect to server")
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -120,13 +124,15 @@ class GUI(Gtk.Application):
         selected = self.local_video_icon_view.get_selected_items()
         if len(selected) != 0:
             index = selected[0].get_indices()[0]
-            print("Local Video:", self.local_video_list[index])
+            logger.info(f"[GUI] Local Video: f{self.local_video_list[index]}")
+            # print("Local Video:", self.local_video_list[index])
             self.server.video(self.local_video_list[index])
 
     def on_local_web_page_apply(self, action, param):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
         choose: Gio.File = file_chooser.get_file()
-        print("Local Webpage:", choose.get_path())
+        logger.info(f"[GUI] Local Webpage: f{choose.get_path()}")
+        # print("Local Webpage:", choose.get_path())
         self.server.webpage(choose.get_path())
 
     def set_play_pause_icon(self):
@@ -174,37 +180,43 @@ class GUI(Gtk.Application):
 
     def on_volume_changed(self, adjustment):
         self.server.volume = int(adjustment.get_value())
-        print("Volume:", self.server.volume)
+        logger.info(f"[GUI] Volume: f{self.server.volume}")
+        # print("Volume:", self.server.volume)
         self.set_mute_toggle_icon()
 
     def on_blur_radius_changed(self, adjustment):
         self.server.blur_radius = int(adjustment.get_value())
-        print("Blur radius:", self.server.blur_radius)
+        logger.info(f"[GUI] Blur radius: f{self.server.blur_radius}")
+        # print("Blur radius:", self.server.blur_radius)
 
     def on_mute(self, action, state):
         action.set_state(state)
         self.server.is_mute = state
-        print("GUI:", action.get_name(), state)
+        logger.info(f"[GUI] f{action.get_name()}: f{state}")
+        # print("GUI:", action.get_name(), state)
         self.set_mute_toggle_icon()
         self.set_scale_volume_sensitive()
 
     def on_autostart(self, action, state):
         action.set_state(state)
         self.is_autostart = state
-        print("GUI:", action.get_name(), state)
+        logger.info(f"[GUI] f{action.get_name()}: f{state}")
+        # print("GUI:", action.get_name(), state)
         from hidamari.utils import setup_autostart
         setup_autostart(state)
 
     def on_static_wallpaper(self, action, state):
         action.set_state(state)
         self.server.is_static_wallpaper = state
-        print("GUI:", action.get_name(), state)
+        logger.info(f"[GUI] f{action.get_name()}: f{state}")
+        # print("GUI:", action.get_name(), state)
         self.set_spin_blur_radius_sensitive()
 
     def on_detect_maximized(self, action, state):
         action.set_state(state)
         self.server.is_detect_maximized = state
-        print("GUI:", action.get_name(), state)
+        logger.info(f"[GUI] f{action.get_name()}: f{state}")
+        # print("GUI:", action.get_name(), state)
 
     def on_about(self, action, param):
         builder = Gtk.Builder()
@@ -215,26 +227,31 @@ class GUI(Gtk.Application):
         about_dialog.present()
 
     def on_preferences(self, action, param):
-        print(action.get_name(), param)
+        logger.info(f"[GUI] f{action.get_name()}: f{param}")
+        # print(action.get_name(), param)
 
     def on_streaming_activate(self, entry: Gtk.Entry):
         url = entry.get_text()
-        print("Streaming:", url)
+        logger.info(f"[GUI] Streaming: f{url}")
+        # print("Streaming:", url)
         self.server.stream(url)
 
     def on_streaming_refresh(self, entry: Gtk.Entry, *args):
         url = entry.get_text()
-        print("Streaming:", url)
+        logger.info(f"[GUI] Streaming: f{url}")
+        # print("Streaming:", url)
         self.server.stream(url)
 
     def on_web_page_activate(self, entry: Gtk.Entry):
         url = entry.get_text()
-        print("Webpage:", url)
+        logger.info(f"[GUI] Webpage: f{url}")
+        # print("Webpage:", url)
         self.server.webpage(url)
 
     def on_web_page_refresh(self, entry: Gtk.Entry, *args):
         url = entry.get_text()
-        print("Webpage:", url)
+        logger.info(f"[GUI] Webpage: f{url}")
+        # print("Webpage:", url)
         self.server.webpage(url)
 
     def on_quit(self, action, param):

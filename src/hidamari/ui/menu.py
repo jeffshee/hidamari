@@ -1,3 +1,4 @@
+import logging
 import threading
 
 import gi
@@ -11,6 +12,8 @@ from gi.repository import AppIndicator3 as AppIndicator
 from pydbus import SessionBus
 from hidamari.commons import *
 
+logger = logging.getLogger(LOGGER_NAME)
+
 
 def connect():
     # Connect to server
@@ -19,7 +22,7 @@ def connect():
         server = bus.get(DBUS_NAME_SERVER)
         return server
     except GLib.Error:
-        print("Error: Couldn't connect to server")
+        logger.error("Couldn't connect to server")
     return
 
 
@@ -111,7 +114,7 @@ def show_systray_icon(mode):
                                            category=AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
     indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
     indicator.set_menu(menu)
-    print("Systray icon is ready")
+    logger.info("[Systray] Ready")
     Gtk.main()
 
 

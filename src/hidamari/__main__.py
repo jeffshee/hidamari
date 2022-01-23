@@ -1,12 +1,12 @@
-from . import server
-
-from hidamari.commons import *
-
 import argparse
 import logging
 import sys
 
+from hidamari.commons import *
+from . import server
+
 logger = logging.getLogger(LOGGER_NAME)
+
 
 def main():
     # Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
@@ -19,6 +19,7 @@ def main():
                         help="Add pause before launching Hidamari. [sec]")
     parser.add_argument("-b", "--background", action="store_true", help="Launch only the live wallpaper.")
     parser.add_argument("-d", "--debug", action="store_true", help="Print debug messages.")
+    parser.add_argument("-r", "--reset", action="store_true", help="Reset user configuration.")
     args = parser.parse_args()
 
     # Setup logger
@@ -33,6 +34,7 @@ def main():
     # Clear sys.argv as it has influence to the Gtk.Application
     sys.argv = [sys.argv[0]]
     server.main(args)
+
 
 if __name__ == "__main__":
     main()
