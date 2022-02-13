@@ -1,9 +1,17 @@
 import os
 import sys
+import subprocess
 
 DBUS_NAME = "io.github.jeffshee.hidamari"
 HOME = os.environ["HOME"]
-VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Videos", "Hidamari")
+XDG_VIDEOS_DIR = None
+try:
+    XDG_VIDEOS_DIR = subprocess.run(["xdg-user-dir", "VIDEOS"], stdout=subprocess.PIPE)\
+        .stdout.decode('utf-8').replace("\n", "")
+except FileNotFoundError:
+    # xdg-user-dir not found, use $HOME/Hidamari for Video directory instead
+    XDG_VIDEOS_DIR = HOME
+VIDEO_WALLPAPER_DIR = os.path.join(XDG_VIDEOS_DIR, "Hidamari")
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "hidamari.config")
 AUTOSTART_DESKTOP_PATH = os.path.join(os.environ["HOME"], ".config", "autostart", "hidamari.desktop")
