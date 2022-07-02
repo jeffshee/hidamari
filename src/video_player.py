@@ -59,6 +59,7 @@ class VideoPlayer(BasePlayer):
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
         self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
+        self.ori_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
         self.new_wallpaper_uri = os.path.join(tempfile.gettempdir(), "hidamari.png")
 
         self._is_playing = False
@@ -218,9 +219,11 @@ class VideoPlayer(BasePlayer):
                 ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"]))
             blur_wallpaper.save(self.new_wallpaper_uri)
             self.gso.set_string("picture-uri", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+            self.gso.set_string("picture-uri-dark", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
     def restore_original_wallpaper(self):
         self.gso.set_string("picture-uri", self.ori_wallpaper_uri)
+        self.gso.set_string("picture-uri-dark", self.ori_wallpaper_uri_dark)
         if os.path.isfile(self.new_wallpaper_uri):
             os.remove(self.new_wallpaper_uri)
 
