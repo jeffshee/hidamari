@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 
 from base_player import BasePlayer
-from utils import list_local_video_dir
+from utils import list_local_video_dir, is_wayland
 from commons import *
 
 
@@ -46,14 +46,15 @@ class VideoPlayer(BasePlayer):
         # We need to initialize X11 threads so we can use hardware decoding.
         # `libX11.so.6` fix for Fedora 33
         x11 = None
-        for lib in ["libX11.so", "libX11.so.6"]:
-            try:
-                x11 = ctypes.cdll.LoadLibrary(lib)
-            except OSError:
-                pass
-            if x11 is not None:
-                x11.XInitThreads()
-                break
+        if not (is_wayland() and os.environ["GBM_BACKEND"] == "nvidia-drm"):
+            for lib in ["libX11.so", "libX11.so.6"]:
+                try:
+                    x11 = ctypes.cdll.LoadLibrary(lib)
+                except OSError:
+                    pass
+                if x11 is not None:
+                    x11.XInitThreads()
+                    break
 
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
