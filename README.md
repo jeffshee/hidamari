@@ -4,6 +4,15 @@
 <p align="center">Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
 
 # Hidamari　ーひだまりー
+If you like my project, please consider buying me a coffee!! (⁎˃ ꇴ ˂⁎)ｯ
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jeffshee)
+
+Also please don't forget to click that star button! 🌟  
+Your support is truly appreciated!
+
+## For GNOME user 🐾
+Please also check my new project [Hanabi](https://github.com/jeffshee/gnome-ext-hanabi)! While the project is still in its infancy, it has the potential to become more integrated with GNOME Shell.
 
 ## Features 🔥
 
@@ -18,23 +27,30 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [x] Apply static wallpaper with blur effect <sup>1</sup>
 - [x] Detect maximized window and fullscreen mode <sup>2</sup>
 - [x] Volume control
-- [x] Mute the playback anytime with just 2 clicks!
-- [x] Pause the playback anytime with just 2 clicks!
+- [x] Mute/Pause the playback anytime with just 2 clicks!
 - [x] I'm feeling lucky <sup>3</sup>
-- [x] GPU video decoding!
+- [x] Hardware accelerated video decoding! <sup>4</sup>
 - [x] Gnome Wayland support!
 - [x] Multi-monitor support!
-- [x] Streaming URL support! <sup>4</sup>
-- [x] Webpage as wallpaper! <sup>5</sup>
+- [x] Streaming URL support! <sup>5</sup>
+- [x] Webpage as wallpaper! <sup>6</sup>
 - [ ] You name it! =)
 
 <sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i>  
-<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected    
+<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (Limited support for Gnome Wayland, see issue #40)  
 <sup>3</sup> Randomly select and play a video  
-<sup>4</sup> Use <i>youtube-dl</i> as backend, tested with YouTube videos  
-<sup>5</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
+<sup>4</sup> Use <i>vlc</i> as backend  
+<sup>5</sup> Use <i>yt-dlp</i> as backend, tested with YouTube videos  
+<sup>6</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
 
-## Installation (Fedora, RPM) ⏬
+## (Un)Installation ⏬
+Run the script in terminal to install or uninstall:
+```
+bash <(wget -qO- https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh)
+```
+The script will also check for the dependencies. It will try to install them if possible (only for pip packages). 
+
+<!-- ## Installation (Fedora, RPM) ⏬
 
 1. Multimedia codecs, refer
    to [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
@@ -61,7 +77,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 ### Installation
 
 0. Prerequisite stated above.
-1. Run `bash <(wget -qO- https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh)`
+1. Run `bash <(wget -qO- https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh)` -->
 
 ## Screenshot 📸
 
@@ -73,14 +89,12 @@ Hidamari offers similar feature as above, with additional features listed below:
 
 Please click on the image to view <i>(redirect to YouTube)</i>
 
-[![](http://i3.ytimg.com/vi/GV_kL7g94nY/maxresdefault.jpg)](https://www.youtube.com/watch?v=GV_kL7g94nY)
+[![](https://i3.ytimg.com/vi/GV_kL7g94nY/maxresdefault.jpg)](https://www.youtube.com/watch?v=GV_kL7g94nY)
 
-## Please!! (｡>ｕ<｡)
+## Please!! 🙏
 
 Collaboration is welcome! Let's make it better together~  
 Feel free to open an issue if you have any problem or suggestion 🤗  
-Star my project if you like it! 🌟  
-Stay tune!!
 
 ## Contributors ✨
 
