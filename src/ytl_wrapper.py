@@ -1,4 +1,7 @@
-import youtube_dl
+try:
+    import yt_dlp as youtube_dl
+except ImportError:
+    import youtube_dl
 
 
 def get_formats(raw_url):
@@ -46,8 +49,7 @@ def get_optimal_video(formats, height):
 if __name__ == "__main__":
     import vlc
 
-    test_url = "https://www.youtube.com/watch?v=H2QFIQsIOdI&list=LL&index=2"
-    # test_url = "https://www.youtube.com/watch?v=Y-lYuGIWqu0&list=LL&index=6"
+    test_url = "https://www.youtube.com/watch?v=hdf9-E0Rt8Q"
     formats = get_formats(test_url)
     instance = vlc.Instance()
     player = instance.media_player_new()
