@@ -1,6 +1,3 @@
-from commons import *
-from gi.repository.GdkPixbuf import Pixbuf
-from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 import json
 import subprocess
 from pprint import pprint
@@ -10,7 +7,9 @@ import pydbus
 
 gi.require_version("GnomeDesktop", "3.0")
 gi.require_version("Wnck", "3.0")
-
+from gi.repository.GdkPixbuf import Pixbuf
+from gi.repository import Gio, GnomeDesktop, GLib, Wnck
+from commons import *
 
 def is_gnome():
     """
@@ -285,4 +284,5 @@ if __name__ == "__main__":
     print(is_gnome())
     print(is_wayland())
     print(is_nvidia_proprietary())
+    print(is_vdpau_ok())
 
