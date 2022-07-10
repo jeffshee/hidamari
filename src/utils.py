@@ -1,3 +1,6 @@
+from commons import *
+from gi.repository.GdkPixbuf import Pixbuf
+from gi.repository import Gio, GnomeDesktop, GLib, Wnck
 import json
 import subprocess
 from pprint import pprint
@@ -7,9 +10,6 @@ import pydbus
 
 gi.require_version("GnomeDesktop", "3.0")
 gi.require_version("Wnck", "3.0")
-from gi.repository import Gio, GnomeDesktop, GLib, Wnck
-from gi.repository.GdkPixbuf import Pixbuf
-from commons import *
 
 
 def is_gnome():
@@ -28,6 +28,31 @@ def is_wayland():
     $XDG_SESSION_TYPE = x11 | wayland
     """
     return os.environ["XDG_SESSION_TYPE"] == "wayland"
+
+
+def is_nvidia_proprietary():
+    """
+    Check if the GPU is nvidia and the driver is proprietary
+    """
+    # glxinfo | grep "client glx vendor string"
+    output = subprocess.check_output(['glxinfo', '-B']).decode(sys.stdout.encoding)
+    return "OpenGL vendor string: NVIDIA Corporation" in output
+
+
+def is_vdpau_ok():
+    """
+    Check if the VDPAU works fine
+    """
+    # vdpauinfo
+    try:
+        output = subprocess.check_output(['vdpauinfo'])
+    except subprocess.CalledProcessError:
+        print("VDPAU not OK")
+        return False
+    except FileNotFoundError:
+        print("vdpauinfo not found, unable to check VDPAU")
+        return False
+    return True
 
 
 def list_local_video_dir():
@@ -139,22 +164,25 @@ class WindowHandler:
         is_any_maximized, is_any_fullscreen = False, False
         for window in self.screen.get_windows():
             base_state = not Wnck.Window.is_minimized(window) and \
-                         Wnck.Window.is_on_workspace(window, self.screen.get_active_workspace())
+                Wnck.Window.is_on_workspace(
+                    window, self.screen.get_active_workspace())
             window_name, is_maximized, is_fullscreen = window.get_name(), \
-                                                       Wnck.Window.is_maximized(window) and base_state, \
-                                                       Wnck.Window.is_fullscreen(window) and base_state
+                Wnck.Window.is_maximized(window) and base_state, \
+                Wnck.Window.is_fullscreen(window) and base_state
             if is_maximized is True:
                 is_any_maximized = True
             if is_fullscreen is True:
                 is_any_fullscreen = True
 
-        cur_state = {"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen}
+        cur_state = {"is_any_maximized": is_any_maximized,
+                     "is_any_fullscreen": is_any_fullscreen}
         if self.prev_state is None or self.prev_state != cur_state:
             is_changed = True
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed({"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
+            self.on_window_state_changed(
+                {"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
             print("WindowHandler:", cur_state)
 
 
@@ -197,13 +225,15 @@ class WindowHandlerGnome:
         if not all([ret1, ret2, ret3]):
             raise RuntimeError("Cannot communicate with Gnome Shell!")
 
-        cur_state = {'is_any_maximized': maximized != "", 'is_any_fullscreen': fullscreen != ""}
+        cur_state = {'is_any_maximized': maximized !=
+                     "", 'is_any_fullscreen': fullscreen != ""}
         if self.prev_state is None or self.prev_state != cur_state:
             is_changed = True
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed({"is_any_maximized": maximized != "", "is_any_fullscreen": fullscreen != ""})
+            self.on_window_state_changed(
+                {"is_any_maximized": maximized != "", "is_any_fullscreen": fullscreen != ""})
             print("WindowHandler:", cur_state)
         return True
 
@@ -254,3 +284,5 @@ if __name__ == "__main__":
     # Debug
     print(is_gnome())
     print(is_wayland())
+    print(is_nvidia_proprietary())
+
