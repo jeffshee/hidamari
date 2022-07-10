@@ -37,7 +37,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [ ] You name it! =)
 
 <sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i>  
-<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (Limited support for Gnome Wayland, see issue #40)  
+<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (Limited support for Gnome Wayland, see issue [#40](https://github.com/jeffshee/hidamari/issues/40))  
 <sup>3</sup> Randomly select and play a video  
 <sup>4</sup> Use <i>vlc</i> as backend  
 <sup>5</sup> Use <i>yt-dlp</i> as backend, tested with YouTube videos  
