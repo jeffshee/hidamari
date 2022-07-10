@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 
 from base_player import BasePlayer
-from utils import list_local_video_dir
+from utils import list_local_video_dir, is_wayland
 from commons import *
 
 
@@ -46,18 +46,20 @@ class VideoPlayer(BasePlayer):
         # We need to initialize X11 threads so we can use hardware decoding.
         # `libX11.so.6` fix for Fedora 33
         x11 = None
-        for lib in ["libX11.so", "libX11.so.6"]:
-            try:
-                x11 = ctypes.cdll.LoadLibrary(lib)
-            except OSError:
-                pass
-            if x11 is not None:
-                x11.XInitThreads()
-                break
+        if not (is_wayland() and os.environ["GBM_BACKEND"] == "nvidia-drm"):
+            for lib in ["libX11.so", "libX11.so.6"]:
+                try:
+                    x11 = ctypes.cdll.LoadLibrary(lib)
+                except OSError:
+                    pass
+                if x11 is not None:
+                    x11.XInitThreads()
+                    break
 
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
         self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
+        self.ori_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
         self.new_wallpaper_uri = os.path.join(tempfile.gettempdir(), "hidamari.png")
 
         self._is_playing = False
@@ -217,9 +219,11 @@ class VideoPlayer(BasePlayer):
                 ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"]))
             blur_wallpaper.save(self.new_wallpaper_uri)
             self.gso.set_string("picture-uri", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+            self.gso.set_string("picture-uri-dark", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
     def restore_original_wallpaper(self):
         self.gso.set_string("picture-uri", self.ori_wallpaper_uri)
+        self.gso.set_string("picture-uri-dark", self.ori_wallpaper_uri_dark)
         if os.path.isfile(self.new_wallpaper_uri):
             os.remove(self.new_wallpaper_uri)
 
