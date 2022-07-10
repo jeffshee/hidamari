@@ -55,6 +55,12 @@ check_deps() {
     error=1
   fi
 
+  # Arch-based OS doesn't ship with libwnck3 by default
+    if [[ -z $(ldconfig -p | grep libwnck) ]]; then
+    echo "libwnck3 needs to be installed"
+    error=1
+  fi
+
   if [[ $error -ne 1 ]]; then
     echo "Dependencies check OK"
   else
