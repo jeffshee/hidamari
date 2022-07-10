@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 
 from base_player import BasePlayer
-from utils import list_local_video_dir, is_wayland
+from utils import list_local_video_dir, is_wayland, is_nvidia_proprietary, is_vdpau_ok
 from commons import *
 
 
@@ -46,7 +46,9 @@ class VideoPlayer(BasePlayer):
         # We need to initialize X11 threads so we can use hardware decoding.
         # `libX11.so.6` fix for Fedora 33
         x11 = None
-        if not (is_wayland() and os.environ["GBM_BACKEND"] == "nvidia-drm"):
+        if is_wayland() and is_nvidia_proprietary() and not is_vdpau_ok():
+            print("Proprietary Nvidia driver detected! HW Acceleration is not yet working in Wayland.")
+        else:
             for lib in ["libX11.so", "libX11.so.6"]:
                 try:
                     x11 = ctypes.cdll.LoadLibrary(lib)
