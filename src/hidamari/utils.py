@@ -33,6 +33,31 @@ def is_wayland():
     return os.environ["XDG_SESSION_TYPE"] == "wayland"
 
 
+def is_nvidia_proprietary():
+    """
+    Check if the GPU is nvidia and the driver is proprietary
+    """
+    # glxinfo | grep "client glx vendor string"
+    output = subprocess.check_output(['glxinfo', '-B']).decode(sys.stdout.encoding)
+    return "OpenGL vendor string: NVIDIA Corporation" in output
+
+
+def is_vdpau_ok():
+    """
+    Check if the VDPAU works fine
+    """
+    # vdpauinfo
+    try:
+        output = subprocess.check_output(['vdpauinfo'])
+    except subprocess.CalledProcessError:
+        print("VDPAU not OK")
+        return False
+    except FileNotFoundError:
+        print("vdpauinfo not found, unable to check VDPAU")
+        return False
+    return True
+
+
 def list_local_video_dir():
     file_list = []
     ext_list = ["3g2", "3gp", "aaf", "asf", "avchd", "avi", "drc", "flv", "m2v", "m4p", "m4v", "mkv", "mng", "mov",

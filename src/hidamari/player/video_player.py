@@ -18,7 +18,7 @@ from PIL import Image, ImageFilter
 from hidamari.player.base_player import BasePlayer
 from hidamari.ui.menu import build_menu
 from hidamari.commons import *
-from hidamari.utils import ActiveHandler, is_gnome, is_wayland
+from hidamari.utils import ActiveHandler, is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok
 
 logger = logging.getLogger(LOGGER_NAME)
 if is_wayland():
@@ -195,14 +195,17 @@ class VideoPlayer(BasePlayer):
         # We need to initialize X11 threads so we can use hardware decoding.
         # `libX11.so.6` fix for Fedora 33
         x11 = None
-        for lib in ["libX11.so", "libX11.so.6"]:
-            try:
-                x11 = ctypes.cdll.LoadLibrary(lib)
-            except OSError:
-                pass
-            if x11 is not None:
-                x11.XInitThreads()
-                break
+        if is_wayland() and is_nvidia_proprietary() and not is_vdpau_ok():
+            print("Proprietary Nvidia driver detected! HW Acceleration is not yet working in Wayland.")
+        else:
+            for lib in ["libX11.so", "libX11.so.6"]:
+                try:
+                    x11 = ctypes.cdll.LoadLibrary(lib)
+                except OSError:
+                    pass
+                if x11 is not None:
+                    x11.XInitThreads()
+                    break
 
         self.config = None
         self.reload_config()
@@ -210,6 +213,7 @@ class VideoPlayer(BasePlayer):
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
         self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
+        self.ori_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
         self.new_wallpaper_uri = os.path.join(tempfile.gettempdir(), "hidamari.png")
 
         # Handler should be created after everything initialized
@@ -378,9 +382,11 @@ class VideoPlayer(BasePlayer):
                 ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"]))
             blur_wallpaper.save(self.new_wallpaper_uri)
             self.gso.set_string("picture-uri", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+            self.gso.set_string("picture-uri-dark", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
 
     def restore_original_wallpaper(self):
         self.gso.set_string("picture-uri", self.ori_wallpaper_uri)
+        self.gso.set_string("picture-uri-dark", self.ori_wallpaper_uri_dark)
         if os.path.isfile(self.new_wallpaper_uri):
             os.remove(self.new_wallpaper_uri)
 
