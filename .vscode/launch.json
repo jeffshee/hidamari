@@ -5,12 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Module",
+            "name": "Launch Hidamari",
             "type": "python",
             "request": "launch",
             "module": "hidamari",
             "justMyCode": true,
-            "cwd": "${workspaceFolder}/src"
+            "cwd": "${workspaceFolder}/src",
+            "args": ["-d"]
+        },
+        {
+            "name": "Launch Control Panel",
+            "type": "python",
+            "request": "launch",
+            "program": "control.py",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}/src/hidamari/gui/"
         }
     ]
 }

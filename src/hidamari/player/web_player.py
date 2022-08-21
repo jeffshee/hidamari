@@ -10,9 +10,14 @@ from gi.repository import Gtk, WebKit2, Gdk
 
 from pydbus import SessionBus
 
-from hidamari.player.base_player import BasePlayer
-from hidamari.ui.menu import build_menu
-from hidamari.commons import *
+try:
+    from player.base_player import BasePlayer
+    from menu import build_menu
+    from commons import *
+except ModuleNotFoundError:
+    from hidamari.player.base_player import BasePlayer
+    from hidamari.menu import build_menu
+    from hidamari.commons import *
 
 logger = logging.getLogger(LOGGER_NAME)
 

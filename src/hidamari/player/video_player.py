@@ -1,3 +1,4 @@
+from ast import Mod
 import ctypes
 import logging
 import pathlib
@@ -7,7 +8,6 @@ import tempfile
 from threading import Timer
 
 import gi
-
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, Gdk
 
@@ -15,24 +15,28 @@ from pydbus import SessionBus
 import vlc
 from PIL import Image, ImageFilter
 
-from hidamari.player.base_player import BasePlayer
-from hidamari.ui.menu import build_menu
-from hidamari.commons import *
-from hidamari.utils import ActiveHandler, is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+try:
+    from player.base_player import BasePlayer
+    from menu import build_menu
+    from commons import *
+    from utils import ActiveHandler, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+except ModuleNotFoundError:
+    from hidamari.player.base_player import BasePlayer
+    from hidamari.menu import build_menu
+    from hidamari.commons import *
+    from hidamari.utils import ActiveHandler, is_wayland, is_nvidia_proprietary, is_vdpau_ok
 
 logger = logging.getLogger(LOGGER_NAME)
 if is_wayland():
-    if is_gnome():
-        from hidamari.utils import WindowHandlerGnome as WindowHandler
-    else:
-        # Dummy class as not currently supported.
-        class WindowHandler:
-            def __init__(self, _: callable):
-                pass
-elif is_gnome():
-    from hidamari.utils import WindowHandlerGnome as WindowHandler
+    # Window event monitoring for GNOME Wayland is broken.
+    class WindowHandler:
+        def __init__(self, _: callable):
+            pass
 else:
-    from hidamari.utils import WindowHandler
+    try:
+        from utils import WindowHandler
+    except ModuleNotFoundError:
+        from hidamari.utils import WindowHandler
 
 
 class Fade:
@@ -214,7 +218,7 @@ class VideoPlayer(BasePlayer):
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
         self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
         self.ori_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
-        self.new_wallpaper_uri = os.path.join(tempfile.gettempdir(), "hidamari.png")
+        self.new_wallpaper_uri = os.path.join(CONFIG_PATH, "static.png")
 
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None

@@ -3,36 +3,26 @@ import sys
 from abc import abstractmethod
 
 import gi
-
-from hidamari.ui.menu import build_menu
-
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, Gdk
+
 from pydbus import SessionBus
-from hidamari.commons import *
-from hidamari.utils import gnome_desktop_icon_workaround
+
+try:
+    from commons import *
+    from utils import gnome_desktop_icon_workaround
+except ModuleNotFoundError:
+    from hidamari.commons import *
+    from hidamari.utils import gnome_desktop_icon_workaround
+
 
 logger = logging.getLogger(LOGGER_NAME)
 
+APP_ID = f"{PROJECT}.player"
 
-class RikaWindow(Gtk.ApplicationWindow):
-    # A cute dummy window ;)
+class DummyWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
-        super(RikaWindow, self).__init__(*args, **kwargs)
-        self.image = Gtk.Image.new_from_file(RIKA_GIF_PATH)
-        self.add(self.image)
-        self.image.show()
-        self.connect("button-press-event", self._on_button_press_event)
-
-        self.menu = None
-
-    def _on_button_press_event(self, widget, event):
-        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
-            if not self.menu:
-                self.menu = build_menu(MODE_NULL)
-            self.menu.popup_at_pointer()
-            return True
-        return False
+        super(DummyWindow, self).__init__(*args, **kwargs)
 
 
 class BasePlayer(Gtk.Application):
@@ -54,7 +44,7 @@ class BasePlayer(Gtk.Application):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
-            application_id=APPLICATION_ID_PLAYER,
+            application_id=APP_ID,
             flags=Gio.ApplicationFlags.FLAGS_NONE,
             **kwargs
         )
@@ -77,7 +67,7 @@ class BasePlayer(Gtk.Application):
     def new_window(self, gdk_monitor):
         # Override here for different window
         # NOTE: Don't forget to set the application=self, otherwise the application will quit immediately lol
-        return RikaWindow(application=self)
+        return DummyWindow(application=self)
 
     def _on_size_changed(self, *args):
         logger.info("[Player] size-changed")

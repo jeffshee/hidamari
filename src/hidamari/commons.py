@@ -1,48 +1,26 @@
 import os
 import subprocess
 
-PROJECT_NAME = APP_INDICATOR_ID = "io.github.jeffshee.Hidamari"
-PROJECT_NAME_SHORT = LOGGER_NAME = "Hidamari"
-DBUS_NAME_SERVER = f"{PROJECT_NAME}.server"
-DBUS_NAME_PLAYER = f"{PROJECT_NAME}.player"
-APPLICATION_ID_GUI = f"{PROJECT_NAME}.gui"
-APPLICATION_ID_PLAYER = f"{PROJECT_NAME}.player"
+LOGGER_NAME = "Hidamari"
 
-ICON_NAME = "hidamari"
+PROJECT = "io.jeffshee.Hidamari"
+DBUS_NAME_SERVER = f"{PROJECT}.server"
+DBUS_NAME_PLAYER = f"{PROJECT}.player"
+
 HOME = os.environ["HOME"]
-XDG_VIDEOS_DIR = None
 try:
-    XDG_VIDEOS_DIR = subprocess.run(["xdg-user-dir", "VIDEOS"], stdout=subprocess.PIPE)\
+    xdg_video_dir = subprocess.run(["xdg-user-dir", "VIDEOS"], stdout=subprocess.PIPE)\
         .stdout.decode('utf-8').replace("\n", "")
+    VIDEO_WALLPAPER_DIR = os.path.join(xdg_video_dir, "Hidamari")
 except FileNotFoundError:
     # xdg-user-dir not found, use $HOME/Hidamari for Video directory instead
-    XDG_VIDEOS_DIR = HOME
-VIDEO_WALLPAPER_DIR = os.path.join(XDG_VIDEOS_DIR, "Hidamari")
+    VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Hidamari")
+
+AUTOSTART_DESKTOP_PATH = os.path.join(HOME, ".config", "autostart", "hidamari.desktop")
+
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
-CONFIG_PATH = os.path.join(CONFIG_DIR, "hidamari.config")
-AUTOSTART_DESKTOP_PATH = os.path.join(os.environ["HOME"], ".config", "autostart", "hidamari.desktop")
-AUTOSTART_DESKTOP_CONTENT = \
-    """
-    [Desktop Entry]
-    Type=Application
-    Name=Hidamari
-    Exec=hidamari -p 0 -b 
-    StartupNotify=false
-    Terminal=false
-    Icon=hidamari
-    Categories=System;Monitor;
-    """
+CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 
-from hidamari import ui
-
-GUI_SCRIPT_PATH = os.path.join(*ui.__path__, "gui.py")
-GUI_GLADE_PATH = os.path.join(*ui.__path__, "gui_v2.glade")
-
-from hidamari import player
-
-RIKA_GIF_PATH = os.path.join(*player.__path__, "rika.gif")
-
-MODE_NULL = "MODE_NULL"
 MODE_VIDEO = "MODE_VIDEO"
 MODE_STREAM = "MODE_STREAM"
 MODE_WEBPAGE = "MODE_WEBPAGE"
@@ -60,8 +38,8 @@ FADE_DURATION_SEC = "fade_duration_sec"
 FADE_INTERVAL = "fade_interval"
 CONFIG_TEMPLATE = {
     CONFIG_KEY_VERSION: CONFIG_VERSION,
-    CONFIG_KEY_MODE: MODE_NULL,
-    CONFIG_KEY_DATA_SOURCE: None,
+    CONFIG_KEY_MODE: MODE_VIDEO,
+    CONFIG_KEY_DATA_SOURCE: "",
     CONFIG_KEY_MUTE: False,
     CONFIG_KEY_VOLUME: 50,
     CONFIG_KEY_STATIC_WALLPAPER: True,

@@ -1,21 +1,27 @@
 import logging
-import multiprocessing as mp
 import random
 import signal
 import time
+import multiprocessing as mp
 from multiprocessing import Process
 
 from gi.repository import GLib
 from pydbus import SessionBus
 
-from hidamari.commons import *
-# from hidamari.player.base_player import main as base_player_main
-from hidamari.player.video_player import main as video_player_main
-from hidamari.player.web_player import main as web_player_main
-from hidamari.player.null_player import main as null_player_main
-from hidamari.ui.gui import main as gui_main
-from hidamari.ui.menu import show_systray_icon
-from hidamari.utils import ConfigUtil, EndSessionHandler, list_local_video_dir
+try:
+    from commons import *
+    from player.video_player import main as video_player_main
+    from player.web_player import main as web_player_main
+    from gui.control import main as gui_main
+    from menu import show_systray_icon
+    from utils import ConfigUtil, EndSessionHandler, get_video_paths
+except ModuleNotFoundError:
+    from hidamari.commons import *
+    from hidamari.player.video_player import main as video_player_main
+    from hidamari.player.web_player import main as web_player_main
+    from hidamari.gui.control import main as gui_main
+    from hidamari.menu import show_systray_icon
+    from hidamari.utils import ConfigUtil, EndSessionHandler, get_video_paths
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
@@ -55,6 +61,13 @@ class HidamariServer(object):
 
     def __init__(self, args):
         self.args = args
+        self._prev_mode = None
+
+        # Processes
+        mp.set_start_method("spawn")
+        self.gui_process = None
+        self.sys_icon_process = None
+        self.player_process = None
 
         signal.signal(signal.SIGINT, lambda *_: self.quit())
         signal.signal(signal.SIGTERM, lambda *_: self.quit())
@@ -63,26 +76,16 @@ class HidamariServer(object):
         # Monitoring EndSession (OS reboot, shutdown, etc.)
         EndSessionHandler(self.quit)
 
-        # Make Hidamari folder if not exist
-        os.makedirs(VIDEO_WALLPAPER_DIR, exist_ok=True)
-        # Reset user configuration?
+        # Configuration
         if args.reset:
             ConfigUtil().generate_template()
-        # Load user configuration
         self._load_config()
 
-        mp.set_start_method("spawn")
-        self.gui_process = None
-        self.sys_icon_process = None
-        self.player_process = None
-
-        self._prev_mode = None
-
-        # Initial loading for player process
+        # Player process
         self.reload()
 
-        # Show main GUI?
-        if args and not args.background:
+        # Show main GUI
+        if not args.background:
             self.show_gui()
 
         logger.info("[Server] Started")
@@ -97,33 +100,28 @@ class HidamariServer(object):
         """Setup and run player"""
         logger.info(f"[Mode] {mode}")
         self.config[CONFIG_KEY_MODE] = mode
+
         # Set data source if specified
         if data_source:
             self.config[CONFIG_KEY_DATA_SOURCE] = data_source
-        self._save_config()
 
+        # Quit current then create a new player
         self._quit_player()
-
-        # Create new player
         if mode in [MODE_VIDEO, MODE_STREAM]:
             self.player_process = Process(target=video_player_main)
         elif mode == MODE_WEBPAGE:
             self.player_process = Process(target=web_player_main)
         else:
-            self.player_process = Process(target=null_player_main)
-            # if self.args.debug:
-            #     logger.debug("[Server] Showing dummy window")
-            #     self.player_process = Process(target=base_player_main)
-            # else:
-            #     self.player_process = Process(target=null_player_main)
+            raise ValueError("[Server] Unknown mode")
         if self.player_process is not None:
             self.player_process.start()
 
+        # Refresh systray icon if the mode changed
         if self._prev_mode != self.mode:
-            # Refresh systray icon if the mode changed
             if self.sys_icon_process:
                 self.sys_icon_process.terminate()
-            self.sys_icon_process = Process(target=show_systray_icon, args=(mode,))
+            self.sys_icon_process = Process(
+                target=show_systray_icon, args=(mode,))
             self.sys_icon_process.start()
         self._prev_mode = self.mode
 
@@ -133,9 +131,6 @@ class HidamariServer(object):
         player = get_instance(DBUS_NAME_PLAYER)
         if player:
             player.quit_player()
-
-    def null(self):
-        self._setup_player(MODE_NULL)
 
     def video(self, video_path=None):
         self._setup_player(MODE_VIDEO, video_path)
@@ -159,26 +154,27 @@ class HidamariServer(object):
             player.start_playback()
 
     def reload(self):
-        if self.config[CONFIG_KEY_MODE] == MODE_NULL:
-            # Welcome to Hidamari, first time user ;)
-            self.null()
-        elif self.config[CONFIG_KEY_MODE] == MODE_VIDEO:
+        if self.config[CONFIG_KEY_MODE] == MODE_VIDEO:
             self.video()
         elif self.config[CONFIG_KEY_MODE] == MODE_STREAM:
             self.stream()
         elif self.config[CONFIG_KEY_MODE] == MODE_WEBPAGE:
             self.webpage()
         else:
-            raise ValueError("Unknown mode")
+            raise ValueError("[Server] Unknown mode")
 
     def feeling_lucky(self):
         """Random play a video from the directory"""
-        file_list = list_local_video_dir()
+        file_list = get_video_paths()
         # Remove current data source from the random selection
         if self.config[CONFIG_KEY_DATA_SOURCE] in file_list:
             file_list.remove(self.config[CONFIG_KEY_DATA_SOURCE])
         if file_list:
-            self.video(random.choice(file_list))
+            video_path = random.choice(file_list)
+            self.config[CONFIG_KEY_MODE] = MODE_VIDEO
+            self.config[CONFIG_KEY_DATA_SOURCE] = video_path
+            self._save_config()
+            self.video(video_path)
 
     def show_gui(self):
         """Show main GUI"""
@@ -208,9 +204,8 @@ class HidamariServer(object):
     @volume.setter
     def volume(self, volume):
         self.config[CONFIG_KEY_VOLUME] = volume
-        self._save_config()
         player = get_instance(DBUS_NAME_PLAYER)
-        if player:
+        if player is not None:
             player.volume = volume
 
     @property
@@ -220,9 +215,8 @@ class HidamariServer(object):
     @blur_radius.setter
     def blur_radius(self, blur_radius):
         self.config[CONFIG_KEY_BLUR_RADIUS] = blur_radius
-        self._save_config()
         player = get_instance(DBUS_NAME_PLAYER)
-        if player and player.mode != MODE_NULL:
+        if player is not None:
             player.reload_config()
 
     @property
@@ -232,29 +226,28 @@ class HidamariServer(object):
     @is_mute.setter
     def is_mute(self, is_mute):
         self.config[CONFIG_KEY_MUTE] = is_mute
-        self._save_config()
         player = get_instance(DBUS_NAME_PLAYER)
-        if player:
+        if player is not None:
             player.is_mute = is_mute
 
     @property
     def is_playing(self):
         player = get_instance(DBUS_NAME_PLAYER)
-        if player:
+        if player is not None:
             return player.is_playing
         return False
 
     @property
     def is_paused_by_user(self):
         player = get_instance(DBUS_NAME_PLAYER)
-        if player and player.mode in [MODE_VIDEO, MODE_STREAM]:
+        if player is not None and player.mode in [MODE_VIDEO, MODE_STREAM]:
             return player.is_paused_by_user
         return None
 
     @is_paused_by_user.setter
     def is_paused_by_user(self, is_paused_by_user):
         player = get_instance(DBUS_NAME_PLAYER)
-        if player and player.mode in [MODE_VIDEO, MODE_STREAM]:
+        if player is not None and player.mode in [MODE_VIDEO, MODE_STREAM]:
             player.is_paused_by_user = is_paused_by_user
 
     @property
@@ -264,9 +257,8 @@ class HidamariServer(object):
     @is_static_wallpaper.setter
     def is_static_wallpaper(self, is_static_wallpaper):
         self.config[CONFIG_KEY_STATIC_WALLPAPER] = is_static_wallpaper
-        self._save_config()
         player = get_instance(DBUS_NAME_PLAYER)
-        if player and player.mode != MODE_NULL:
+        if player is not None:
             player.reload_config()
 
     @property
@@ -276,9 +268,8 @@ class HidamariServer(object):
     @is_detect_maximized.setter
     def is_detect_maximized(self, is_detect_maximized):
         self.config[CONFIG_KEY_DETECT_MAXIMIZED] = is_detect_maximized
-        self._save_config()
         player = get_instance(DBUS_NAME_PLAYER)
-        if player and player.mode != MODE_NULL:
+        if player is not None:
             player.reload_config()
 
 
@@ -293,7 +284,7 @@ def get_instance(dbus_name):
 
 def main(args):
     server = get_instance(DBUS_NAME_SERVER)
-    if server:
+    if server is not None:
         server.show_gui()
     else:
         # Pause before launching

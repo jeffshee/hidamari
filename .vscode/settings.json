@@ -1,0 +1,7 @@
+{
+    // module level import not at top of file 
+    "python.formatting.autopep8Args": [
+        "--ignore",
+        "E402"
+    ]
+}

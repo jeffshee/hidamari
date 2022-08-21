@@ -1,16 +1,19 @@
+import sys
 import json
 import logging
 import subprocess
 from pprint import pformat
 
 import gi
+gi.require_version("Wnck", "3.0")
+from gi.repository import Gio, GLib, Wnck, Gdk
+
 import pydbus
 
-gi.require_version("GnomeDesktop", "3.0")
-gi.require_version("Wnck", "3.0")
-from gi.repository import Gio, GnomeDesktop, GLib, Wnck, Gdk
-from gi.repository.GdkPixbuf import Pixbuf
-from hidamari.commons import *
+try:
+    from commons import *
+except ModuleNotFoundError:
+    from hidamari.commons import *
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -22,7 +25,7 @@ def is_gnome():
     On Fedora 34, $XDG_CURRENT_DESKTOP = GNOME
     Hence we do the detection by looking for the word "gnome"
     """
-    return "gnome" in os.environ["XDG_CURRENT_DESKTOP"].lower()
+    return "gnome" in os.environ.get("XDG_CURRENT_DESKTOP").lower()
 
 
 def is_wayland():
@@ -30,7 +33,7 @@ def is_wayland():
     Check if current session is Wayland or not.
     $XDG_SESSION_TYPE = x11 | wayland
     """
-    return os.environ["XDG_SESSION_TYPE"] == "wayland"
+    return os.environ.get("XDG_SESSION_TYPE") == "wayland"
 
 
 def is_nvidia_proprietary():
@@ -38,7 +41,8 @@ def is_nvidia_proprietary():
     Check if the GPU is nvidia and the driver is proprietary
     """
     # glxinfo | grep "client glx vendor string"
-    output = subprocess.check_output(['glxinfo', '-B']).decode(sys.stdout.encoding)
+    output = subprocess.check_output(
+        ['glxinfo', '-B']).decode(sys.stdout.encoding)
     return "OpenGL vendor string: NVIDIA Corporation" in output
 
 
@@ -48,7 +52,7 @@ def is_vdpau_ok():
     """
     # vdpauinfo
     try:
-        output = subprocess.check_output(['vdpauinfo'])
+        _ = subprocess.check_output(['vdpauinfo'])
     except subprocess.CalledProcessError:
         print("VDPAU not OK")
         return False
@@ -58,66 +62,17 @@ def is_vdpau_ok():
     return True
 
 
-def list_local_video_dir():
+def get_video_paths():
     file_list = []
-    ext_list = ["3g2", "3gp", "aaf", "asf", "avchd", "avi", "drc", "flv", "m2v", "m4p", "m4v", "mkv", "mng", "mov",
-                "mp2", "mp4", "mpe", "mpeg", "mpg", "mpv", "mxf", "nsv", "ogg", "ogv", "qt", "rm", "rmvb", "roq", "svi",
-                "vob", "webm", "wmv", "yuv"]
     for filename in os.listdir(VIDEO_WALLPAPER_DIR):
         filepath = os.path.join(VIDEO_WALLPAPER_DIR, filename)
-        if os.path.isfile(filepath) and filename.split(".")[-1].lower() in ext_list:
+        file = Gio.file_new_for_path(filepath)
+        info = file.query_info('standard::content-type',
+                               Gio.FileQueryInfoFlags.NONE, None)
+        mime_type = info.get_content_type()
+        if "video" in mime_type:
             file_list.append(filepath)
     return sorted(file_list)
-
-
-def xdg_open_video_dir():
-    subprocess.call(["xdg-open", os.path.realpath(VIDEO_WALLPAPER_DIR)])
-
-
-def generate_thumbnail_gnome(filename):
-    factory = GnomeDesktop.DesktopThumbnailFactory()
-    mtime = os.path.getmtime(filename)
-    # Use Gio to determine the URI and mime type
-    f = Gio.file_new_for_path(filename)
-    uri = f.get_uri()
-    info = f.query_info(
-        "standard::content-type", Gio.FileQueryInfoFlags.NONE, None)
-    mime_type = info.get_content_type()
-
-    if factory.lookup(uri, mtime) is not None:
-        return False
-
-    if not factory.can_thumbnail(uri, mime_type, mtime):
-        return False
-
-    thumbnail = factory.generate_thumbnail(uri, mime_type)
-    if thumbnail is None:
-        return False
-
-    factory.save_thumbnail(thumbnail, uri, mtime)
-    return True
-
-
-def get_thumbnail_gnome(video_path, list_store, idx):
-    file = Gio.File.new_for_path(video_path)
-    info = file.query_info("*", 0, None)
-    thumbnail = info.get_attribute_byte_string("thumbnail::path")
-    if thumbnail is not None:
-        new_pixbuf = Pixbuf.new_from_file_at_size(thumbnail, -1, 96)
-        list_store[idx][0] = new_pixbuf
-    else:
-        generate_thumbnail_gnome(video_path)
-
-
-def setup_autostart(autostart):
-    if autostart:
-        with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
-            f.write(AUTOSTART_DESKTOP_CONTENT)
-    else:
-        try:
-            os.remove(AUTOSTART_DESKTOP_PATH)
-        except OSError:
-            pass
 
 
 """
@@ -209,9 +164,12 @@ class EndSessionHandler:
             session_bus = pydbus.SessionBus()
             proxy = session_bus.get("org.gnome.SessionManager")
             client_id = proxy.RegisterClient("", "")
-            self.session_client = session_bus.get("org.gnome.SessionManager", client_id)
-            self.session_client.QueryEndSession.connect(self.__query_end_session_handler_gnome)
-            self.session_client.EndSession.connect(self.__end_session_handler_gnome)
+            self.session_client = session_bus.get(
+                "org.gnome.SessionManager", client_id)
+            self.session_client.QueryEndSession.connect(
+                self.__query_end_session_handler_gnome)
+            self.session_client.EndSession.connect(
+                self.__end_session_handler_gnome)
         else:
             system_bus = pydbus.SystemBus()
             proxy = system_bus.get(".login1")
@@ -234,7 +192,7 @@ class EndSessionHandler:
 
 class WindowHandler:
     """
-    Handler for monitoring window events (maximized and fullscreen mode)
+    Handler for monitoring window events (maximized and fullscreen mode) for X11
     """
 
     def __init__(self, on_window_state_changed: callable):
@@ -260,28 +218,38 @@ class WindowHandler:
         is_any_maximized, is_any_fullscreen = False, False
         for window in self.screen.get_windows():
             base_state = not Wnck.Window.is_minimized(window) and \
-                         Wnck.Window.is_on_workspace(window, self.screen.get_active_workspace())
+                Wnck.Window.is_on_workspace(
+                    window, self.screen.get_active_workspace())
             window_name, is_maximized, is_fullscreen = window.get_name(), \
-                                                       Wnck.Window.is_maximized(window) and base_state, \
-                                                       Wnck.Window.is_fullscreen(window) and base_state
+                Wnck.Window.is_maximized(window) and base_state, \
+                Wnck.Window.is_fullscreen(window) and base_state
             if is_maximized is True:
                 is_any_maximized = True
             if is_fullscreen is True:
                 is_any_fullscreen = True
 
-        cur_state = {"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen}
+        cur_state = {"is_any_maximized": is_any_maximized,
+                     "is_any_fullscreen": is_any_fullscreen}
         if self.prev_state is None or self.prev_state != cur_state:
             is_changed = True
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed({"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
+            self.on_window_state_changed(
+                {"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
             logger.debug(f"[WindowHandler] {cur_state}")
 
 
 class WindowHandlerGnome:
     """
     Handler for monitoring window events for Gnome only
+    TODO: 
+    This is broken due to a change in GNOME. =(
+    https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/7298ee23e91b756c7009b4d7687dfd8673856f8b
+    
+    TLDR, there is no way to monitor window events in Wayland, unless we use an Shell extension.
+    To bypass, execute the below line in looking glass (Alt+F2 `lg`)
+    `global.context.unsafe_mode = true`
     """
 
     def __init__(self, on_window_state_changed: callable):
@@ -334,15 +302,18 @@ class WindowHandlerGnome:
         fullscreen = all(fullscreen)
 
         if not all([ret1, ret2, ret3]):
-            logging.error("[WindowHandlerGnome] Cannot communicate with Gnome Shell!")
+            logging.error(
+                "[WindowHandlerGnome] Cannot communicate with Gnome Shell!")
 
-        cur_state = {'is_any_maximized': maximized, 'is_any_fullscreen': fullscreen}
+        cur_state = {'is_any_maximized': maximized,
+                     'is_any_fullscreen': fullscreen}
         if self.prev_state is None or self.prev_state != cur_state:
             is_changed = True
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed({"is_any_maximized": maximized, "is_any_fullscreen": fullscreen})
+            self.on_window_state_changed(
+                {"is_any_maximized": maximized, "is_any_fullscreen": fullscreen})
             logger.debug(f"[WindowHandlerGnome] {cur_state}")
         return True
 

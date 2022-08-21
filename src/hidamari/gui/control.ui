@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.38.2 -->
+<!-- Generated with glade 3.39.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
   <object class="GtkAboutDialog" id="AboutDialog">
@@ -13,9 +13,7 @@ Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</pr
     <property name="website">https://github.com/jeffshee/hidamari</property>
     <property name="website-label" translatable="yes">GitHub</property>
     <property name="authors">Jeff Shee https://github.com/jeffshee
-All Contributors
-94824 https://github.com/94824
-xenoney https://github.com/xenoney</property>
+All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</property>
     <property name="artists">Freepik https://www.freepik.com</property>
     <property name="logo-icon-name">hidamari</property>
     <property name="license-type">apache-2-0</property>
@@ -819,6 +817,24 @@ Set a web page as wallpaper</property>
           </object>
           <packing>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="ButtonFeelingLucky">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">app.feeling_lucky</property>
+            <child>
+              <object class="GtkImage" id="ButtonPlayPauseIcon1">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="icon-name">media-playlist-shuffle-symbolic</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>
