@@ -3,7 +3,6 @@ import logging
 import threading
 from tkinter.messagebox import NO
 
-
 # TODO port to Gtk4
 import gi
 gi.require_version("Gtk", "3.0")
@@ -11,10 +10,9 @@ from gi.repository import Gtk, Gio, GLib, GdkPixbuf
 
 from pydbus import SessionBus
 
-import os
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-
 try:
+    import os
+    sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
     from gui.gui_utils import get_video_paths, get_thumbnail, setup_autostart
     from utils import ConfigUtil
@@ -30,8 +28,6 @@ APP_ID = f"{PROJECT}.gui"
 APP_TITLE = "Hidamari"
 APP_UI_PATH = os.path.join(os.path.abspath(
     os.path.dirname(__file__)), "control.ui")
-
-DBUS_NAME_SERVER = f"{PROJECT}.server"
 
 
 class ControlPanel(Gtk.Application):

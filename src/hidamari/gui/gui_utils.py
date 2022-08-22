@@ -1,15 +1,15 @@
 import os
-import json
+import sys
 import logging
 from pprint import pformat
 
 import gi
-
 gi.require_version("GnomeDesktop", "4.0")
-
 from gi.repository import Gio, GnomeDesktop, GdkPixbuf
 
 try:
+    import os
+    sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
 except ModuleNotFoundError:
     from hidamari.commons import *

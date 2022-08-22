@@ -9,6 +9,8 @@ from gi.repository import Gtk, Gio, Gdk
 from pydbus import SessionBus
 
 try:
+    import os
+    sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
     from utils import gnome_desktop_icon_workaround
 except ModuleNotFoundError:

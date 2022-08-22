@@ -3,7 +3,6 @@ import logging
 import pathlib
 
 import gi
-
 gi.require_version("Gtk", "3.0")
 gi.require_version("WebKit2", "4.0")
 from gi.repository import Gtk, WebKit2, Gdk
@@ -11,13 +10,17 @@ from gi.repository import Gtk, WebKit2, Gdk
 from pydbus import SessionBus
 
 try:
+    import os
+    sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from player.base_player import BasePlayer
     from menu import build_menu
     from commons import *
+    from utils import ConfigUtil
 except ModuleNotFoundError:
     from hidamari.player.base_player import BasePlayer
     from hidamari.menu import build_menu
     from hidamari.commons import *
+    from hidamari.utils import ConfigUtil
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -138,7 +141,6 @@ class WebPlayer(BasePlayer):
         pass
 
     def reload_config(self):
-        from hidamari.utils import ConfigUtil
         self.config = ConfigUtil().load()
 
 

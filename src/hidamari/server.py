@@ -111,19 +111,22 @@ class HidamariServer(object):
             self.player_process = Process(target=video_player_main)
         elif mode == MODE_WEBPAGE:
             self.player_process = Process(target=web_player_main)
+        elif mode == MODE_NULL:
+            pass
         else:
             raise ValueError("[Server] Unknown mode")
         if self.player_process is not None:
             self.player_process.start()
 
         # Refresh systray icon if the mode changed
-        if self._prev_mode != self.mode:
-            if self.sys_icon_process:
-                self.sys_icon_process.terminate()
-            self.sys_icon_process = Process(
-                target=show_systray_icon, args=(mode,))
-            self.sys_icon_process.start()
-        self._prev_mode = self.mode
+        if self.config[CONFIG_KEY_SYSTRAY]:
+            if self._prev_mode != self.mode:
+                if self.sys_icon_process:
+                    self.sys_icon_process.terminate()
+                self.sys_icon_process = Process(
+                    target=show_systray_icon, args=(mode,))
+                self.sys_icon_process.start()
+            self._prev_mode = self.mode
 
     @staticmethod
     def _quit_player():
@@ -160,6 +163,8 @@ class HidamariServer(object):
             self.stream()
         elif self.config[CONFIG_KEY_MODE] == MODE_WEBPAGE:
             self.webpage()
+        elif self.config[CONFIG_KEY_MODE] == MODE_NULL:
+            pass
         else:
             raise ValueError("[Server] Unknown mode")
 

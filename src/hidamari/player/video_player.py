@@ -1,34 +1,38 @@
-from ast import Mod
+import sys
+import time
 import ctypes
 import logging
 import pathlib
 import subprocess
-import sys
-import tempfile
 from threading import Timer
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, Gdk
 
-from pydbus import SessionBus
 import vlc
+from pydbus import SessionBus
 from PIL import Image, ImageFilter
 
 try:
+    import os
+    sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from player.base_player import BasePlayer
     from menu import build_menu
     from commons import *
-    from utils import ActiveHandler, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from yt_utils import get_formats, get_best_audio, get_optimal_video
 except ModuleNotFoundError:
     from hidamari.player.base_player import BasePlayer
     from hidamari.menu import build_menu
     from hidamari.commons import *
-    from hidamari.utils import ActiveHandler, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from hidamari.utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from hidamari.yt_utils import get_formats, get_best_audio, get_optimal_video
 
 logger = logging.getLogger(LOGGER_NAME)
+
 if is_wayland():
-    # Window event monitoring for GNOME Wayland is broken.
+    # TODO Window event monitoring for GNOME Wayland is broken ATM.
     class WindowHandler:
         def __init__(self, _: callable):
             pass
@@ -88,13 +92,6 @@ class VLCWidget(Gtk.DrawingArea):
         self.set_size_request(width, height)
 
 
-def build_dummy_menu():
-    menu = Gtk.Menu()
-    menu.append(Gtk.MenuItem(label="Hello"))
-    menu.show_all()
-    return menu
-
-
 class PlayerWindow(Gtk.ApplicationWindow):
     def __init__(self, width, height, *args, **kwargs):
         super(PlayerWindow, self).__init__(*args, **kwargs)
@@ -122,7 +119,8 @@ class PlayerWindow(Gtk.ApplicationWindow):
         cur = 0
         step = (target - cur) / (fade_duration_sec / fade_interval)
         self.fade.cancel()
-        self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume)
+        self.fade.start(cur=cur, target=target, step=step,
+                        fade_interval=fade_interval, update_callback=self.set_volume)
 
     def is_playing(self):
         return self.__vlc_widget.player.is_playing()
@@ -200,7 +198,8 @@ class VideoPlayer(BasePlayer):
         # `libX11.so.6` fix for Fedora 33
         x11 = None
         if is_wayland() and is_nvidia_proprietary() and not is_vdpau_ok():
-            print("Proprietary Nvidia driver detected! HW Acceleration is not yet working in Wayland.")
+            logger.warning(
+                "Proprietary Nvidia driver detected! HW Acceleration is not yet working in Wayland.")
         else:
             for lib in ["libX11.so", "libX11.so.6"]:
                 try:
@@ -216,9 +215,9 @@ class VideoPlayer(BasePlayer):
 
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
-        self.ori_wallpaper_uri = self.gso.get_string("picture-uri")
-        self.ori_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
-        self.new_wallpaper_uri = os.path.join(CONFIG_PATH, "static.png")
+        self.original_wallpaper_uri = self.gso.get_string("picture-uri")
+        self.original_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
+        self.static_wallpaper_uri = os.path.join(CONFIG_DIR, "static.png")
 
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None
@@ -247,7 +246,8 @@ class VideoPlayer(BasePlayer):
                 self.pause_playback()
 
     def _on_window_state_changed(self, state):
-        self.is_any_maximized, self.is_any_fullscreen = state["is_any_maximized"], state["is_any_fullscreen"]
+        self.is_any_maximized, self.is_any_fullscreen = state[
+            "is_any_maximized"], state["is_any_fullscreen"]
         if self._should_playback_start():
             self.start_playback()
         else:
@@ -291,9 +291,9 @@ class VideoPlayer(BasePlayer):
                 window.set_position(0.0)
 
         elif self.mode == MODE_STREAM:
-            from hidamari.ytl_wrapper import get_formats, get_best_audio, get_optimal_video
             formats = get_formats(data_source)
-            max_height = max(self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
+            max_height = max(
+                self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
             video_url = get_optimal_video(formats, max_height)
             audio_url = get_best_audio(formats)
 
@@ -321,7 +321,7 @@ class VideoPlayer(BasePlayer):
         if self.config[CONFIG_KEY_STATIC_WALLPAPER] and self.mode == MODE_VIDEO:
             self.set_static_wallpaper()
         else:
-            self.restore_original_wallpaper()
+            self.set_original_wallpaper()
 
     @property
     def volume(self):
@@ -351,15 +351,15 @@ class VideoPlayer(BasePlayer):
 
     def pause_playback(self):
         for monitor, window in self.windows.items():
-            window.pause_fade(fade_duration_sec=self.config[FADE_DURATION_SEC],
-                              fade_interval=self.config[FADE_INTERVAL])
+            window.pause_fade(fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                              fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
 
     def start_playback(self):
         # if not self.is_paused_by_user:
         if self._should_playback_start():
             for monitor, window in self.windows.items():
-                window.play_fade(target=self.volume, fade_duration_sec=self.config[FADE_DURATION_SEC],
-                                 fade_interval=self.config[FADE_INTERVAL])
+                window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                                 fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
 
     def monitor_sync(self):
         primary_monitor = None
@@ -373,33 +373,44 @@ class VideoPlayer(BasePlayer):
                     continue
                 # `set_position()` method require the playback to be enabled before calling
                 window.play()
-                window.set_position(self.windows[primary_monitor].get_position())
-                window.play() if self.windows[primary_monitor].is_playing() else window.pause()
+                window.set_position(
+                    self.windows[primary_monitor].get_position())
+                window.play() if self.windows[primary_monitor].is_playing(
+                ) else window.pause()
 
     def set_static_wallpaper(self):
+        # Get the duration of the video
+        try:
+            duration = float(subprocess.check_output(
+                f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{self.data_source}"', shell=True))
+        except subprocess.CalledProcessError:
+            duration = 0
+        # Find the golden ratio
+        ss = time.strftime('%H:%M:%S', time.gmtime(duration / 3.14))
+        # Extract the frame
         subprocess.call(
-            'ffmpeg -y -i "{}" -vframes 1 "{}" -loglevel quiet > /dev/null 2>&1 < /dev/null'.format(
-                self.data_source, self.new_wallpaper_uri), shell=True)
-        if os.path.isfile(self.new_wallpaper_uri):
-            blur_wallpaper = Image.open(self.new_wallpaper_uri)
+            f'ffmpeg -y -ss {ss} -i "{self.data_source}" -vframes 1 "{self.static_wallpaper_uri}" -loglevel quiet > /dev/null 2>&1 < /dev/null', shell=True)
+        if os.path.isfile(self.static_wallpaper_uri):
+            blur_wallpaper = Image.open(self.static_wallpaper_uri)
             blur_wallpaper = blur_wallpaper.filter(
                 ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"]))
-            blur_wallpaper.save(self.new_wallpaper_uri)
-            self.gso.set_string("picture-uri", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
-            self.gso.set_string("picture-uri-dark", pathlib.Path(self.new_wallpaper_uri).resolve().as_uri())
+            blur_wallpaper.save(self.static_wallpaper_uri)
+            self.gso.set_string(
+                "picture-uri", pathlib.Path(self.static_wallpaper_uri).resolve().as_uri())
+            self.gso.set_string(
+                "picture-uri-dark", pathlib.Path(self.static_wallpaper_uri).resolve().as_uri())
 
-    def restore_original_wallpaper(self):
-        self.gso.set_string("picture-uri", self.ori_wallpaper_uri)
-        self.gso.set_string("picture-uri-dark", self.ori_wallpaper_uri_dark)
-        if os.path.isfile(self.new_wallpaper_uri):
-            os.remove(self.new_wallpaper_uri)
+    def set_original_wallpaper(self):
+        self.gso.set_string("picture-uri", self.original_wallpaper_uri)
+        self.gso.set_string("picture-uri-dark", self.original_wallpaper_uri_dark)
+        if os.path.isfile(self.static_wallpaper_uri):
+            os.remove(self.static_wallpaper_uri)
 
     def reload_config(self):
-        from hidamari.utils import ConfigUtil
         self.config = ConfigUtil().load()
 
     def quit_player(self):
-        self.restore_original_wallpaper()
+        self.set_original_wallpaper()
         super().quit_player()
 
 

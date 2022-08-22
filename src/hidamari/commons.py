@@ -21,6 +21,7 @@ AUTOSTART_DESKTOP_PATH = os.path.join(HOME, ".config", "autostart", "hidamari.de
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 
+MODE_NULL = "MODE_NULL"
 MODE_VIDEO = "MODE_VIDEO"
 MODE_STREAM = "MODE_STREAM"
 MODE_WEBPAGE = "MODE_WEBPAGE"
@@ -34,17 +35,19 @@ CONFIG_KEY_VOLUME = "audio_volume"
 CONFIG_KEY_STATIC_WALLPAPER = "is_static_wallpaper"
 CONFIG_KEY_BLUR_RADIUS = "static_wallpaper_blur_radius"
 CONFIG_KEY_DETECT_MAXIMIZED = "is_detect_maximized"
-FADE_DURATION_SEC = "fade_duration_sec"
-FADE_INTERVAL = "fade_interval"
+CONFIG_KEY_FADE_DURATION_SEC = "fade_duration_sec"
+CONFIG_KEY_FADE_INTERVAL = "fade_interval"
+CONFIG_KEY_SYSTRAY = "is_show_systray"
 CONFIG_TEMPLATE = {
     CONFIG_KEY_VERSION: CONFIG_VERSION,
-    CONFIG_KEY_MODE: MODE_VIDEO,
-    CONFIG_KEY_DATA_SOURCE: "",
+    CONFIG_KEY_MODE: MODE_NULL,
+    CONFIG_KEY_DATA_SOURCE: None,
     CONFIG_KEY_MUTE: False,
     CONFIG_KEY_VOLUME: 50,
     CONFIG_KEY_STATIC_WALLPAPER: True,
     CONFIG_KEY_BLUR_RADIUS: 5,
     CONFIG_KEY_DETECT_MAXIMIZED: True,
-    FADE_DURATION_SEC: 1.5,
-    FADE_INTERVAL: 0.1,
+    CONFIG_KEY_FADE_DURATION_SEC: 1.5,
+    CONFIG_KEY_FADE_INTERVAL: 0.1,
+    CONFIG_KEY_SYSTRAY: False
 }
