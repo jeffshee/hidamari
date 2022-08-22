@@ -59,7 +59,6 @@ class ControlPanel(Gtk.Application):
         self.video_paths = None
 
         self.is_autostart = os.path.isfile(AUTOSTART_DESKTOP_PATH)
-        self.is_first_time = False  # TODO Dummy
 
         self._connect_server()
         self._load_config()
@@ -126,8 +125,10 @@ class ControlPanel(Gtk.Application):
         if self.server is None:
             self._show_dbus_error()
 
-        if self.is_first_time:
+        if self.config[CONFIG_KEY_FIRST_TIME]:
             self._show_welcome()
+            self.config[CONFIG_KEY_FIRST_TIME] = False
+            self._save_config()
 
     def _show_dbus_error(self):
         dialog = Gtk.MessageDialog(parent=self.window, modal=True, destroy_with_parent=True,
