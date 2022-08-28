@@ -2,8 +2,39 @@
 <component type="desktop">
 	<id>io.jeffshee.Hidamari.desktop</id>
 	<metadata_license>CC0-1.0</metadata_license>
-	<project_license></project_license>
+	<project_license>GPL-3.0-or-later</project_license>
+	<name>Hidamari</name>
+	<summary>Video wallpaper for Linux</summary>
 	<description>
-	  <p>No description</p>
+		<p>Video wallpaper for Linux. Written in Python.</p>
+		<p>Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
+		<p>Similar functionality to Xwinwrap + mpv or Komorebi, with more features.</p>
 	</description>
+	<screenshot>
+		<image>https://github.com/jeffshee/hidamari/blob/flatpak/res/01_video.png</image>
+	</screenshot>
+	<screenshot>
+		<image>https://github.com/jeffshee/hidamari/blob/flatpak/res/02_streaming.png</image>
+	</screenshot>
+	<screenshot>
+		<image>https://github.com/jeffshee/hidamari/blob/flatpak/res/03_webpage.png</image>
+	</screenshot>
+	<launchable type="desktop-id">@APPLICATION_ID@.desktop</launchable>
+	<url type="homepage">https://github.com/jeffshee/hidamari</url>
+	<url type="bugtracker">https://github.com/jeffshee/hidamari/issues</url>
+	<url type="donation">https://www.buymeacoffee.com/jeffshee</url>
+	<developer_name>Jeff Shee</developer_name>
+	<releases>
+		<release version="3.0.0-beta" date="2022-08-28">
+		  <description>
+			<p>Hi! Hidamari v3</p>
+			<ul>
+			  <li>First Flatpak build 📦</li>
+			  <li>Bug fixes and performance improvements 😎</li>
+			</ul>
+		  </description>
+		</release>
+	</releases>
+	<content_rating type="oars-1.1"/>
+    <provides>@APPLICATION_ID@.desktop</provides>
 </component>
