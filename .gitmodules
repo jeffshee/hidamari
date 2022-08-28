@@ -1,0 +1,6 @@
+[submodule "shared-modules"]
+	path = shared-modules
+	url = https://github.com/flathub/shared-modules.git
+[submodule "org.videolan.VLC"]
+	path = vlc
+	url = https://github.com/flathub/org.videolan.VLC.git
