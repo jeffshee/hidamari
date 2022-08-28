@@ -17,7 +17,7 @@ except ModuleNotFoundError:
 logger = logging.getLogger(LOGGER_NAME)
 
 APP_INDICATOR_ID = PROJECT
-APP_INDICATOR_ICON = "hidamari"
+APP_INDICATOR_ICON = "io.jeffshee.Hidamari"
 
 def connect():
     # Connect to server

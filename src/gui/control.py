@@ -1,7 +1,6 @@
 import sys
 import logging
 import threading
-from tkinter.messagebox import NO
 
 # TODO port to Gtk4
 import gi
@@ -14,12 +13,12 @@ try:
     import os
     sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
-    from gui.gui_utils import get_video_paths, get_thumbnail, setup_autostart
-    from utils import ConfigUtil
+    from gui.gui_utils import get_video_paths, get_thumbnail
+    from utils import ConfigUtil, setup_autostart
 except ModuleNotFoundError:
     from hidamari.commons import *
-    from hidamari.gui.gui_utils import get_video_paths, get_thumbnail, setup_autostart
-    from hidamari.utils import ConfigUtil
+    from hidamari.gui.gui_utils import get_video_paths, get_thumbnail
+    from hidamari.utils import ConfigUtil, setup_autostart
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(LOGGER_NAME)
@@ -79,7 +78,7 @@ class ControlPanel(Gtk.Application):
         Gtk.Application.do_startup(self)
 
         actions = [
-            ("local_video_dir", lambda *_: subprocess.call(
+            ("local_video_dir", lambda *_: subprocess.run(
                 ["xdg-open", os.path.realpath(VIDEO_WALLPAPER_DIR)])),
             ("local_video_refresh", self._reload_icon_view),
             ("local_video_apply", self.on_local_video_apply),
@@ -87,7 +86,6 @@ class ControlPanel(Gtk.Application):
             ("play_pause", self.on_play_pause),
             ("feeling_lucky", self.on_feeling_lucky),
             ("about", self.on_about),
-            ("preferences", self.on_preferences),
             ("quit", self.on_quit),
         ]
 
@@ -268,10 +266,6 @@ class ControlPanel(Gtk.Application):
         about_dialog.set_transient_for(self.window)
         about_dialog.set_modal(True)
         about_dialog.present()
-
-    # TODO might be removed
-    def on_preferences(self, action, param):
-        logger.info(f"[GUI] {action.get_name()}: f{param}")
 
     def on_streaming_activate(self, entry: Gtk.Entry):
         url = entry.get_text()

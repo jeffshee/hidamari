@@ -9,14 +9,36 @@ DBUS_NAME_PLAYER = f"{PROJECT}.player"
 
 HOME = os.environ["HOME"]
 try:
-    xdg_video_dir = subprocess.run(["xdg-user-dir", "VIDEOS"], stdout=subprocess.PIPE)\
-        .stdout.decode('utf-8').replace("\n", "")
+    xdg_video_dir = subprocess.check_output(
+        "xdg-user-dir VIDEOS", shell=True, encoding='UTF-8').replace("\n", "")
     VIDEO_WALLPAPER_DIR = os.path.join(xdg_video_dir, "Hidamari")
 except FileNotFoundError:
     # xdg-user-dir not found, use $HOME/Hidamari for Video directory instead
     VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Hidamari")
 
-AUTOSTART_DESKTOP_PATH = os.path.join(HOME, ".config", "autostart", "hidamari.desktop")
+AUTOSTART_DESKTOP_PATH = os.path.join(
+    HOME, ".config", "autostart", f"{PROJECT}.desktop")
+AUTOSTART_DESKTOP_CONTENT = \
+    """[Desktop Entry]
+Name=Hidamari
+Exec=hidamari -b
+Icon=io.jeffshee.Hidamari
+Terminal=false
+Type=Application
+Categories=GTK;Utility;
+StartupNotify=true
+"""
+AUTOSTART_DESKTOP_CONTENT_FLATPAK = \
+    """[Desktop Entry]
+Name=hidamari
+Exec=/usr/bin/flatpak run --command=hidamari io.jeffshee.Hidamari -b
+Icon=io.jeffshee.Hidamari
+Terminal=false
+Type=Application
+Categories=GTK;Utility;
+StartupNotify=true
+X-Flatpak=io.jeffshee.Hidamari
+"""
 
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")

@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Hidamari
-Exec=hidamari -p 0
-StartupNotify=false
-Terminal=false
-Icon=hidamari
-Categories=System;Monitor;

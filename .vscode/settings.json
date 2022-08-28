@@ -3,5 +3,16 @@
     "python.formatting.autopep8Args": [
         "--ignore",
         "E402"
-    ]
+    ],
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.hg/store/**": true,
+        ".flatpak/**": true,
+        "_build/**": true
+    },
+    "mesonbuild.configureOnOpen": false,
+    "mesonbuild.buildFolder": "_build",
+    "mesonbuild.mesonPath": "/home/jeffshee/Developer/Linux/hidamari-dev/.flatpak/meson.sh"
 }

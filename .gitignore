@@ -3,17 +3,3 @@ __pycache__/
 
 # Project exclude paths
 /venv/
-/flatpak/
-/src/deprecated/
-/src/test/
-bin/
-dist/
-etc/
-include/
-lib/
-lib64
-pyvenv.cfg
-share/
-src/hidamari.egg-info/
-
-.idea/

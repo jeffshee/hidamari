@@ -1,0 +1,7 @@
+data/io.jeffshee.Hidamari.desktop.in
+data/io.jeffshee.Hidamari.appdata.xml.in
+data/io.jeffshee.Hidamari.gschema.xml
+src/window.ui
+src/main.py
+src/window.py
+

@@ -1,0 +1,4 @@
+[Application]
+name=io.jeffshee.Hidamari
+runtime=org.gnome.Platform/x86_64/42
+sdk=org.gnome.Sdk/x86_64/42

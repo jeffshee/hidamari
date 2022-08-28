@@ -4,11 +4,11 @@ import sys
 
 try:
     from commons import *
-    from utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     import server
 except ModuleNotFoundError:
     from hidamari.commons import *
-    from hidamari.utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from hidamari.utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     from hidamari import server
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -36,6 +36,7 @@ def main():
     logger.debug(f"[Desktop Env] {os.environ.get('XDG_CURRENT_DESKTOP', 'Not found')} | is_gnome = {is_gnome()}")
     logger.debug(f"[Windowing Sys] {os.environ.get('XDG_SESSION_TYPE', 'Not found')} | is_wayland = {is_wayland()}")
     logger.debug(f"[GPU] is_nvidia_proprietary = {is_nvidia_proprietary()} | is_vdpau_ok = {is_vdpau_ok()}")
+    logger.debug(f"[Flatpak] is_flatpak = {is_flatpak()}")
     logger.debug(f"[Args] {vars(args)}")
 
     # Make Hidamari folder if not exist

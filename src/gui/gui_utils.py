@@ -17,29 +17,6 @@ except ModuleNotFoundError:
 logger = logging.getLogger(LOGGER_NAME)
 
 
-def setup_autostart(autostart):
-    if autostart:
-        with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
-            # TODO add flatpak support
-            AUTOSTART_DESKTOP_CONTENT = \
-                """
-                [Desktop Entry]
-                Type=Application
-                Name=Hidamari
-                Exec=hidamari -p 0 -b 
-                StartupNotify=false
-                Terminal=false
-                Icon=hidamari
-                Categories=System;Monitor;
-                """
-            f.write(AUTOSTART_DESKTOP_CONTENT)
-    else:
-        try:
-            os.remove(AUTOSTART_DESKTOP_PATH)
-        except OSError:
-            pass
-
-
 def get_video_paths():
     file_list = []
     for filename in os.listdir(VIDEO_WALLPAPER_DIR):

@@ -15,7 +15,7 @@ Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</pr
     <property name="authors">Jeff Shee https://github.com/jeffshee
 All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</property>
     <property name="artists">Freepik https://www.freepik.com</property>
-    <property name="logo-icon-name">hidamari</property>
+    <property name="logo-icon-name">io.jeffshee.Hidamari</property>
     <property name="license-type">apache-2-0</property>
     <child internal-child="vbox">
       <object class="GtkBox">
@@ -294,7 +294,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
     <property name="can-focus">False</property>
     <property name="default-width">1024</property>
     <property name="default-height">576</property>
-    <property name="icon-name">hidamari</property>
+    <property name="icon-name">io.jeffshee.Hidamari</property>
     <child>
       <object class="GtkStack" id="stack1">
         <property name="visible">True</property>

@@ -65,9 +65,9 @@ Hidamari offers similar feature as above, with additional features listed below:
 
 ## Screenshot 📸
 
-![](screenshot/01_video.png)
-![](screenshot/02_streaming.png)
-![](screenshot/03_webpage.png)
+![](res/01_video.png)
+![](res/02_streaming.png)
+![](res/03_webpage.png)
 
 ## Demo 📽️
 

@@ -25,7 +25,6 @@ except ModuleNotFoundError:
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# TODO switch to chromium-based webview
 class WebWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super(WebWindow, self).__init__(*args, **kwargs)
@@ -105,7 +104,6 @@ class WebPlayer(BasePlayer):
         for monitor, window in self.windows.items():
             window.load_uri(data_source)
             if not monitor.is_primary():
-                # TODO not sure if this is desirable
                 monitor.set_is_mute(True)
         self.volume = self.config[CONFIG_KEY_VOLUME]
         self.is_mute = self.config[CONFIG_KEY_MUTE]

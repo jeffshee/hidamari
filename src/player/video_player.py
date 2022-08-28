@@ -20,13 +20,13 @@ try:
     from player.base_player import BasePlayer
     from menu import build_menu
     from commons import *
-    from utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     from yt_utils import get_formats, get_best_audio, get_optimal_video
 except ModuleNotFoundError:
     from hidamari.player.base_player import BasePlayer
     from hidamari.menu import build_menu
     from hidamari.commons import *
-    from hidamari.utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok
+    from hidamari.utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     from hidamari.yt_utils import get_formats, get_best_audio, get_optimal_video
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -215,9 +215,15 @@ class VideoPlayer(BasePlayer):
 
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
-        self.original_wallpaper_uri = self.gso.get_string("picture-uri")
-        self.original_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
-        self.static_wallpaper_uri = os.path.join(CONFIG_DIR, "static.png")
+        if is_flatpak():
+            picture_uri = subprocess.check_output("flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri'", shell=True, encoding='UTF-8')
+            picture_uri_dark = subprocess.check_output("flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri-dark'", shell=True, encoding='UTF-8')
+            self.original_wallpaper_uri = picture_uri
+            self.original_wallpaper_uri_dark = picture_uri_dark
+        else:
+            self.original_wallpaper_uri = self.gso.get_string("picture-uri")
+            self.original_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
+        self.static_wallpaper_path = os.path.join(CONFIG_DIR, "static.png")
 
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None
@@ -388,23 +394,37 @@ class VideoPlayer(BasePlayer):
         # Find the golden ratio
         ss = time.strftime('%H:%M:%S', time.gmtime(duration / 3.14))
         # Extract the frame
-        subprocess.call(
-            f'ffmpeg -y -ss {ss} -i "{self.data_source}" -vframes 1 "{self.static_wallpaper_uri}" -loglevel quiet > /dev/null 2>&1 < /dev/null', shell=True)
-        if os.path.isfile(self.static_wallpaper_uri):
-            blur_wallpaper = Image.open(self.static_wallpaper_uri)
+        ret = subprocess.run(f"ffmpeg -y -ss {ss} -i '{self.data_source}' -vframes 1 '{self.static_wallpaper_path}'", shell=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.STDOUT)
+        if ret.returncode == 0 and os.path.isfile(self.static_wallpaper_path):
+            blur_wallpaper = Image.open(self.static_wallpaper_path)
             blur_wallpaper = blur_wallpaper.filter(
                 ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"]))
-            blur_wallpaper.save(self.static_wallpaper_uri)
-            self.gso.set_string(
-                "picture-uri", pathlib.Path(self.static_wallpaper_uri).resolve().as_uri())
-            self.gso.set_string(
-                "picture-uri-dark", pathlib.Path(self.static_wallpaper_uri).resolve().as_uri())
+            blur_wallpaper.save(self.static_wallpaper_path)
+            static_wallpaper_uri = pathlib.Path(
+                self.static_wallpaper_path).resolve().as_uri()
+            if is_flatpak():
+                subprocess.run(
+                    f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {static_wallpaper_uri}'", shell=True)
+                subprocess.run(
+                    f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {static_wallpaper_uri}'", shell=True)
+            else:
+                self.gso.set_string("picture-uri", static_wallpaper_uri)
+                self.gso.set_string("picture-uri-dark", static_wallpaper_uri)
 
     def set_original_wallpaper(self):
-        self.gso.set_string("picture-uri", self.original_wallpaper_uri)
-        self.gso.set_string("picture-uri-dark", self.original_wallpaper_uri_dark)
-        if os.path.isfile(self.static_wallpaper_uri):
-            os.remove(self.static_wallpaper_uri)
+        if is_flatpak():
+            subprocess.run(
+                f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {self.original_wallpaper_uri}'", shell=True)
+            subprocess.run(
+                f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {self.original_wallpaper_uri_dark}'", shell=True)
+        else:
+            self.gso.set_string("picture-uri", self.original_wallpaper_uri)
+            self.gso.set_string("picture-uri-dark",
+                                self.original_wallpaper_uri_dark)
+        if os.path.isfile(self.static_wallpaper_path):
+            os.remove(self.static_wallpaper_path)
 
     def reload_config(self):
         self.config = ConfigUtil().load()

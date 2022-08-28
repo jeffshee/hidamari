@@ -42,7 +42,7 @@ def is_nvidia_proprietary():
     """
     # glxinfo | grep "client glx vendor string"
     output = subprocess.check_output(
-        ['glxinfo', '-B']).decode(sys.stdout.encoding)
+        "glxinfo -B", shell=True, encoding='UTF-8')
     return "OpenGL vendor string: NVIDIA Corporation" in output
 
 
@@ -52,14 +52,36 @@ def is_vdpau_ok():
     """
     # vdpauinfo
     try:
-        _ = subprocess.check_output(['vdpauinfo'])
-    except subprocess.CalledProcessError:
-        print("VDPAU not OK")
-        return False
+        ret = subprocess.run("vdpauinfo",
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.STDOUT)
     except FileNotFoundError:
         print("vdpauinfo not found, unable to check VDPAU")
         return False
-    return True
+    return ret.returncode == 0
+
+
+def is_flatpak():
+    """
+    Check if Hidamari is a Flatpak
+    Reference:
+    https://gitlab.gnome.org/jrb/crosswords/-/blob/master/src/crosswords-init.c#L179
+    """
+    return os.path.isfile('/.flatpak-info')
+
+
+def setup_autostart(autostart):
+    if autostart:
+        with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
+            if is_flatpak():
+                f.write(AUTOSTART_DESKTOP_CONTENT_FLATPAK)
+            else:
+                f.write(AUTOSTART_DESKTOP_CONTENT)
+    else:
+        try:
+            os.remove(AUTOSTART_DESKTOP_PATH)
+        except OSError:
+            pass
 
 
 def get_video_paths():
@@ -246,7 +268,7 @@ class WindowHandlerGnome:
     TODO: 
     This is broken due to a change in GNOME. =(
     https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/7298ee23e91b756c7009b4d7687dfd8673856f8b
-    
+
     TLDR, there is no way to monitor window events in Wayland, unless we use an Shell extension.
     To bypass, execute the below line in looking glass (Alt+F2 `lg`)
     `global.context.unsafe_mode = true`
