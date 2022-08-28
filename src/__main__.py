@@ -14,13 +14,13 @@ except ModuleNotFoundError:
 logger = logging.getLogger(LOGGER_NAME)
 
 
-def main():
+def main(version):
     # Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
     os.environ["GDK_BACKEND"] = "x11"
     # Suppress VLC Log
     os.environ["VLC_VERBOSE"] = "-1"
 
-    parser = argparse.ArgumentParser(description="Hidamari launcher")
+    parser = argparse.ArgumentParser(description=f"Hidamari v{version}")
     parser.add_argument("-p", "--pause", dest="p", type=int, default=0,
                         help="Add pause before launching Hidamari. [sec]")
     parser.add_argument("-b", "--background", action="store_true", help="Launch only the live wallpaper.")
@@ -33,19 +33,23 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     # Log system information
-    logger.debug(f"[Desktop Env] {os.environ.get('XDG_CURRENT_DESKTOP', 'Not found')} | is_gnome = {is_gnome()}")
-    logger.debug(f"[Windowing Sys] {os.environ.get('XDG_SESSION_TYPE', 'Not found')} | is_wayland = {is_wayland()}")
-    logger.debug(f"[GPU] is_nvidia_proprietary = {is_nvidia_proprietary()} | is_vdpau_ok = {is_vdpau_ok()}")
-    logger.debug(f"[Flatpak] is_flatpak = {is_flatpak()}")
-    logger.debug(f"[Args] {vars(args)}")
+    logger.info(f"Hidamari v{version}")
+    logger.info("--- System information ---")
+    logger.info(f"is_gnome = {is_gnome()}")
+    logger.info(f"is_wayland = {is_wayland()}")
+    logger.info(f"is_nvidia_proprietary = {is_nvidia_proprietary()}")
+    logger.info(f"is_vdpau_ok = {is_vdpau_ok()}")
+    logger.info(f"is_flatpak = {is_flatpak()}")
+    logger.info("--------------------------")
+    logger.info(f"[Args] {vars(args)}")
 
     # Make Hidamari folder if not exist
     os.makedirs(VIDEO_WALLPAPER_DIR, exist_ok=True)
 
     # Clear sys.argv as it has influence to the Gtk.Application
     sys.argv = [sys.argv[0]]
-    server.main(args)
+    server.main(version, args)
 
 
 if __name__ == "__main__":
-    main()
+    main("dev")

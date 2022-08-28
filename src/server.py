@@ -59,7 +59,8 @@ class HidamariServer(object):
     </node>
     """
 
-    def __init__(self, args):
+    def __init__(self, version, args):
+        self.version = version
         self.args = args
         self._prev_mode = None
 
@@ -183,7 +184,7 @@ class HidamariServer(object):
 
     def show_gui(self):
         """Show main GUI"""
-        self.gui_process = Process(target=gui_main)
+        self.gui_process = Process(target=gui_main, args=(self.version,))
         self.gui_process.start()
 
     def quit(self):
@@ -287,7 +288,7 @@ def get_instance(dbus_name):
     return instance
 
 
-def main(args):
+def main(version, args):
     server = get_instance(DBUS_NAME_SERVER)
     if server is not None:
         server.show_gui()
@@ -295,7 +296,7 @@ def main(args):
         # Pause before launching
         time.sleep(args.p)
         bus = SessionBus()
-        server = HidamariServer(args)
+        server = HidamariServer(version, args)
         try:
             bus.publish(DBUS_NAME_SERVER, server)
             loop.run()

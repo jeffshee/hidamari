@@ -26,7 +26,7 @@ def connect():
         server = bus.get(DBUS_NAME_SERVER)
         return server
     except GLib.Error:
-        logger.error("Couldn't connect to server")
+        logger.error("[Menu] Couldn't connect to server")
     return
 
 

@@ -14,11 +14,11 @@ try:
     sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
     from gui.gui_utils import get_video_paths, get_thumbnail
-    from utils import ConfigUtil, setup_autostart
+    from utils import ConfigUtil, setup_autostart, is_wayland
 except ModuleNotFoundError:
     from hidamari.commons import *
     from hidamari.gui.gui_utils import get_video_paths, get_thumbnail
-    from hidamari.utils import ConfigUtil, setup_autostart
+    from hidamari.utils import ConfigUtil, setup_autostart, is_wayland
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(LOGGER_NAME)
@@ -30,7 +30,7 @@ APP_UI_PATH = os.path.join(os.path.abspath(
 
 
 class ControlPanel(Gtk.Application):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, version, *args, **kwargs):
         super(ControlPanel, self).__init__(
             *args,
             application_id=APP_ID,
@@ -52,6 +52,7 @@ class ControlPanel(Gtk.Application):
         self.builder.connect_signals(signals)
 
         # Variables init
+        self.version = version
         self.window = None
         self.server = None
         self.icon_view = None
@@ -66,7 +67,7 @@ class ControlPanel(Gtk.Application):
         try:
             self.server = SessionBus().get(DBUS_NAME_SERVER)
         except GLib.Error:
-            logger.warning("[GUI] Couldn't connect to server")
+            logger.error("[GUI] Couldn't connect to server")
 
     def _load_config(self):
         self.config = ConfigUtil().load()
@@ -109,6 +110,10 @@ class ControlPanel(Gtk.Application):
             action.connect("change-state", handler)
             self.add_action(action)
 
+        if is_wayland:
+            toggle = self.builder.get_object("ToggleDetectMaximized")
+            toggle.set_visible(False)
+            
         self._reload_all_widgets()
 
     def do_activate(self):
@@ -264,6 +269,7 @@ class ControlPanel(Gtk.Application):
         self.builder.add_from_file(APP_UI_PATH)
         about_dialog: Gtk.AboutDialog = self.builder.get_object("AboutDialog")
         about_dialog.set_transient_for(self.window)
+        about_dialog.set_version(self.version)
         about_dialog.set_modal(True)
         about_dialog.present()
 
@@ -356,10 +362,10 @@ class ControlPanel(Gtk.Application):
             thread.start()
 
 
-def main():
-    app = ControlPanel()
+def main(version):
+    app = ControlPanel(version)
     app.run(sys.argv)
 
 
 if __name__ == "__main__":
-    main()
+    main("dev")

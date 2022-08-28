@@ -56,7 +56,7 @@ def is_vdpau_ok():
                              stdout=subprocess.DEVNULL,
                              stderr=subprocess.STDOUT)
     except FileNotFoundError:
-        print("vdpauinfo not found, unable to check VDPAU")
+        logger.error("vdpauinfo not found, unable to check VDPAU")
         return False
     return ret.returncode == 0
 
@@ -388,10 +388,3 @@ class ConfigUtil:
             json_str = json.dumps(config, indent=3)
             print(json_str, file=f)
             logger.debug(f"[Config] Saved\n{pformat(config)}")
-
-
-if __name__ == "__main__":
-    # Debug
-    print(is_gnome())
-    print(is_wayland())
-    gnome_desktop_icon_workaround()

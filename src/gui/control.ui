@@ -6,8 +6,8 @@
     <property name="can-focus">False</property>
     <property name="type-hint">dialog</property>
     <property name="program-name">Hidamari</property>
-    <property name="copyright" translatable="yes">Copyright © 2020 JeffShee@ねくもりそふと</property>
-    <property name="comments" translatable="yes">Video wallpaper for Linux. Minimal and written in Python.
+    <property name="copyright" translatable="yes">Copyright © 2022 Jeff Shee</property>
+    <property name="comments" translatable="yes">Video wallpaper for Linux. Written in Python. 🐍
 
 Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</property>
     <property name="website">https://github.com/jeffshee/hidamari</property>
@@ -16,7 +16,6 @@ Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun</pr
 All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</property>
     <property name="artists">Freepik https://www.freepik.com</property>
     <property name="logo-icon-name">io.jeffshee.Hidamari</property>
-    <property name="license-type">apache-2-0</property>
     <child internal-child="vbox">
       <object class="GtkBox">
         <property name="can-focus">False</property>
@@ -104,6 +103,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Video frame can be applied as system wallpaper, look great in GNOME</property>
             <property name="action-name">app.static_wallpaper</property>
             <property name="text" translatable="yes">Apply static wallpaper</property>
           </object>
@@ -114,10 +114,11 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton">
+          <object class="GtkModelButton" id="ToggleDetectMaximized">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Automatically pauses playback when maximized window or full screen mode is detected</property>
             <property name="action-name">app.detect_maximized</property>
             <property name="text" translatable="yes">Detect maximized window</property>
           </object>
@@ -319,7 +320,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="label" translatable="yes">&lt;span size="x-large"&gt;&lt;b&gt;Local Video&lt;/b&gt;&lt;/span&gt;
-Videos located in ~/Videos/Hidamari/</property>
+Videos located in Hidamari folder</property>
                     <property name="use-markup">True</property>
                     <property name="xalign">0</property>
                   </object>
@@ -334,6 +335,7 @@ Videos located in ~/Videos/Hidamari/</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
+                    <property name="tooltip-text" translatable="yes">Refresh</property>
                     <property name="halign">center</property>
                     <property name="valign">center</property>
                     <property name="action-name">app.local_video_refresh</property>
@@ -358,6 +360,7 @@ Videos located in ~/Videos/Hidamari/</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
+                    <property name="tooltip-text" translatable="yes">Open Hidamari folder</property>
                     <property name="halign">center</property>
                     <property name="valign">center</property>
                     <property name="action-name">app.local_video_dir</property>
@@ -513,7 +516,6 @@ Videos from streaming services</property>
                         <property name="spacing">8</property>
                         <child>
                           <object class="GtkLabel">
-                            <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">💡	You need to install &lt;i&gt;youtube-dl&lt;/i&gt; for this feature</property>
@@ -806,6 +808,7 @@ Set a web page as wallpaper</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Toggle Play/Pause</property>
             <property name="action-name">app.play_pause</property>
             <child>
               <object class="GtkImage" id="ButtonPlayPauseIcon">
@@ -824,6 +827,7 @@ Set a web page as wallpaper</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">I'm Feeling Lucky</property>
             <property name="action-name">app.feeling_lucky</property>
             <child>
               <object class="GtkImage" id="ButtonPlayPauseIcon1">

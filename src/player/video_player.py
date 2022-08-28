@@ -1,5 +1,6 @@
 import sys
 import time
+import random
 import ctypes
 import logging
 import pathlib
@@ -223,7 +224,7 @@ class VideoPlayer(BasePlayer):
         else:
             self.original_wallpaper_uri = self.gso.get_string("picture-uri")
             self.original_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
-        self.static_wallpaper_path = os.path.join(CONFIG_DIR, "static.png")
+        self.static_wallpaper_path = os.path.join(CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
 
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None
