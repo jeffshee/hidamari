@@ -3,8 +3,6 @@
     "runtime": "org.gnome.Platform",
     "runtime-version": "42",
     "sdk": "org.gnome.Sdk",
-    "base": "org.videolan.VLC",
-    "base-version": "stable",
     "command": "hidamari",
     "finish-args": [
         "--share=network",
@@ -38,6 +36,7 @@
         "*.a"
     ],
     "modules": [
+        "vlc.json",
         "shared-modules/libappindicator/libappindicator-gtk3-introspection-12.10.json",
         {
             "name": "python3-python-vlc",
