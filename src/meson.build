@@ -2,12 +2,12 @@ pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.proje
 moduledir = join_paths(pkgdatadir, 'hidamari')
 gnome = import('gnome')
 
-#gnome.compile_resources('hidamari',
+# gnome.compile_resources('hidamari',
 #  'hidamari.gresource.xml',
 #  gresource_bundle: true,
 #  install: true,
 #  install_dir: pkgdatadir,
-#)
+# )
 
 python = import('python')
 
@@ -35,6 +35,10 @@ hidamari_sources = [
   'yt_utils.py'
 ]
 
-install_subdir('gui', install_dir: moduledir)
-install_subdir('player', install_dir: moduledir)
+exclude_dir = [
+  '__pycache__'
+]
+
+install_subdir('gui', install_dir: moduledir, exclude_directories: exclude_dir)
+install_subdir('player', install_dir: moduledir, exclude_directories: exclude_dir)
 install_data(hidamari_sources, install_dir: moduledir)
