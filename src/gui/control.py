@@ -110,7 +110,7 @@ class ControlPanel(Gtk.Application):
             action.connect("change-state", handler)
             self.add_action(action)
 
-        if is_wayland:
+        if is_wayland():
             toggle = self.builder.get_object("ToggleDetectMaximized")
             toggle.set_visible(False)
             
