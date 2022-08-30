@@ -36,7 +36,7 @@
         "*.a"
     ],
     "modules": [
-        "vlc.json",
+        "vlc-slim.json",
         "shared-modules/libappindicator/libappindicator-gtk3-introspection-12.10.json",
         {
             "name": "python3-python-vlc",

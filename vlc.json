@@ -155,7 +155,7 @@
                 },
                 {
                     "type": "patch",
-                    "path": "vlc/libshout-openssl11.patch"
+                    "path": "libvlc/libshout-openssl11.patch"
                 },
                 {
                     "type": "script",
@@ -231,11 +231,11 @@
                 },
                 {
                     "type": "patch",
-                    "path": "vlc/gsm.patch"
+                    "path": "libvlc/gsm.patch"
                 },
                 {
                     "type": "patch",
-                    "path": "vlc/gsm-makefile.patch"
+                    "path": "libvlc/gsm-makefile.patch"
                 }
             ]
         },
@@ -272,7 +272,7 @@
                 },
                 {
                     "type": "patch",
-                    "path": "vlc/libkate.patch"
+                    "path": "libvlc/libkate.patch"
                 },
                 {
                     "type": "script",
@@ -321,7 +321,7 @@
                 },
                 {
                     "type": "patch",
-                    "path": "vlc/libebml-gcc11.patch"
+                    "path": "libvlc/libebml-gcc11.patch"
                 }
             ]
         },
@@ -714,11 +714,11 @@
                 },
                 {
                     "type": "patch",
-                    "path": "vlc/live555-add-pkgconfig-file.patch"
+                    "path": "libvlc/live555-add-pkgconfig-file.patch"
                 },
                 {
                     "type": "patch",
-                    "path": "vlc/live555-nosignal.patch"
+                    "path": "libvlc/live555-nosignal.patch"
                 }
             ]
         },
@@ -763,14 +763,8 @@
                 "/share/macosx"
             ],
             "post-install": [
-                "install -Dp -m 644 org.videolan.VLC.appdata.xml /app/share/appdata/vlc.appdata.xml",
-                "mv /app/bin/vlc /app/bin/vlc.bin",
-                "mv vlc.sh /app/bin/vlc",
-                "chmod +x /app/bin/vlc",
-                "sed -i -e 's/Icon=vlc/Icon=org.videolan.VLC/g' /app/share/applications/vlc-*.desktop",
-                "for s in openbd opendvd opencda openvcd; do mv /app/share/applications/vlc-$s.desktop /app/share/applications/org.videolan.VLC-$s.desktop; done",
-                "tar xf chrpath-0.16.tar.gz && cd chrpath-0.16 && ./configure && make",
-                "./chrpath-0.16/chrpath -d /app/lib/vlc/plugins/access/liblibbluray_plugin.so"
+                "rm -f ${FLATPAK_DEST}/lib/vlc/plugins/plugins.dat",
+                "${FLATPAK_DEST}/lib/vlc/vlc-cache-gen ${FLATPAK_DEST}/lib/vlc/plugins"
             ],
             "sources": [
                 {
@@ -779,29 +773,8 @@
                     "sha256": "8c5a62d88a4fb45c1b095cf10befef217dfa87aedcec5184b9e7d590b6dd4133"
                 },
                 {
-                    "type": "file",
-                    "path": "vlc/org.videolan.VLC.appdata.xml"
-                },
-                {
                     "type": "patch",
-                    "path": "vlc/vlc-fix-appdata.patch"
-                },
-                {
-                    "type": "patch",
-                    "path": "vlc/vlc-disc-shortcuts.patch"
-                },
-                {
-                    "type": "patch",
-                    "path": "vlc/vlc-ignore-time-for-cache.patch"
-                },
-                {
-                    "type": "file",
-                    "path": "vlc/vlc.sh"
-                },
-                {
-                    "type": "file",
-                    "url": "https://src.fedoraproject.org/lookaside/extras/chrpath/chrpath-0.16.tar.gz/2bf8d1d1ee345fc8a7915576f5649982/chrpath-0.16.tar.gz",
-                    "sha256": "bb0d4c54bac2990e1bdf8132f2c9477ae752859d523e141e72b3b11a12c26e7b"
+                    "path": "libvlc/vlc-ignore-time-for-cache.patch"
                 }
             ]
         }

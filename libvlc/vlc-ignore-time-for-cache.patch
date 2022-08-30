@@ -1,0 +1,26 @@
+From b380b05132521b0c1c18b872eba23d1ebc32e0c9 Mon Sep 17 00:00:00 2001
+From: Mathieu Velten <matmaul@gmail.com>
+Date: Sun, 16 Jun 2019 02:46:56 +0200
+Subject: [PATCH] Ignore time for cache
+
+---
+ src/modules/bank.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/modules/bank.c b/src/modules/bank.c
+index 2e67a0d07e..ab2915fbb7 100644
+--- a/src/modules/bank.c
++++ b/src/modules/bank.c
+@@ -275,8 +275,7 @@ static int AllocatePluginFile (module_bank_t *bank, const char *abspath,
+         plugin = vlc_cache_lookup(&bank->cache, relpath);
+ 
+         if (plugin != NULL
+-         && (plugin->mtime != (int64_t)st->st_mtime
+-          || plugin->size != (uint64_t)st->st_size))
++          && plugin->size != (uint64_t)st->st_size)
+         {
+             msg_Err(bank->obj, "stale plugins cache: modified %s",
+                     plugin->abspath);
+-- 
+2.21.0
+
