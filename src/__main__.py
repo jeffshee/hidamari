@@ -14,7 +14,7 @@ except ModuleNotFoundError:
 logger = logging.getLogger(LOGGER_NAME)
 
 
-def main(version):
+def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/share/locale"):
     # Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
     os.environ["GDK_BACKEND"] = "x11"
     # Suppress VLC Log
@@ -48,8 +48,8 @@ def main(version):
 
     # Clear sys.argv as it has influence to the Gtk.Application
     sys.argv = [sys.argv[0]]
-    server.main(version, args)
+    server.main(version, pkgdatadir, localedir, args)
 
 
 if __name__ == "__main__":
-    main("dev")
+    main()

@@ -183,7 +183,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
                   <object class="GtkImage" id="ToggleMuteIcon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="icon-name">audio-volume-high</property>
+                    <property name="icon-name">audio-volume-high-symbolic</property>
                   </object>
                 </child>
               </object>
@@ -814,7 +814,7 @@ Set a web page as wallpaper</property>
               <object class="GtkImage" id="ButtonPlayPauseIcon">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="icon-name">media-playback-start</property>
+                <property name="icon-name">playback-symbolic</property>
               </object>
             </child>
           </object>
@@ -833,7 +833,7 @@ Set a web page as wallpaper</property>
               <object class="GtkImage" id="ButtonPlayPauseIcon1">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="icon-name">media-playlist-shuffle-symbolic</property>
+                <property name="icon-name">dice3-symbolic</property>
               </object>
             </child>
           </object>

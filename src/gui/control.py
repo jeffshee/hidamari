@@ -25,9 +25,9 @@ logger = logging.getLogger(LOGGER_NAME)
 
 APP_ID = f"{PROJECT}.gui"
 APP_TITLE = "Hidamari"
-APP_UI_PATH = os.path.join(os.path.abspath(
-    os.path.dirname(__file__)), "control.ui")
-
+# APP_UI_PATH = os.path.join(os.path.abspath(
+#     os.path.dirname(__file__)), "control.ui")
+APP_UI_RESOURCE_PATH = "/io/jeffshee/Hidamari/control.ui"
 
 class ControlPanel(Gtk.Application):
     def __init__(self, version, *args, **kwargs):
@@ -41,7 +41,8 @@ class ControlPanel(Gtk.Application):
         # Builder init
         self.builder = Gtk.Builder()
         self.builder.set_application(self)
-        self.builder.add_from_file(APP_UI_PATH)
+        # self.builder.add_from_file(APP_UI_PATH)
+        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
         # Handlers declared in `control.ui``
         signals = {"on_volume_changed": self.on_volume_changed,
                    "on_streaming_activate": self.on_streaming_activate,
@@ -193,13 +194,13 @@ class ControlPanel(Gtk.Application):
         toggle_icon: Gtk.Image = self.builder.get_object("ToggleMuteIcon")
         volume, is_mute = self.config[CONFIG_KEY_VOLUME], self.config[CONFIG_KEY_MUTE]
         if volume == 0 or is_mute:
-            icon_name = "audio-volume-muted"
+            icon_name = "audio-volume-muted-symbolic"
         elif volume < 30:
-            icon_name = "audio-volume-low"
+            icon_name = "audio-volume-low-symbolic"
         elif volume < 60:
-            icon_name = "audio-volume-medium"
+            icon_name = "audio-volume-medium-symbolic"
         else:
-            icon_name = "audio-volume-high"
+            icon_name = "audio-volume-high-symbolic"
         toggle_icon.set_from_icon_name(icon_name=icon_name, size=0)
 
     def set_scale_volume_sensitive(self):
@@ -266,7 +267,8 @@ class ControlPanel(Gtk.Application):
             self.server.is_detect_maximized = self.config[CONFIG_KEY_DETECT_MAXIMIZED]
 
     def on_about(self, *_):
-        self.builder.add_from_file(APP_UI_PATH)
+        # self.builder.add_from_file(APP_UI_PATH)
+        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
         about_dialog: Gtk.AboutDialog = self.builder.get_object("AboutDialog")
         about_dialog.set_transient_for(self.window)
         about_dialog.set_version(self.version)
@@ -362,10 +364,15 @@ class ControlPanel(Gtk.Application):
             thread.start()
 
 
-def main(version):
+def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/share/locale"):
+    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'hidamari.gresource'))
+    resource._register()
+    icon_theme = Gtk.IconTheme.get_default()
+    icon_theme.add_resource_path("/io/jeffshee/Hidamari/icons")
+
     app = ControlPanel(version)
     app.run(sys.argv)
 
 
 if __name__ == "__main__":
-    main("dev")
+    main()

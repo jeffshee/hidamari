@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/jeffshee/Hidamari/icons/scalable/actions/">
+    <file alias="dice3-symbolic.svg">assets/icons/dice3-symbolic.svg</file>
+    <file alias="playback-symbolic.svg">assets/icons/playback-symbolic.svg</file>
+  </gresource>
+  <gresource prefix="/io/jeffshee/Hidamari">
+    <file alias="control.ui" preprocess="xml-stripblanks">assets/control.ui</file>
+  </gresource>
+</gresources>
