@@ -364,7 +364,13 @@ class ConfigUtil:
                 try:
                     config = json.loads(json_str)
                     if self._check(config):
-                        logger.debug(f"[Config] Loaded\n{pformat(config)}")
+                        logs = []
+                        logs.append("--------- Config ---------")
+                        logs.append(pformat(config, indent=3))
+                        logs.append("--------------------------")
+                        logs_str = "\n".join(logs)
+                        logger.debug(
+                            f"[Config] Loaded\n{logs_str}")
                         return config
                 except json.decoder.JSONDecodeError:
                     logger.debug(f"[Config] JSONDecodeError")
@@ -387,4 +393,9 @@ class ConfigUtil:
         with open(CONFIG_PATH, "w") as f:
             json_str = json.dumps(config, indent=3)
             print(json_str, file=f)
-            logger.debug(f"[Config] Saved\n{pformat(config)}")
+            logs = []
+            logs.append("--------- Config ---------")
+            logs.append(pformat(config, indent=3))
+            logs.append("--------------------------")
+            logs_str = "\n".join(logs)
+            logger.debug(f"[Config] Saved\n{logs_str}")

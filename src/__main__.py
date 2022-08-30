@@ -33,14 +33,23 @@ def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/shar
         logging.basicConfig(level=logging.DEBUG)
 
     # Log system information
-    logger.info(f"Hidamari v{version}")
-    logger.info("--- System information ---")
-    logger.info(f"is_gnome = {is_gnome()}")
-    logger.info(f"is_wayland = {is_wayland()}")
-    logger.info(f"is_nvidia_proprietary = {is_nvidia_proprietary()}")
-    logger.info(f"is_vdpau_ok = {is_vdpau_ok()}")
-    logger.info(f"is_flatpak = {is_flatpak()}")
-    logger.info("--------------------------")
+    sys_info = []
+    sys_info.append("--- System information ---")
+    sys_info.append(f"is_gnome = {is_gnome()}")
+    sys_info.append(f"is_wayland = {is_wayland()}")
+    sys_info.append(f"is_nvidia_proprietary = {is_nvidia_proprietary()}")
+    sys_info.append(f"is_vdpau_ok = {is_vdpau_ok()}")
+    sys_info.append(f"is_flatpak = {is_flatpak()}")
+    sys_info.append("--------------------------")
+    sys_info_str = "\n".join(sys_info)
+    logger.info(f"Hidamari v{version}\n{sys_info_str}")
+    # logger.info("--- System information ---")
+    # logger.info(f"is_gnome = {is_gnome()}")
+    # logger.info(f"is_wayland = {is_wayland()}")
+    # logger.info(f"is_nvidia_proprietary = {is_nvidia_proprietary()}")
+    # logger.info(f"is_vdpau_ok = {is_vdpau_ok()}")
+    # logger.info(f"is_flatpak = {is_flatpak()}")
+    # logger.info("--------------------------")
     logger.info(f"[Args] {vars(args)}")
 
     # Make Hidamari folder if not exist
