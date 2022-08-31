@@ -1,4 +1,4 @@
-application_id = 'io.jeffshee.Hidamari'
+application_id = 'io.github.jeffshee.Hidamari'
 
 scalable_dir = join_paths('hicolor', 'scalable', 'apps')
 install_data(

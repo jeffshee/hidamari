@@ -1,5 +1,5 @@
 {
-    "app-id": "io.jeffshee.Hidamari",
+    "app-id": "io.github.jeffshee.Hidamari",
     "runtime": "org.gnome.Platform",
     "runtime-version": "42",
     "sdk": "org.gnome.Sdk",
@@ -11,8 +11,8 @@
         "--socket=x11",
         "--socket=pulseaudio",
         "--filesystem=home",
-        "--own-name=io.jeffshee.Hidamari.player",
-        "--own-name=io.jeffshee.Hidamari.server",
+        "--own-name=io.github.jeffshee.Hidamari.player",
+        "--own-name=io.github.jeffshee.Hidamari.server",
         "--talk-name=org.gnome.Shell",
         "--talk-name=org.gnome.Shell.Extensions",
         "--talk-name=org.gnome.SessionManager",

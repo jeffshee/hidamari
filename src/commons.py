@@ -3,7 +3,7 @@ import subprocess
 
 LOGGER_NAME = "Hidamari"
 
-PROJECT = "io.jeffshee.Hidamari"
+PROJECT = "io.github.jeffshee.Hidamari"
 DBUS_NAME_SERVER = f"{PROJECT}.server"
 DBUS_NAME_PLAYER = f"{PROJECT}.player"
 
@@ -22,7 +22,7 @@ AUTOSTART_DESKTOP_CONTENT = \
     """[Desktop Entry]
 Name=Hidamari
 Exec=hidamari -b
-Icon=io.jeffshee.Hidamari
+Icon=io.github.jeffshee.Hidamari
 Terminal=false
 Type=Application
 Categories=GTK;Utility;
@@ -31,13 +31,13 @@ StartupNotify=true
 AUTOSTART_DESKTOP_CONTENT_FLATPAK = \
     """[Desktop Entry]
 Name=hidamari
-Exec=/usr/bin/flatpak run --command=hidamari io.jeffshee.Hidamari -b
-Icon=io.jeffshee.Hidamari
+Exec=/usr/bin/flatpak run --command=hidamari io.github.jeffshee.Hidamari -b
+Icon=io.github.jeffshee.Hidamari
 Terminal=false
 Type=Application
 Categories=GTK;Utility;
 StartupNotify=true
-X-Flatpak=io.jeffshee.Hidamari
+X-Flatpak=io.github.jeffshee.Hidamari
 """
 
 CONFIG_DIR = os.path.join(HOME, ".config", "hidamari")

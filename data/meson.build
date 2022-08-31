@@ -1,6 +1,6 @@
 desktop_file = i18n.merge_file(
-  input: 'io.jeffshee.Hidamari.desktop.in',
-  output: 'io.jeffshee.Hidamari.desktop',
+  input: 'io.github.jeffshee.Hidamari.desktop.in',
+  output: 'io.github.jeffshee.Hidamari.desktop',
   type: 'desktop',
   po_dir: '../po',
   install: true,
@@ -15,8 +15,8 @@ if desktop_utils.found()
 endif
 
 appstream_file = i18n.merge_file(
-  input: 'io.jeffshee.Hidamari.appdata.xml.in',
-  output: 'io.jeffshee.Hidamari.appdata.xml',
+  input: 'io.github.jeffshee.Hidamari.appdata.xml.in',
+  output: 'io.github.jeffshee.Hidamari.appdata.xml',
   po_dir: '../po',
   install: true,
   install_dir: join_paths(get_option('datadir'), 'appdata')
@@ -29,7 +29,7 @@ if appstream_util.found()
   )
 endif
 
-install_data('io.jeffshee.Hidamari.gschema.xml',
+install_data('io.github.jeffshee.Hidamari.gschema.xml',
   install_dir: join_paths(get_option('datadir'), 'glib-2.0/schemas')
 )
 

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Hidamari
 Exec=hidamari
-Icon=io.jeffshee.Hidamari
+Icon=io.github.jeffshee.Hidamari
 Terminal=false
 Type=Application
 Categories=GTK;Utility;
