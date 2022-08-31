@@ -19,7 +19,7 @@
             "request": "launch",
             "program": "control.py",
             "justMyCode": true,
-            "cwd": "${workspaceFolder}/src/hidamari/gui/"
+            "cwd": "${workspaceFolder}/src/gui/"
         }
     ]
 }
