@@ -10,7 +10,7 @@
   <project_license>GPL-3.0-or-later</project_license>
   <update_contact>jeffshee8969@gmail.com</update_contact>
   <description>
-    <p>Video wallpaper for Linux. Written in Python.</p>
+    <p>Video wallpaper for Linux. Written in Python. 🐍</p>
     <p>Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
     <p>Similar functionality to Xwinwrap + mpv or Komorebi, with more features.</p>
   </description>
