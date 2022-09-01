@@ -1,32 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <component type="desktop">
-	<id>io.github.jeffshee.Hidamari.desktop</id>
-	<metadata_license>CC0-1.0</metadata_license>
-	<project_license>GPL-3.0-or-later</project_license>
-	<name>Hidamari</name>
-	<summary>Video wallpaper for Linux</summary>
-	<description>
-		<p>Video wallpaper for Linux. Written in Python.</p>
-		<p>Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
-		<p>Similar functionality to Xwinwrap + mpv or Komorebi, with more features.</p>
-	</description>
-	<screenshot>
-		<image>https://github.com/jeffshee/hidamari/blob/flatpak/res/01_video.png</image>
-	</screenshot>
-	<screenshot>
-		<image>https://github.com/jeffshee/hidamari/blob/flatpak/res/02_streaming.png</image>
-	</screenshot>
-	<screenshot>
-		<image>https://github.com/jeffshee/hidamari/blob/flatpak/res/03_webpage.png</image>
-	</screenshot>
-	<launchable type="desktop-id">@APPLICATION_ID@.desktop</launchable>
-	<url type="homepage">https://github.com/jeffshee/hidamari</url>
-	<url type="bugtracker">https://github.com/jeffshee/hidamari/issues</url>
-	<url type="donation">https://www.buymeacoffee.com/jeffshee</url>
-	<developer_name>Jeff Shee</developer_name>
-	<releases>
-		<release version="3.0-beta1" date="2022-08-31">
-		  <description>
+  <!--Created with jdAppdataEdit 4.2-->
+  <id>io.github.jeffshee.Hidamari</id>
+  <name>Hidamari</name>
+  <summary>Video wallpaper for Linux</summary>
+  <developer_name>Jeff Shee</developer_name>
+  <launchable type="desktop-id">@APPLICATION_ID@.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <update_contact>jeffshee8969@gmail.com</update_contact>
+  <description>
+    <p>Video wallpaper for Linux. Written in Python.</p>
+    <p>Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
+    <p>Similar functionality to Xwinwrap + mpv or Komorebi, with more features.</p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-1.png</image>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-2.png</image>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-3.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="3.0-beta1" date="2022-08-31" type="stable"><description>
 			<p>Hi! Hidamari v3</p>
 			<ul>
 			  <li>First Flatpak build 📦</li>
@@ -34,7 +34,22 @@
 			</ul>
 		  </description>
 		</release>
-	</releases>
-	<content_rating type="oars-1.1"/>
-    <provides>@APPLICATION_ID@.desktop</provides>
+  </releases>
+  <url type="homepage">https://github.com/jeffshee/hidamari</url>
+  <url type="bugtracker">https://github.com/jeffshee/hidamari/issues</url>
+  <url type="donation">https://www.buymeacoffee.com/jeffshee</url>
+  <categories>
+    <category>GTK</category>
+    <category>Utility</category>
+  </categories>
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </recommends>
+  <content_rating type="oars-1.1"/>
+  <keywords>
+    <keyword>Live Wallpaper</keyword>
+    <keyword>Video Wallpaper</keyword>
+    <keyword>Wallpaper</keyword>
+  </keywords>
 </component>
