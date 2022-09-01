@@ -71,6 +71,7 @@ def is_flatpak():
 
 
 def setup_autostart(autostart):
+    logger.debug(f"[Autostart] {autostart} {AUTOSTART_DESKTOP_PATH}")
     if autostart:
         with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
             if is_flatpak():
@@ -81,7 +82,7 @@ def setup_autostart(autostart):
         try:
             os.remove(AUTOSTART_DESKTOP_PATH)
         except OSError:
-            pass
+            logger.debug("[Autostart] File does not exist")
 
 
 def get_video_paths():
@@ -373,7 +374,7 @@ class ConfigUtil:
                         logs.append("--------------------------")
                         logs_str = "\n".join(logs)
                         logger.debug(
-                            f"[Config] Loaded\n{logs_str}")
+                            f"[Config] Loaded {CONFIG_PATH}\n{logs_str}")
                         return config
                 except json.decoder.JSONDecodeError:
                     logger.debug(f"[Config] JSONDecodeError")
@@ -401,4 +402,4 @@ class ConfigUtil:
             logs.append(pformat(config, indent=3))
             logs.append("--------------------------")
             logs_str = "\n".join(logs)
-            logger.debug(f"[Config] Saved\n{logs_str}")
+            logger.debug(f"[Config] Saved {CONFIG_PATH}\n{logs_str}")
