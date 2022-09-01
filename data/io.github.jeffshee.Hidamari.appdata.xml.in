@@ -5,7 +5,7 @@
   <name>Hidamari</name>
   <summary>Video wallpaper for Linux</summary>
   <developer_name>Jeff Shee</developer_name>
-  <launchable type="desktop-id">@APPLICATION_ID@.desktop</launchable>
+  <launchable type="desktop-id">io.github.jeffshee.Hidamari.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
   <update_contact>jeffshee8969@gmail.com</update_contact>
