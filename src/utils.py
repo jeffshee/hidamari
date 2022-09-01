@@ -150,13 +150,18 @@ Handlers
 class ActiveHandler:
     """
     Handler for monitoring screen lock
+    GNOME:
+    https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/data/dbus-interfaces/org.gnome.ScreenSaver.xml
+    Cinamon:
+    https://github.com/linuxmint/cinnamon-screensaver/blob/master/libcscreensaver/org.cinnamon.ScreenSaver.xml
+    Freedesktop:
+    https://github.com/KDE/kscreenlocker/blob/master/dbus/org.freedesktop.ScreenSaver.xml
     """
 
     def __init__(self, on_active_changed: callable):
         session_bus = pydbus.SessionBus()
         screensaver_list = ["org.gnome.ScreenSaver",
                             "org.cinnamon.ScreenSaver",
-                            "org.kde.screensaver",
                             "org.freedesktop.ScreenSaver"]
         for s in screensaver_list:
             try:
@@ -262,82 +267,80 @@ class WindowHandler:
             logger.debug(f"[WindowHandler] {cur_state}")
 
 
-class WindowHandlerGnome:
-    """
-    Handler for monitoring window events for Gnome only
-    TODO: 
-    This is broken due to a change in GNOME. =(
-    https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/7298ee23e91b756c7009b4d7687dfd8673856f8b
+# class WindowHandlerGnome:
+#     """
+#     Handler for monitoring window events for Gnome only
+#     TODO: 
+#     This is broken due to a change in GNOME. =(
+#     https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/7298ee23e91b756c7009b4d7687dfd8673856f8b
 
-    TLDR, there is no way to monitor window events in Wayland, unless we use an Shell extension.
-    To bypass, execute the below line in looking glass (Alt+F2 `lg`)
-    `global.context.unsafe_mode = true`
-    """
+#     TLDR, there is no way to monitor window events in Wayland, unless we use an Shell extension.
+#     To bypass, execute the below line in looking glass (Alt+F2 `lg`)
+#     `global.context.unsafe_mode = true`
+#     """
 
-    def __init__(self, on_window_state_changed: callable):
-        self.on_window_state_changed = on_window_state_changed
-        self.gnome_shell = pydbus.SessionBus().get("org.gnome.Shell")
-        self.prev_state = None
-        display = Gdk.Display.get_default()
-        self.num_monitor = display.get_n_monitors()
-        GLib.timeout_add(500, self.eval)
+#     def __init__(self, on_window_state_changed: callable):
+#         self.on_window_state_changed = on_window_state_changed
+#         self.gnome_shell = pydbus.SessionBus().get("org.gnome.Shell")
+#         self.prev_state = None
+#         display = Gdk.Display.get_default()
+#         self.num_monitor = display.get_n_monitors()
+#         GLib.timeout_add(500, self.eval)
 
-    def eval(self):
-        is_changed = False
+#     def eval(self):
+#         is_changed = False
 
-        ret1, workspace = self.gnome_shell.Eval("""
-                        global.workspace_manager.get_active_workspace_index()
-                        """)
-        # NOTE: get window status grouped by each monitor
-        # window.meta_window.get_monitor()
-        ret2 = False
-        maximized = []
-        for monitor in range(self.num_monitor):
-            ret2, temp = self.gnome_shell.Eval(f"""
-                            var window_list = global.get_window_actors().find(window =>
-                                window.meta_window.maximized_horizontally &
-                                window.meta_window.maximized_vertically &
-                                !window.meta_window.minimized &
-                                window.meta_window.get_workspace().workspace_index == {workspace} &
-                                window.meta_window.get_monitor() == {monitor}
-                            );
-                            window_list
-                            """)
-            maximized.append(temp != "")
-        # Every monitors have a maximized window?
-        maximized = all(maximized)
+#         ret1, workspace = self.gnome_shell.Eval("""
+#                         global.workspace_manager.get_active_workspace_index()
+#                         """)
+#         ret2 = False
+#         maximized = []
+#         for monitor in range(self.num_monitor):
+#             ret2, temp = self.gnome_shell.Eval(f"""
+#                             var window_list = global.get_window_actors().find(window =>
+#                                 window.meta_window.maximized_horizontally &
+#                                 window.meta_window.maximized_vertically &
+#                                 !window.meta_window.minimized &
+#                                 window.meta_window.get_workspace().workspace_index == {workspace} &
+#                                 window.meta_window.get_monitor() == {monitor}
+#                             );
+#                             window_list
+#                             """)
+#             maximized.append(temp != "")
+#         # Every monitors have a maximized window?
+#         maximized = all(maximized)
 
-        ret3 = False
-        fullscreen = []
-        for monitor in range(self.num_monitor):
-            ret3, temp = self.gnome_shell.Eval(f"""
-                            var window_list = global.get_window_actors().find(window =>
-                    window.meta_window.is_fullscreen() &
-                    !window.meta_window.minimized &
-                    window.meta_window.get_workspace().workspace_index == {workspace} &
-                    window.meta_window.get_monitor() == {monitor}
-                );
-                window_list
-                """)
-            fullscreen.append(temp != "")
-        # Every monitors have a fullscreen window?
-        fullscreen = all(fullscreen)
+#         ret3 = False
+#         fullscreen = []
+#         for monitor in range(self.num_monitor):
+#             ret3, temp = self.gnome_shell.Eval(f"""
+#                             var window_list = global.get_window_actors().find(window =>
+#                     window.meta_window.is_fullscreen() &
+#                     !window.meta_window.minimized &
+#                     window.meta_window.get_workspace().workspace_index == {workspace} &
+#                     window.meta_window.get_monitor() == {monitor}
+#                 );
+#                 window_list
+#                 """)
+#             fullscreen.append(temp != "")
+#         # Every monitors have a fullscreen window?
+#         fullscreen = all(fullscreen)
 
-        if not all([ret1, ret2, ret3]):
-            logging.error(
-                "[WindowHandlerGnome] Cannot communicate with Gnome Shell!")
+#         if not all([ret1, ret2, ret3]):
+#             logging.error(
+#                 "[WindowHandlerGnome] Cannot communicate with Gnome Shell!")
 
-        cur_state = {'is_any_maximized': maximized,
-                     'is_any_fullscreen': fullscreen}
-        if self.prev_state is None or self.prev_state != cur_state:
-            is_changed = True
-            self.prev_state = cur_state
+#         cur_state = {'is_any_maximized': maximized,
+#                      'is_any_fullscreen': fullscreen}
+#         if self.prev_state is None or self.prev_state != cur_state:
+#             is_changed = True
+#             self.prev_state = cur_state
 
-        if is_changed:
-            self.on_window_state_changed(
-                {"is_any_maximized": maximized, "is_any_fullscreen": fullscreen})
-            logger.debug(f"[WindowHandlerGnome] {cur_state}")
-        return True
+#         if is_changed:
+#             self.on_window_state_changed(
+#                 {"is_any_maximized": maximized, "is_any_fullscreen": fullscreen})
+#             logger.debug(f"[WindowHandlerGnome] {cur_state}")
+#         return True
 
 
 class ConfigUtil:
