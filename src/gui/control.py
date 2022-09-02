@@ -13,12 +13,12 @@ try:
     import os
     sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
-    from gui.gui_utils import get_video_paths, get_thumbnail
-    from utils import ConfigUtil, setup_autostart, is_wayland
+    from gui.gui_utils import get_thumbnail, debounce
+    from utils import ConfigUtil, setup_autostart, is_wayland, get_video_paths
 except ModuleNotFoundError:
     from hidamari.commons import *
-    from hidamari.gui.gui_utils import get_video_paths, get_thumbnail
-    from hidamari.utils import ConfigUtil, setup_autostart, is_wayland
+    from hidamari.gui.gui_utils import get_thumbnail, debounce
+    from hidamari.utils import ConfigUtil, setup_autostart, is_wayland, get_video_paths
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(LOGGER_NAME)
@@ -28,6 +28,7 @@ APP_TITLE = "Hidamari"
 # APP_UI_PATH = os.path.join(os.path.abspath(
 #     os.path.dirname(__file__)), "control.ui")
 APP_UI_RESOURCE_PATH = "/io/jeffshee/Hidamari/control.ui"
+
 
 class ControlPanel(Gtk.Application):
     def __init__(self, version, *args, **kwargs):
@@ -76,6 +77,10 @@ class ControlPanel(Gtk.Application):
     def _save_config(self):
         ConfigUtil().save(self.config)
 
+    @debounce(1)
+    def _save_config_delay(self):
+        self._save_config()
+
     def do_startup(self):
         Gtk.Application.do_startup(self)
 
@@ -114,7 +119,7 @@ class ControlPanel(Gtk.Application):
         if is_wayland():
             toggle = self.builder.get_object("ToggleDetectMaximized")
             toggle.set_visible(False)
-            
+
         self._reload_all_widgets()
 
     def do_activate(self):
@@ -220,7 +225,7 @@ class ControlPanel(Gtk.Application):
     def on_volume_changed(self, adjustment):
         self.config[CONFIG_KEY_VOLUME] = int(adjustment.get_value())
         logger.info(f"[GUI] Volume: {self.config[CONFIG_KEY_VOLUME]}")
-        self._save_config()
+        self._save_config_delay()
         if self.server is not None:
             self.server.volume = self.config[CONFIG_KEY_VOLUME]
         self.set_mute_toggle_icon()
@@ -229,7 +234,7 @@ class ControlPanel(Gtk.Application):
         self.config[CONFIG_KEY_BLUR_RADIUS] = int(adjustment.get_value())
         logger.info(
             f"[GUI] Blur radius: {self.config[CONFIG_KEY_BLUR_RADIUS]}")
-        self._save_config()
+        self._save_config_delay()
         if self.server is not None:
             self.server.blur_radius = self.config[CONFIG_KEY_BLUR_RADIUS]
 
@@ -365,7 +370,8 @@ class ControlPanel(Gtk.Application):
 
 
 def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/share/locale"):
-    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'hidamari.gresource'))
+    resource = Gio.Resource.load(
+        os.path.join(pkgdatadir, 'hidamari.gresource'))
     resource._register()
     icon_theme = Gtk.IconTheme.get_default()
     icon_theme.add_resource_path("/io/jeffshee/Hidamari/icons")

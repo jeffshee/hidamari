@@ -1,7 +1,7 @@
 import os
 import sys
 import logging
-from pprint import pformat
+import threading
 
 import gi
 gi.require_version("GnomeDesktop", "4.0")
@@ -15,19 +15,6 @@ except ModuleNotFoundError:
     from hidamari.commons import *
 
 logger = logging.getLogger(LOGGER_NAME)
-
-
-def get_video_paths():
-    file_list = []
-    for filename in os.listdir(VIDEO_WALLPAPER_DIR):
-        filepath = os.path.join(VIDEO_WALLPAPER_DIR, filename)
-        file = Gio.file_new_for_path(filepath)
-        info = file.query_info('standard::content-type',
-                               Gio.FileQueryInfoFlags.NONE, None)
-        mime_type = info.get_content_type()
-        if "video" in mime_type:
-            file_list.append(filepath)
-    return sorted(file_list)
 
 
 def generate_thumbnail(filename):
@@ -60,3 +47,29 @@ def get_thumbnail(video_path, list_store, idx):
     if thumbnail is not None or generate_thumbnail(video_path):
         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(thumbnail, -1, 96)
         list_store[idx][0] = pixbuf
+
+
+def debounce(wait_time):
+    """
+    Decorator that will debounce a function so that it is called after wait_time seconds
+    If it is called multiple times, will wait for the last call to be debounced and run only this one.
+    See the test_debounce.py file for examples
+    Reference:
+    https://github.com/salesforce/decorator-operations/blob/master/decoratorOperations/debounce_functions/debounce.py
+    """
+    def decorator(function):
+        def debounced(*args, **kwargs):
+            def call_function():
+                debounced._timer = None
+                return function(*args, **kwargs)
+
+            if debounced._timer is not None:
+                debounced._timer.cancel()
+
+            debounced._timer = threading.Timer(wait_time, call_function)
+            debounced._timer.start()
+
+        debounced._timer = None
+        return debounced
+
+    return decorator

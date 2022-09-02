@@ -1,4 +1,3 @@
-import sys
 import json
 import logging
 import subprocess
@@ -6,7 +5,7 @@ from pprint import pformat
 
 import gi
 gi.require_version("Wnck", "3.0")
-from gi.repository import Gio, GLib, Wnck, Gdk
+from gi.repository import Gio, GLib, Wnck #, Gdk
 
 import pydbus
 
@@ -271,7 +270,7 @@ class WindowHandler:
 # class WindowHandlerGnome:
 #     """
 #     Handler for monitoring window events for Gnome only
-#     TODO: 
+#     TODO:
 #     This is broken due to a change in GNOME. =(
 #     https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/7298ee23e91b756c7009b4d7687dfd8673856f8b
 
