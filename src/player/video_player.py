@@ -1,4 +1,5 @@
 import sys
+import glob
 import time
 import random
 import ctypes
@@ -424,8 +425,9 @@ class VideoPlayer(BasePlayer):
             self.gso.set_string("picture-uri", self.original_wallpaper_uri)
             self.gso.set_string("picture-uri-dark",
                                 self.original_wallpaper_uri_dark)
-        if os.path.isfile(self.static_wallpaper_path):
-            os.remove(self.static_wallpaper_path)
+        # Purge the generated static wallpaper (and leftover if any)
+        for f in glob.glob(os.path.join(CONFIG_DIR, "static-*.png")):
+            os.remove(f)
 
     def reload_config(self):
         self.config = ConfigUtil().load()
