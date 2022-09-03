@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <component type="desktop">
-  <!--Created with jdAppdataEdit 4.2-->
+  <!--Created with jdAppdataEdit 5.0-->
   <id>io.github.jeffshee.Hidamari</id>
   <name>Hidamari</name>
   <summary>Video wallpaper for Linux</summary>
@@ -26,6 +26,11 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="3.0-beta2" date="2022-09-03" type="stable">
+      <description>
+        <p>UI improvements! ✨</p>
+      </description>
+    </release>
     <release version="3.0-beta1" date="2022-08-31" type="stable"><description>
 			<p>Hi! Hidamari v3</p>
 			<ul>

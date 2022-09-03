@@ -1,5 +1,5 @@
 project('hidamari',
-          version: '3.0-beta1',
+          version: '3.0-beta2',
           license: ['GPL-3.0'],
     meson_version: '>= 0.59.0',
   default_options: [ 'warning_level=2',
