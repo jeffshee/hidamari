@@ -2,3 +2,4 @@ Pillow==9.2.0
 pydbus==0.6.0
 python-vlc==3.0.16120
 yt-dlp>=2022.8.8
+requests==2.28.1

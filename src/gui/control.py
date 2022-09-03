@@ -1,6 +1,7 @@
 import sys
 import logging
 import threading
+import requests
 
 # TODO port to Gtk4
 import gi
@@ -8,6 +9,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GLib, GdkPixbuf
 
 from pydbus import SessionBus
+import yt_dlp
 
 try:
     import os
@@ -47,9 +49,7 @@ class ControlPanel(Gtk.Application):
         # Handlers declared in `control.ui``
         signals = {"on_volume_changed": self.on_volume_changed,
                    "on_streaming_activate": self.on_streaming_activate,
-                   "on_streaming_refresh": self.on_streaming_refresh,
                    "on_web_page_activate": self.on_web_page_activate,
-                   "on_web_page_refresh": self._reload_icon_view,
                    "on_blur_radius_changed": self.on_blur_radius_changed}
         self.builder.connect_signals(signals)
 
@@ -92,6 +92,8 @@ class ControlPanel(Gtk.Application):
             ("local_web_page_apply", self.on_local_web_page_apply),
             ("play_pause", self.on_play_pause),
             ("feeling_lucky", self.on_feeling_lucky),
+            ("config", lambda *_: subprocess.run(
+                ["xdg-open", os.path.realpath(CONFIG_DIR)])),
             ("about", self.on_about),
             ("quit", self.on_quit),
         ]
@@ -132,20 +134,12 @@ class ControlPanel(Gtk.Application):
         self.window.present()
 
         if self.server is None:
-            self._show_dbus_error()
+            self._show_error("Couldn't connect to server")
 
         if self.config[CONFIG_KEY_FIRST_TIME]:
             self._show_welcome()
             self.config[CONFIG_KEY_FIRST_TIME] = False
             self._save_config()
-
-    def _show_dbus_error(self):
-        dialog = Gtk.MessageDialog(parent=self.window, modal=True, destroy_with_parent=True,
-                                   text="Oops!", message_type=Gtk.MessageType.ERROR,
-                                   secondary_text="Couldn't connect to server",
-                                   buttons=Gtk.ButtonsType.OK)
-        dialog.run()
-        dialog.destroy()
 
     def _show_welcome(self):
         # Welcome dialog
@@ -153,6 +147,14 @@ class ControlPanel(Gtk.Application):
                                    text="Welcome to Hidamari 🤗", message_type=Gtk.MessageType.INFO,
                                    secondary_text="You can bring up the Menu by <b>Right click</b> on the desktop",
                                    secondary_use_markup=True,
+                                   buttons=Gtk.ButtonsType.OK)
+        dialog.run()
+        dialog.destroy()
+
+    def _show_error(self, error):
+        dialog = Gtk.MessageDialog(parent=self.window, modal=True, destroy_with_parent=True,
+                                   text="Oops!", message_type=Gtk.MessageType.ERROR,
+                                   secondary_text=error,
                                    buttons=Gtk.ButtonsType.OK)
         dialog.run()
         dialog.destroy()
@@ -173,6 +175,9 @@ class ControlPanel(Gtk.Application):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object(
             "FileChooser")
         choose: Gio.File = file_chooser.get_file()
+        if choose is None:
+            self._show_error("Please choose a HTML file")
+            return
         file_path = choose.get_path()
         logger.info(f"[GUI] Local Webpage: {file_path}")
         self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
@@ -280,8 +285,38 @@ class ControlPanel(Gtk.Application):
         about_dialog.set_modal(True)
         about_dialog.present()
 
-    def on_streaming_activate(self, entry: Gtk.Entry):
+    def _check_url(self, url):
+        # Check if the url is valid
+        try:
+            response = requests.get(url)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[GUI] Failed to access {url}. Error:\n{e}")
+            self._show_error(f"Failed to access {url}. Error:\n{e}")
+            return False
+        if response.status_code >= 400:
+            logger.error(
+                f"[GUI] Failed to access {url}. Error code: {response.status_code}")
+            self._show_error(
+                f"Failed to access {url}. Error code: {response.status_code}")
+            return False
+        return True
+
+    def _check_yt_dlp(self, raw_url):
+        # Check if the url is valid (yt_dlp)
+        try:
+            with yt_dlp.YoutubeDL({"noplaylist": True}) as ydl:
+                ydl.extract_info(raw_url, download=False)
+        except yt_dlp.utils.DownloadError as e:
+            s = " ".join(str(e).split(" ")[1:])
+            logger.error(f"[GUI] Failed to stream {raw_url}. Error:\n{s}")
+            self._show_error(f"Failed to stream {raw_url}. Error:\n{s}")
+            return False
+        return True
+
+    def on_streaming_activate(self, entry: Gtk.Entry, *_):
         url = entry.get_text()
+        if not self._check_yt_dlp(url):
+            return
         logger.info(f"[GUI] Streaming: {url}")
         self.config[CONFIG_KEY_MODE] = MODE_STREAM
         self.config[CONFIG_KEY_DATA_SOURCE] = url
@@ -289,26 +324,10 @@ class ControlPanel(Gtk.Application):
         if self.server is not None:
             self.server.stream(url)
 
-    def on_streaming_refresh(self, entry: Gtk.Entry, *_):
+    def on_web_page_activate(self, entry: Gtk.Entry, *_):
         url = entry.get_text()
-        logger.info(f"[GUI] Streaming: {url}")
-        self.config[CONFIG_KEY_MODE] = MODE_STREAM
-        self.config[CONFIG_KEY_DATA_SOURCE] = url
-        self._save_config()
-        if self.server is not None:
-            self.server.stream(url)
-
-    def on_web_page_activate(self, entry: Gtk.Entry):
-        url = entry.get_text()
-        logger.info(f"[GUI] Webpage: {url}")
-        self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
-        self.config[CONFIG_KEY_DATA_SOURCE] = url
-        self._save_config()
-        if self.server is not None:
-            self.server.webpage(url)
-
-    def on_web_page_refresh(self, entry: Gtk.Entry, *_):
-        url = entry.get_text()
+        if not self._check_url(url):
+            return
         logger.info(f"[GUI] Webpage: {url}")
         self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
         self.config[CONFIG_KEY_DATA_SOURCE] = url
