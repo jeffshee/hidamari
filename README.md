@@ -37,13 +37,28 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [ ] You name it! =)
 
 <sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i>  
-<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (Limited support for Gnome Wayland, see issue [#40](https://github.com/jeffshee/hidamari/issues/40))  
+<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (X11 only)  
 <sup>3</sup> Randomly select and play a video  
 <sup>4</sup> Use <i>vlc</i> as backend  
 <sup>5</sup> Use <i>yt-dlp</i> as backend, tested with YouTube videos  
 <sup>6</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
 
-<!-- TODO add flathub link -->
+## Installation 📦
+Available as Flatpak!
+
+<a href='https://flathub.org/apps/details/io.github.jeffshee.Hidamari'><img width='240' alt='Download Hidamari on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
+
+### Command line instructions
+Install:  
+Make sure to follow the [setup guide](https://flatpak.org/setup/) before installing
+```
+flatpak install flathub io.github.jeffshee.Hidamari
+```
+Run:  
+```
+flatpak run io.github.jeffshee.Hidamari
+```
+
 <!-- ## (Un)Installation ⏬
 Run the script in terminal to install or uninstall:
 ```
