@@ -26,8 +26,12 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="3.0-beta2" date="2022-09-03" type="stable">
+    <release version="3.0-beta3" date="2022-09-06" type="stable">
       <description>
+        <p>Fixed bug for non-GNOME distros. Also some minor improvements in logging messages.</p>
+      </description>
+    </release>
+    <release version="3.0-beta2" date="2022-09-03" type="stable"><description>
         <p>UI improvements! ✨</p>
       </description>
     </release>
