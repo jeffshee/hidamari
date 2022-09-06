@@ -5,7 +5,7 @@ from pprint import pformat
 
 import gi
 gi.require_version("Wnck", "3.0")
-from gi.repository import Gio, GLib, Wnck #, Gdk
+from gi.repository import Gio, GLib, Wnck  # , Gdk
 
 import pydbus
 
@@ -40,8 +40,12 @@ def is_nvidia_proprietary():
     Check if the GPU is nvidia and the driver is proprietary
     """
     # glxinfo | grep "client glx vendor string"
-    output = subprocess.check_output(
-        "glxinfo -B", shell=True, encoding='UTF-8')
+    try:
+        output = subprocess.check_output(
+            "glxinfo -B", shell=True, encoding='UTF-8')
+    except FileNotFoundError:
+        logger.error("[Utils] glxinfo not found, unable to check GPU")
+        return False
     return "OpenGL vendor string: NVIDIA Corporation" in output
 
 
@@ -55,7 +59,7 @@ def is_vdpau_ok():
                              stdout=subprocess.DEVNULL,
                              stderr=subprocess.STDOUT)
     except FileNotFoundError:
-        logger.error("vdpauinfo not found, unable to check VDPAU")
+        logger.error("[Utils] vdpauinfo not found, unable to check VDPAU")
         return False
     return ret.returncode == 0
 
@@ -70,7 +74,8 @@ def is_flatpak():
 
 
 def setup_autostart(autostart):
-    logger.debug(f"[Autostart] {autostart} {AUTOSTART_DESKTOP_PATH}")
+    logger.debug(
+        f"[Utils] autostart={autostart}, path={AUTOSTART_DESKTOP_PATH}")
     if autostart:
         with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
             if is_flatpak():
@@ -78,10 +83,8 @@ def setup_autostart(autostart):
             else:
                 f.write(AUTOSTART_DESKTOP_CONTENT)
     else:
-        try:
+        if os.path.isfile(AUTOSTART_DESKTOP_PATH):
             os.remove(AUTOSTART_DESKTOP_PATH)
-        except OSError:
-            logger.debug("[Autostart] File does not exist")
 
 
 def get_video_paths():
@@ -133,12 +136,13 @@ def gnome_desktop_icon_workaround():
     """
     if not is_gnome():
         return
-    extension_list = ["ding@rastersoft.com", "desktopicons-neo@darkdemon"]
+    extension_list = ["ding@rastersoft.com",
+                      "desktopicons-neo@darkdemon", "gtk4-ding@smedius.gitlab.com"]
     for ext in extension_list:
         # Check if installed and enabled
         if gnome_extension_is_installed(ext) and gnome_extension_is_enabled(ext):
             # Reload the extension
-            logger.info("[GNOME] Applying desktop icon workaround")
+            logger.info(f"[Utils] Apply workaround for {ext}")
             gnome_extension_set_disable(ext)
             gnome_extension_set_enable(ext)
 
@@ -177,17 +181,14 @@ class EndSessionHandler:
     Handler for monitoring end session
     References:
     https://github.com/backloop/gendsession
-    https://people.gnome.org/~mccann/gnome-session/docs/gnome-session.html
 
     PrepareForShutdown() signal from logind is not handled
     https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/787
-    https://bugs.launchpad.net/ubuntu/+source/gdm3/+bug/1803581
-
     """
 
     def __init__(self, on_end_session: callable):
         self.on_end_session = on_end_session
-
+        
         if is_gnome():
             session_bus = pydbus.SessionBus()
             proxy = session_bus.get("org.gnome.SessionManager")
@@ -201,7 +202,7 @@ class EndSessionHandler:
         else:
             system_bus = pydbus.SystemBus()
             proxy = system_bus.get(".login1")
-            proxy.PrepareForShutdown.connect(self.on_end_session)
+            proxy.PrepareForShutdown.connect(self.__end_session_handler)
 
     def __end_session_response_gnome(self, ok=True):
         if ok:
@@ -210,12 +211,17 @@ class EndSessionHandler:
             self.session_client.EndSessionResponse(False, "Not ready")
 
     def __query_end_session_handler_gnome(self, flags):
-        # ignore flags, always agree on the QueryEndSesion
+        # Ignore flags, always agree on the QueryEndSesion
         self.__end_session_response_gnome(True)
 
     def __end_session_handler_gnome(self, flags):
+        logger.debug("[EndSessionHandler] called")
         self.on_end_session()
         self.__end_session_response_gnome(True)
+    
+    def __end_session_handler(self, *_):
+        logger.debug("[EndSessionHandler] called")
+        self.on_end_session()
 
 
 class WindowHandler:
