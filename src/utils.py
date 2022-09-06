@@ -131,7 +131,8 @@ def gnome_desktop_icon_workaround():
     Workaround for GNOME desktop icon extensions not displaying the icons on top of Hidamari.
     Call this right after the wallpaper is shown.
     """
-    assert is_gnome()
+    if not is_gnome():
+        return
     extension_list = ["ding@rastersoft.com", "desktopicons-neo@darkdemon"]
     for ext in extension_list:
         # Check if installed and enabled
