@@ -500,7 +500,7 @@ Videos from streaming services</property>
                     <property name="input-purpose">url</property>
                     <property name="input-hints">GTK_INPUT_HINT_NO_SPELLCHECK | GTK_INPUT_HINT_NO_EMOJI | GTK_INPUT_HINT_NONE</property>
                     <signal name="activate" handler="on_streaming_activate" swapped="no"/>
-                    <signal name="icon-press" handler="on_streaming_refresh" swapped="no"/>
+                    <signal name="icon-press" handler="on_streaming_activate" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -640,7 +640,7 @@ Set a web page as wallpaper</property>
                     <property name="input-purpose">url</property>
                     <property name="input-hints">GTK_INPUT_HINT_NO_SPELLCHECK | GTK_INPUT_HINT_NO_EMOJI | GTK_INPUT_HINT_NONE</property>
                     <signal name="activate" handler="on_web_page_activate" swapped="no"/>
-                    <signal name="icon-press" handler="on_web_page_refresh" swapped="no"/>
+                    <signal name="icon-press" handler="on_web_page_activate" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
