@@ -12,7 +12,7 @@ Also please don't forget to click that star button! 🌟
 Your support is truly appreciated!
 
 ## For GNOME user 🐾
-Please also check my new project [Hanabi](https://github.com/jeffshee/gnome-ext-hanabi)! While the project is still in its infancy, it has the potential to become more integrated with GNOME Shell.
+Please also check my new project [Hanabi](https://github.com/jeffshee/gnome-ext-hanabi)! While the project is still in its infancy, it has the potential to become more integrated with GNOME Shell
 
 ## Features 🔥
 
@@ -37,18 +37,19 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [ ] You name it! =)
 
 <sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i>  
-<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (X11 only)  
+<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (currently X11 only)  
 <sup>3</sup> Randomly select and play a video  
 <sup>4</sup> Use <i>vlc</i> as backend  
 <sup>5</sup> Use <i>yt-dlp</i> as backend, tested with YouTube videos  
 <sup>6</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
 
-## Installation 📦
-Available as Flatpak!
+## Installation ⏬
+### Flappak 📦
+It is available on Flathub!
 
 <a href='https://flathub.org/apps/details/io.github.jeffshee.Hidamari'><img width='240' alt='Download Hidamari on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
 
-### Command line instructions
+#### Command line instructions
 Install:  
 Make sure to follow the [setup guide](https://flatpak.org/setup/) before installing
 ```
@@ -59,41 +60,11 @@ Run:
 flatpak run io.github.jeffshee.Hidamari
 ```
 
-<!-- ## (Un)Installation ⏬
-Run the script in terminal to install or uninstall:
-```
-bash <(wget -qO- https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh)
-```
-The script will also check for the dependencies. It will try to install them if possible (only for pip packages).  -->
-
-<!-- ## Installation (Fedora, RPM) ⏬
-
-1. Multimedia codecs, refer
-   to [Fedora](https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/)
-2. Enable Copr `sudo dnf copr enable jeffshee/hidamari`
-3. Install `sudo dnf install hidamari`
-
-## Installation (Ubuntu, DEB) ⏬
-
-1. Multimedia codecs, refer to [Ubuntu](https://itsfoss.com/install-media-codecs-ubuntu/)
-2. Download the `.deb` file from release section
-3. Install `sudo apt install ./path/to/hidamari*.deb`
-4. (Recommended) Upgrade `youtube-dl` to the latest version:  
-   `sudo pip3 install --upgrade youtube-dl`
-
-## Installation (Other linux) ⏬
-
-### Prerequisite
-
-1. python3, pip3, git, ffmpeg, vlc, libx11
-2. Multimedia codecs, please refer to your distribution for installation guide
-3. PyGObject, refer to [Installation](https://pygobject.readthedocs.io/en/latest/getting_started.html)
-4. Pillow, pydbus, youtube-dl `sudo pip3 install pillow pydbus python-vlc youtube-dl`
-
-### Installation
-
-0. Prerequisite stated above.
-1. Run `bash <(wget -qO- https://raw.githubusercontent.com/jeffshee/hidamari/master/install.sh)` -->
+### Unofficial package
+These are maintained by the community!
+| Distro     | URL                                     | Maintainer                            |
+|------------|-----------------------------------------|---------------------------------------|
+| Arch Linux | https://github.com/laymoth/hidamari-git | [laymoth](https://github.com/laymoth) |
 
 ## Screenshot 📸
 
