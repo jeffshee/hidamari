@@ -98,6 +98,8 @@ class PlayerWindow(Gtk.ApplicationWindow):
     def __init__(self, width, height, *args, **kwargs):
         super(PlayerWindow, self).__init__(*args, **kwargs)
         # Setup a VLC widget given the provided width and height.
+        self.width = width
+        self.height = height
         self.__vlc_widget = VLCWidget(width, height)
         self.add(self.__vlc_widget)
         self.__vlc_widget.show()
@@ -163,6 +165,42 @@ class PlayerWindow(Gtk.ApplicationWindow):
     def snapshot(self, *args):
         return self.__vlc_widget.player.video_take_snapshot(*args)
 
+    def centercrop(self, video_width=None, video_height=None):
+        # Getting dimension from libvlc is not reliable enough (need to consider timing)
+        if (video_width, video_height) == (None, None):
+            video_width, video_height = self.__vlc_widget.player.video_get_size()
+            if video_width == 0 or video_height == 0:
+                print("video_get_size is not ready yet")
+                # logger.debug("video_get_size is not ready yet")
+                return
+        print("Dimension", video_width, video_height)
+        window_ratio = self.width / self.height
+        video_ratio = video_width / video_height
+        if window_ratio == video_ratio:
+            return
+        elif video_ratio < window_ratio:
+            # If window is wider than video
+            # For example video ratio (4:3)=1.33..., window ratio (16:9)=1.77...
+            # crop_height = video_width * self.height / self.width
+            crop_height = video_width / window_ratio
+            top_offset = (video_height - crop_height) / 2
+            crop_geometry = f"{int(video_width)}x{int(crop_height+top_offset)}+0+{int(top_offset)}"
+            # crop_geometry = "{:d}x{:d}+0+{:d}".format(
+            #     video_width, crop_height + top_offset, top_offset)
+
+        else:
+            # If video is wider than window
+            # crop_width = video_width / self.height * self.width
+            crop_width = video_width * window_ratio
+            left_offset = (video_width - crop_width) / 2
+            crop_geometry = f"{int(crop_width+left_offset)}x{int(video_height)}+{int(left_offset)}+0"
+            # crop_geometry = "{:d}x{:d}+{:d}+0".format(
+            #     crop_width + left_offset, video_height, left_offset)
+
+        # Crop geometry WxH+L+T: Width x Height + Left Offset + top Offset
+        print("Crop geometry", crop_geometry)
+        self.__vlc_widget.player.video_set_crop_geometry(crop_geometry)
+
     def add_audio_track(self, audio):
         self.__vlc_widget.player.add_slave(vlc.MediaSlaveType(1), audio, True)
 
@@ -218,14 +256,18 @@ class VideoPlayer(BasePlayer):
         # Static wallpaper
         self.gso = Gio.Settings.new("org.gnome.desktop.background")
         if is_flatpak():
-            picture_uri = subprocess.check_output("flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri'", shell=True, encoding='UTF-8')
-            picture_uri_dark = subprocess.check_output("flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri-dark'", shell=True, encoding='UTF-8')
+            picture_uri = subprocess.check_output(
+                "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri'", shell=True, encoding='UTF-8')
+            picture_uri_dark = subprocess.check_output(
+                "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri-dark'", shell=True, encoding='UTF-8')
             self.original_wallpaper_uri = picture_uri
             self.original_wallpaper_uri_dark = picture_uri_dark
         else:
             self.original_wallpaper_uri = self.gso.get_string("picture-uri")
-            self.original_wallpaper_uri_dark = self.gso.get_string("picture-uri-dark")
-        self.static_wallpaper_path = os.path.join(CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
+            self.original_wallpaper_uri_dark = self.gso.get_string(
+                "picture-uri-dark")
+        self.static_wallpaper_path = os.path.join(
+            CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
 
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None
@@ -284,6 +326,16 @@ class VideoPlayer(BasePlayer):
         self.config[CONFIG_KEY_DATA_SOURCE] = data_source
 
         if self.mode == MODE_VIDEO:
+            # Get the dimension of the video
+            try:
+                dimension = subprocess.check_output(
+                    f'ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "{self.data_source}"', shell=True, encoding='UTF-8').replace("\n", "")
+                dimension = dimension.split("x")
+                video_width, video_height = int(
+                    dimension[0]), int(dimension[1])
+            except subprocess.CalledProcessError:
+                video_width, video_height = None, None
+
             for monitor, window in self.windows.items():
                 media = window.media_new(data_source)
                 """
@@ -297,12 +349,14 @@ class VideoPlayer(BasePlayer):
                     media.add_option("no-audio")
                 window.set_media(media)
                 window.set_position(0.0)
+                window.centercrop(video_width, video_height)
 
         elif self.mode == MODE_STREAM:
             formats = get_formats(data_source)
             max_height = max(
                 self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
-            video_url = get_optimal_video(formats, max_height)
+            video_url, video_width, video_height = get_optimal_video(
+                formats, max_height)
             audio_url = get_best_audio(formats)
 
             for monitor, window in self.windows.items():
@@ -312,6 +366,7 @@ class VideoPlayer(BasePlayer):
                 if monitor.is_primary():
                     window.add_audio_track(audio_url)
                 window.set_position(0.0)
+                window.centercrop(video_width, video_height)
         else:
             raise ValueError("Invalid mode")
 
@@ -363,7 +418,6 @@ class VideoPlayer(BasePlayer):
                               fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
 
     def start_playback(self):
-        # if not self.is_paused_by_user:
         if self._should_playback_start():
             for monitor, window in self.windows.items():
                 window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
@@ -397,8 +451,8 @@ class VideoPlayer(BasePlayer):
         ss = time.strftime('%H:%M:%S', time.gmtime(duration / 3.14))
         # Extract the frame
         ret = subprocess.run(f"ffmpeg -y -ss {ss} -i '{self.data_source}' -vframes 1 '{self.static_wallpaper_path}'", shell=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.STDOUT)
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.STDOUT)
         if ret.returncode == 0 and os.path.isfile(self.static_wallpaper_path):
             blur_wallpaper = Image.open(self.static_wallpaper_path)
             blur_wallpaper = blur_wallpaper.filter(
