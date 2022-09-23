@@ -22,13 +22,13 @@ try:
     from player.base_player import BasePlayer
     from menu import build_menu
     from commons import *
-    from utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
+    from utils import ActiveHandler, ConfigUtil, is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     from yt_utils import get_formats, get_best_audio, get_optimal_video
 except ModuleNotFoundError:
     from hidamari.player.base_player import BasePlayer
     from hidamari.menu import build_menu
     from hidamari.commons import *
-    from hidamari.utils import ActiveHandler, ConfigUtil, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
+    from hidamari.utils import ActiveHandler, ConfigUtil, is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     from hidamari.yt_utils import get_formats, get_best_audio, get_optimal_video
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -170,10 +170,9 @@ class PlayerWindow(Gtk.ApplicationWindow):
         if (video_width, video_height) == (None, None):
             video_width, video_height = self.__vlc_widget.player.video_get_size()
             if video_width == 0 or video_height == 0:
-                print("video_get_size is not ready yet")
-                # logger.debug("video_get_size is not ready yet")
+                logger.warning("[CenterCrop] video_get_size is not ready yet")
                 return
-        print("Dimension", video_width, video_height)
+        logger.debug(f"[CenterCrop] Dimension {video_width}x{video_height}")
         window_ratio = self.width / self.height
         video_ratio = video_width / video_height
         if window_ratio == video_ratio:
@@ -181,24 +180,18 @@ class PlayerWindow(Gtk.ApplicationWindow):
         elif video_ratio < window_ratio:
             # If window is wider than video
             # For example video ratio (4:3)=1.33..., window ratio (16:9)=1.77...
-            # crop_height = video_width * self.height / self.width
             crop_height = video_width / window_ratio
             top_offset = (video_height - crop_height) / 2
             crop_geometry = f"{int(video_width)}x{int(crop_height+top_offset)}+0+{int(top_offset)}"
-            # crop_geometry = "{:d}x{:d}+0+{:d}".format(
-            #     video_width, crop_height + top_offset, top_offset)
 
         else:
             # If video is wider than window
-            # crop_width = video_width / self.height * self.width
             crop_width = video_width * window_ratio
             left_offset = (video_width - crop_width) / 2
             crop_geometry = f"{int(crop_width+left_offset)}x{int(video_height)}+{int(left_offset)}+0"
-            # crop_geometry = "{:d}x{:d}+{:d}+0".format(
-            #     crop_width + left_offset, video_height, left_offset)
 
         # Crop geometry WxH+L+T: Width x Height + Left Offset + top Offset
-        print("Crop geometry", crop_geometry)
+        logger.debug(f"[CenterCrop] Crop geometry: {crop_geometry}")
         self.__vlc_widget.player.video_set_crop_geometry(crop_geometry)
 
     def add_audio_track(self, audio):
@@ -253,21 +246,23 @@ class VideoPlayer(BasePlayer):
         self.config = None
         self.reload_config()
 
-        # Static wallpaper
-        self.gso = Gio.Settings.new("org.gnome.desktop.background")
-        if is_flatpak():
-            picture_uri = subprocess.check_output(
-                "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri'", shell=True, encoding='UTF-8')
-            picture_uri_dark = subprocess.check_output(
-                "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri-dark'", shell=True, encoding='UTF-8')
-            self.original_wallpaper_uri = picture_uri
-            self.original_wallpaper_uri_dark = picture_uri_dark
-        else:
-            self.original_wallpaper_uri = self.gso.get_string("picture-uri")
-            self.original_wallpaper_uri_dark = self.gso.get_string(
-                "picture-uri-dark")
-        self.static_wallpaper_path = os.path.join(
-            CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
+        # Static wallpaper (currently for GNOME only)
+        if is_gnome():
+            self.original_wallpaper_uri = None
+            self.original_wallpaper_uri_dark = None
+            if is_flatpak():
+                try:
+                    self.original_wallpaper_uri = subprocess.check_output(
+                        "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri'", shell=True, encoding='UTF-8')
+                    self.original_wallpaper_uri_dark = subprocess.check_output(
+                        "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri-dark'", shell=True, encoding='UTF-8')
+                except subprocess.CalledProcessError as e:
+                    logger.error(f"[StaticWallpaper] {e}")
+            else:
+                gso = Gio.Settings.new("org.gnome.desktop.background")
+                self.original_wallpaper_uri = gso.get_string("picture-uri")
+                self.original_wallpaper_uri_dark = gso.get_string(
+                    "picture-uri-dark")
 
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None
@@ -441,6 +436,9 @@ class VideoPlayer(BasePlayer):
                 ) else window.pause()
 
     def set_static_wallpaper(self):
+        # Currently for GNOME only
+        if not is_gnome():
+            return
         # Get the duration of the video
         try:
             duration = float(subprocess.check_output(
@@ -450,35 +448,50 @@ class VideoPlayer(BasePlayer):
         # Find the golden ratio
         ss = time.strftime('%H:%M:%S', time.gmtime(duration / 3.14))
         # Extract the frame
-        ret = subprocess.run(f"ffmpeg -y -ss {ss} -i '{self.data_source}' -vframes 1 '{self.static_wallpaper_path}'", shell=True,
+        static_wallpaper_path = os.path.join(
+            CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
+        ret = subprocess.run(f"ffmpeg -y -ss {ss} -i '{self.data_source}' -vframes 1 '{static_wallpaper_path}'", shell=True,
                              stdout=subprocess.DEVNULL,
                              stderr=subprocess.STDOUT)
-        if ret.returncode == 0 and os.path.isfile(self.static_wallpaper_path):
-            blur_wallpaper = Image.open(self.static_wallpaper_path)
+        if ret.returncode == 0 and os.path.isfile(static_wallpaper_path):
+            blur_wallpaper = Image.open(static_wallpaper_path)
             blur_wallpaper = blur_wallpaper.filter(
                 ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"]))
-            blur_wallpaper.save(self.static_wallpaper_path)
+            blur_wallpaper.save(static_wallpaper_path)
             static_wallpaper_uri = pathlib.Path(
-                self.static_wallpaper_path).resolve().as_uri()
+                static_wallpaper_path).resolve().as_uri()
             if is_flatpak():
-                subprocess.run(
-                    f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {static_wallpaper_uri}'", shell=True)
-                subprocess.run(
-                    f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {static_wallpaper_uri}'", shell=True)
+                try:
+                    subprocess.run(
+                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {static_wallpaper_uri}'", shell=True)
+                    subprocess.run(
+                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {static_wallpaper_uri}'", shell=True)
+                except subprocess.CalledProcessError as e:
+                    logger.error(f"[StaticWallpaper] {e}")
             else:
-                self.gso.set_string("picture-uri", static_wallpaper_uri)
-                self.gso.set_string("picture-uri-dark", static_wallpaper_uri)
+                gso = Gio.Settings.new("org.gnome.desktop.background")
+                gso.set_string("picture-uri", static_wallpaper_uri)
+                gso.set_string("picture-uri-dark", static_wallpaper_uri)
 
     def set_original_wallpaper(self):
+        # Currently for GNOME only
+        if not is_gnome():
+            return
         if is_flatpak():
-            subprocess.run(
-                f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {self.original_wallpaper_uri}'", shell=True)
-            subprocess.run(
-                f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {self.original_wallpaper_uri_dark}'", shell=True)
+            try:
+                if self.original_wallpaper_uri is not None:
+                    subprocess.run(
+                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {self.original_wallpaper_uri}'", shell=True)
+                if self.original_wallpaper_uri_dark is not None:
+                    subprocess.run(
+                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {self.original_wallpaper_uri_dark}'", shell=True)
+            except subprocess.CalledProcessError as e:
+                logger.error(f"[StaticWallpaper] {e}")
         else:
-            self.gso.set_string("picture-uri", self.original_wallpaper_uri)
-            self.gso.set_string("picture-uri-dark",
-                                self.original_wallpaper_uri_dark)
+            gso = Gio.Settings.new("org.gnome.desktop.background")
+            gso.set_string("picture-uri", self.original_wallpaper_uri)
+            gso.set_string("picture-uri-dark",
+                           self.original_wallpaper_uri_dark)
         # Purge the generated static wallpaper (and leftover if any)
         for f in glob.glob(os.path.join(CONFIG_DIR, "static-*.png")):
             os.remove(f)

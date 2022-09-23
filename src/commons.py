@@ -17,7 +17,8 @@ except FileNotFoundError:
     VIDEO_WALLPAPER_DIR = os.path.join(HOME, "Hidamari")
 
 xdg_config_home = os.environ.get("XDG_CONFIG_HOME", os.path.join(HOME, ".config"))
-AUTOSTART_DESKTOP_PATH = os.path.join(xdg_config_home, "autostart", f"{PROJECT}.desktop")
+AUTOSTART_DIR = os.path.join(xdg_config_home, "autostart")
+AUTOSTART_DESKTOP_PATH = os.path.join(AUTOSTART_DIR, f"{PROJECT}.desktop")
 AUTOSTART_DESKTOP_CONTENT = \
     """[Desktop Entry]
 Name=Hidamari

@@ -99,7 +99,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton">
+          <object class="GtkModelButton" id="ToggleStaticWallpaper">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
@@ -201,7 +201,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkLabel" id="LabelBlurRadius">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can-focus">False</property>

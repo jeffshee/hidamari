@@ -14,5 +14,5 @@
     },
     "mesonbuild.configureOnOpen": false,
     "mesonbuild.buildFolder": "_build",
-    "mesonbuild.mesonPath": "/home/jeffshee/Developer/Linux/hidamari-dev/.flatpak/meson.sh"
+    "mesonbuild.mesonPath": "/home/jeffshee/Developer/Linux/hidamari/.flatpak/meson.sh"
 }

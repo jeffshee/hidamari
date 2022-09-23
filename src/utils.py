@@ -74,11 +74,39 @@ def is_flatpak():
 
 
 def setup_autostart(autostart):
+    if is_flatpak():
+        """
+        Use portal to autostart for Flatpak
+        Documentation:
+        https://libportal.org/method.Portal.request_background.html
+        https://libportal.org/method.Portal.request_background_finish.html 
+        """
+
+        gi.require_version("Xdp", "1.0")
+        from gi.repository import Xdp
+        xdp = Xdp.Portal.new()
+
+        # Request Autostart
+        xdp.request_background(
+            None,  # parent
+            "Autostart Hidamari in background",  # reason
+            ['hidamari', '-b'],  # commandline
+            Xdp.BackgroundFlags.AUTOSTART if autostart else Xdp.BackgroundFlags.NONE,  # flags
+            None,  # cancellable
+            lambda portal, result, user_data: logger.debug(
+                f"[Utils] autostart={autostart}, request_background sucess={portal.request_background_finish(result)}"),  # callback
+            None,  # user_data
+        )
+        
+    os.makedirs(AUTOSTART_DIR, exist_ok=True)
     logger.debug(
         f"[Utils] autostart={autostart}, path={AUTOSTART_DESKTOP_PATH}")
     if autostart:
         with open(AUTOSTART_DESKTOP_PATH, mode='w') as f:
             if is_flatpak():
+                # Write files to the sandbox as well, for the following reasons:
+                # (1) So that we know if autostart is enabled by looking the file in sandbox
+                # (2) Acts as a fallback in case the portal doesn't work
                 f.write(AUTOSTART_DESKTOP_CONTENT_FLATPAK)
             else:
                 f.write(AUTOSTART_DESKTOP_CONTENT)
@@ -188,7 +216,7 @@ class EndSessionHandler:
 
     def __init__(self, on_end_session: callable):
         self.on_end_session = on_end_session
-        
+
         if is_gnome():
             session_bus = pydbus.SessionBus()
             proxy = session_bus.get("org.gnome.SessionManager")
@@ -218,7 +246,7 @@ class EndSessionHandler:
         logger.debug("[EndSessionHandler] called")
         self.on_end_session()
         self.__end_session_response_gnome(True)
-    
+
     def __end_session_handler(self, *_):
         logger.debug("[EndSessionHandler] called")
         self.on_end_session()

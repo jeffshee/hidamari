@@ -136,6 +136,27 @@
             ]
         },
         {
+            "name": "libportal",
+            "buildsystem": "meson",
+            "config-opts": [
+                "-Dbackends=gtk3",
+                "-Ddocs=false"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/flatpak/libportal/releases/download/0.6/libportal-0.6.tar.xz",
+                    "sha256": "88a12c3ba71bc31acff7238c280de697d609cebc50830c3766776ec35abc6566",
+                    "x-checker-data": {
+                        "type": "json",
+                        "url": "https://api.github.com/repos/flatpak/libportal/releases/latest",
+                        "version-query": ".tag_name",
+                        "url-query": ".assets[] | select(.name==\"libportal-\" + $version + \".tar.xz\") | .browser_download_url"
+                    }
+                }
+            ]
+        },
+        {
             "name": "hidamari",
             "builddir": true,
             "buildsystem": "meson",

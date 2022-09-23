@@ -16,11 +16,11 @@ try:
     sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
     from gui.gui_utils import get_thumbnail, debounce
-    from utils import ConfigUtil, setup_autostart, is_wayland, get_video_paths
+    from utils import ConfigUtil, setup_autostart, is_gnome, is_wayland, get_video_paths
 except ModuleNotFoundError:
     from hidamari.commons import *
     from hidamari.gui.gui_utils import get_thumbnail, debounce
-    from hidamari.utils import ConfigUtil, setup_autostart, is_wayland, get_video_paths
+    from hidamari.utils import ConfigUtil, setup_autostart, is_gnome, is_wayland, get_video_paths
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(LOGGER_NAME)
@@ -119,8 +119,13 @@ class ControlPanel(Gtk.Application):
             self.add_action(action)
 
         if is_wayland():
-            toggle = self.builder.get_object("ToggleDetectMaximized")
-            toggle.set_visible(False)
+            self.builder.get_object("ToggleDetectMaximized").set_visible(False)
+
+        if not is_gnome():
+            # Disable static wallpaper functionality for non-GNOME DE
+            self.builder.get_object("ToggleStaticWallpaper").set_visible(False)
+            self.builder.get_object("LabelBlurRadius").set_visible(False)
+            self.builder.get_object("SpinBlurRadius").set_visible(False)
 
         self._reload_all_widgets()
 

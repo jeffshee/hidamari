@@ -36,10 +36,10 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [x] Webpage as wallpaper! <sup>6</sup>
 - [ ] You name it! =)
 
-<sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i>  
-<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (currently X11 only)  
+<sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i> (currently GNOME exclusive, support for other DE might be added if requested...)  
+<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (currently X11 only...)  
 <sup>3</sup> Randomly select and play a video  
-<sup>4</sup> Use <i>vlc</i> as backend  
+<sup>4</sup> Use <i>vlc</i> as backend (currently HW acceleration doesn't work with Nvidia+Wayland combination...)     
 <sup>5</sup> Use <i>yt-dlp</i> as backend, tested with YouTube videos  
 <sup>6</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
 
