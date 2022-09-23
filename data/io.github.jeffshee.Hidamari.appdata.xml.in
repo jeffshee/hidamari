@@ -26,8 +26,15 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="3.0-beta3" date="2022-09-06" type="stable">
+    <release version="3.0-beta4" date="2022-09-23" type="stable">
       <description>
+        <ul>
+          <li>Fixed autostart issue</li>
+          <li>Fixed a crash for non-GNOME distros</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0-beta3" date="2022-09-06" type="stable"><description>
         <p>Fixed bug for non-GNOME distros. Also some minor improvements in logging messages.</p>
       </description>
     </release>
