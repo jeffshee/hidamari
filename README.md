@@ -44,7 +44,7 @@ Hidamari offers similar feature as above, with additional features listed below:
 <sup>6</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
 
 ## Installation ⏬
-### Flappak 📦
+### Flatpak 📦
 It is available on Flathub!
 
 <a href='https://flathub.org/apps/details/io.github.jeffshee.Hidamari'><img width='240' alt='Download Hidamari on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
