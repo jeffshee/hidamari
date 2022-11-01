@@ -165,7 +165,10 @@ def gnome_desktop_icon_workaround():
     if not is_gnome():
         return
     extension_list = ["ding@rastersoft.com",
-                      "desktopicons-neo@darkdemon", "gtk4-ding@smedius.gitlab.com"]
+                      "desktopicons-neo@darkdemon", 
+                      "gtk4-ding@smedius.gitlab.com",
+                      "zorin-desktop-icons@zorinos.com"
+                      ]
     for ext in extension_list:
         # Check if installed and enabled
         if gnome_extension_is_installed(ext) and gnome_extension_is_enabled(ext):
