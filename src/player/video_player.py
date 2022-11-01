@@ -186,7 +186,7 @@ class PlayerWindow(Gtk.ApplicationWindow):
 
         else:
             # If video is wider than window
-            crop_width = video_width * window_ratio
+            crop_width = video_height * window_ratio
             left_offset = (video_width - crop_width) / 2
             crop_geometry = f"{int(crop_width+left_offset)}x{int(video_height)}+{int(left_offset)}+0"
 
