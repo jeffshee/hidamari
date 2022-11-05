@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <component type="desktop">
-  <!--Created with jdAppdataEdit 5.0-->
+  <!--Created with jdAppdataEdit 5.1-->
   <id>io.github.jeffshee.Hidamari</id>
   <name>Hidamari</name>
   <summary>Video wallpaper for Linux</summary>
@@ -26,8 +26,17 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="3.0-beta4" date="2022-09-23" type="stable">
+    <release version="3.1" date="2022-11-05" type="stable">
       <description>
+        <ul>
+          <li>Added desktop icon workaround for ZorinOS</li>
+          <li>Fixed center-crop for widescreen</li>
+          <li>Allow screensaver (screen blank) if playback is paused</li>
+          <li>Minor tweak</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0-beta4" date="2022-09-23" type="stable"><description>
         <ul>
           <li>Fixed autostart issue</li>
           <li>Fixed a crash for non-GNOME distros</li>

@@ -27,8 +27,6 @@ logger = logging.getLogger(LOGGER_NAME)
 
 APP_ID = f"{PROJECT}.gui"
 APP_TITLE = "Hidamari"
-# APP_UI_PATH = os.path.join(os.path.abspath(
-#     os.path.dirname(__file__)), "control.ui")
 APP_UI_RESOURCE_PATH = "/io/jeffshee/Hidamari/control.ui"
 
 
@@ -44,7 +42,6 @@ class ControlPanel(Gtk.Application):
         # Builder init
         self.builder = Gtk.Builder()
         self.builder.set_application(self)
-        # self.builder.add_from_file(APP_UI_PATH)
         self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
         # Handlers declared in `control.ui``
         signals = {"on_volume_changed": self.on_volume_changed,
@@ -93,7 +90,7 @@ class ControlPanel(Gtk.Application):
             ("play_pause", self.on_play_pause),
             ("feeling_lucky", self.on_feeling_lucky),
             ("config", lambda *_: subprocess.run(
-                ["xdg-open", os.path.realpath(CONFIG_DIR)])),
+                ["xdg-open", os.path.realpath(CONFIG_PATH)])),
             ("about", self.on_about),
             ("quit", self.on_quit),
         ]
@@ -150,7 +147,8 @@ class ControlPanel(Gtk.Application):
         # Welcome dialog
         dialog = Gtk.MessageDialog(parent=self.window, modal=True, destroy_with_parent=True,
                                    text="Welcome to Hidamari 🤗", message_type=Gtk.MessageType.INFO,
-                                   secondary_text="You can bring up the Menu by <b>Right click</b> on the desktop",
+                                #    secondary_text="You can bring up the Menu by <b>Right click</b> on the desktop",
+                                   secondary_text="Quickstart for adding local videos:\n ・Click the folder icon to open the Hidamari folder\n ・Put your videos there\n ・Click the refresh button",
                                    secondary_use_markup=True,
                                    buttons=Gtk.ButtonsType.OK)
         dialog.run()

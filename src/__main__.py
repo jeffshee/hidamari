@@ -43,13 +43,6 @@ def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/shar
     sys_info.append("--------------------------")
     sys_info_str = "\n".join(sys_info)
     logger.info(f"Hidamari v{version}\n{sys_info_str}")
-    # logger.info("--- System information ---")
-    # logger.info(f"is_gnome = {is_gnome()}")
-    # logger.info(f"is_wayland = {is_wayland()}")
-    # logger.info(f"is_nvidia_proprietary = {is_nvidia_proprietary()}")
-    # logger.info(f"is_vdpau_ok = {is_vdpau_ok()}")
-    # logger.info(f"is_flatpak = {is_flatpak()}")
-    # logger.info("--------------------------")
     logger.info(f"[Args] {vars(args)}")
 
     # Make Hidamari folder if not exist
