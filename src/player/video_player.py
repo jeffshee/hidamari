@@ -323,8 +323,11 @@ class VideoPlayer(BasePlayer):
         if self.mode == MODE_VIDEO:
             # Get the dimension of the video
             try:
-                dimension = subprocess.check_output(
-                    f'ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "{self.data_source}"', shell=True, encoding='UTF-8').replace("\n", "")
+                dimension = subprocess.check_output([
+                    'ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                    '-show_entries', 'stream=width,height', '-of',
+                    'csv=s=x:p=0', self.data_source
+                ], shell=False, encoding='UTF-8').replace('\n', '')
                 dimension = dimension.split("x")
                 video_width, video_height = int(
                     dimension[0]), int(dimension[1])
@@ -444,8 +447,10 @@ class VideoPlayer(BasePlayer):
             return
         # Get the duration of the video
         try:
-            duration = float(subprocess.check_output(
-                f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{self.data_source}"', shell=True))
+            duration = float(subprocess.check_output([
+                'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                '-of', 'default=noprint_wrappers=1:nokey=1', self.data_source
+            ], shell = False))
         except subprocess.CalledProcessError:
             duration = 0
         # Find the golden ratio
@@ -453,9 +458,10 @@ class VideoPlayer(BasePlayer):
         # Extract the frame
         static_wallpaper_path = os.path.join(
             CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
-        ret = subprocess.run(f"ffmpeg -y -ss {ss} -i '{self.data_source}' -vframes 1 '{static_wallpaper_path}'", shell=True,
-                             stdout=subprocess.DEVNULL,
-                             stderr=subprocess.STDOUT)
+        ret = subprocess.run([
+            'ffmpeg', '-y', '-ss', ss, '-i', self.data_source,
+            '-vframes', '1', static_wallpaper_path
+        ], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         if ret.returncode == 0 and os.path.isfile(static_wallpaper_path):
             blur_wallpaper = Image.open(static_wallpaper_path)
             blur_wallpaper = blur_wallpaper.filter(
