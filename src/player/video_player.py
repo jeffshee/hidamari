@@ -253,9 +253,9 @@ class VideoPlayer(BasePlayer):
             if is_flatpak():
                 try:
                     self.original_wallpaper_uri = subprocess.check_output(
-                        "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri'", shell=True, encoding='UTF-8')
+                        "flatpak-spawn --host gsettings get org.gnome.desktop.background picture-uri", shell=True, encoding='UTF-8')
                     self.original_wallpaper_uri_dark = subprocess.check_output(
-                        "flatpak-spawn --host sh -c 'gsettings get org.gnome.desktop.background picture-uri-dark'", shell=True, encoding='UTF-8')
+                        "flatpak-spawn --host gsettings get org.gnome.desktop.background picture-uri-dark", shell=True, encoding='UTF-8')
                 except subprocess.CalledProcessError as e:
                     logger.error(f"[StaticWallpaper] {e}")
             else:
@@ -472,9 +472,9 @@ class VideoPlayer(BasePlayer):
             if is_flatpak():
                 try:
                     subprocess.run(
-                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {static_wallpaper_uri}'", shell=True)
+                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri', static_wallpaper_uri], shell=False)
                     subprocess.run(
-                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {static_wallpaper_uri}'", shell=True)
+                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri-dark', static_wallpaper_uri], shell=False)
                 except subprocess.CalledProcessError as e:
                     logger.error(f"[StaticWallpaper] {e}")
             else:
@@ -490,10 +490,10 @@ class VideoPlayer(BasePlayer):
             try:
                 if self.original_wallpaper_uri is not None:
                     subprocess.run(
-                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri {self.original_wallpaper_uri}'", shell=True)
+                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri', self.original_wallpaper_uri], shell=False)
                 if self.original_wallpaper_uri_dark is not None:
                     subprocess.run(
-                        f"flatpak-spawn --host sh -c 'gsettings set org.gnome.desktop.background picture-uri-dark {self.original_wallpaper_uri_dark}'", shell=True)
+                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri-dark', self.original_wallpaper_uri], shell=False)
             except subprocess.CalledProcessError as e:
                 logger.error(f"[StaticWallpaper] {e}")
         else:
