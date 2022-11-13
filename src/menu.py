@@ -1,5 +1,7 @@
 import logging
 import threading
+import multiprocessing as mp
+import setproctitle
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -111,6 +113,8 @@ def build_menu(mode):
 
 
 def show_systray_icon(mode):
+    setproctitle.setproctitle(mp.current_process().name)
+    
     menu = build_menu(mode)
     indicator = AppIndicator.Indicator.new(id=APP_INDICATOR_ID, icon_name=APP_INDICATOR_ICON,
                                            category=AppIndicator.IndicatorCategory.SYSTEM_SERVICES)

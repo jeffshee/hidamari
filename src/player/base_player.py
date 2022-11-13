@@ -1,6 +1,8 @@
 import logging
 import sys
 from abc import abstractmethod
+import multiprocessing as mp
+import setproctitle
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -50,6 +52,7 @@ class BasePlayer(Gtk.Application):
             flags=Gio.ApplicationFlags.FLAGS_NONE,
             **kwargs
         )
+        setproctitle.setproctitle(mp.current_process().name)
         self.windows = dict()
         self._monitor_detect()
 

@@ -4,6 +4,7 @@ import signal
 import time
 import multiprocessing as mp
 from multiprocessing import Process
+import setproctitle
 
 from gi.repository import GLib
 from pydbus import SessionBus
@@ -60,14 +61,19 @@ class HidamariServer(object):
     """
 
     def __init__(self, version, pkgdatadir, localedir, args):
+        setproctitle.setproctitle("hidamari-server")
+
         self.version = version
         self.pkgdatadir = pkgdatadir
         self.localedir = localedir
         self.args = args
         self._prev_mode = None
+        self._player_count = 0
 
         # Processes
-        mp.set_start_method("spawn")
+        # Switch to `forkserver` since v3.2 for performance. BTW `fork` didn't work (it crashes).
+        # Ref: https://bnikolic.co.uk/blog/python/parallelism/2019/11/13/python-forkserver-preload.html
+        mp.set_start_method("forkserver")
         self.gui_process = None
         self.sys_icon_process = None
         self.player_process = None
@@ -111,15 +117,18 @@ class HidamariServer(object):
         # Quit current then create a new player
         self._quit_player()
         if mode in [MODE_VIDEO, MODE_STREAM]:
-            self.player_process = Process(target=video_player_main)
+            self.player_process = Process(
+                name=f"hidamari-player-{self._player_count}", target=video_player_main)
         elif mode == MODE_WEBPAGE:
-            self.player_process = Process(target=web_player_main)
+            self.player_process = Process(
+                name=f"hidamari-player-{self._player_count}", target=web_player_main)
         elif mode == MODE_NULL:
             pass
         else:
             raise ValueError("[Server] Unknown mode")
         if self.player_process is not None:
             self.player_process.start()
+            self._player_count += 1
 
         # Refresh systray icon if the mode changed
         if self.config[CONFIG_KEY_SYSTRAY]:
@@ -127,7 +136,7 @@ class HidamariServer(object):
                 if self.sys_icon_process:
                     self.sys_icon_process.terminate()
                 self.sys_icon_process = Process(
-                    target=show_systray_icon, args=(mode,))
+                    name="hidamari-systray", target=show_systray_icon, args=(mode,))
                 self.sys_icon_process.start()
             self._prev_mode = self.mode
 
@@ -186,7 +195,7 @@ class HidamariServer(object):
 
     def show_gui(self):
         """Show main GUI"""
-        self.gui_process = Process(target=gui_main, args=(
+        self.gui_process = Process(name="hidamari-gui", target=gui_main, args=(
             self.version, self.pkgdatadir, self.localedir,))
         self.gui_process.start()
 

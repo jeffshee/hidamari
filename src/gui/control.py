@@ -2,8 +2,10 @@ import sys
 import logging
 import threading
 import requests
+import multiprocessing as mp
+import setproctitle
 
-# TODO port to Gtk4
+# TODO: Port to Gtk4/adwaita someday...
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GLib, GdkPixbuf
@@ -38,7 +40,7 @@ class ControlPanel(Gtk.Application):
             flags=Gio.ApplicationFlags.FLAGS_NONE,
             **kwargs
         )
-
+        setproctitle.setproctitle(mp.current_process().name)
         # Builder init
         self.builder = Gtk.Builder()
         self.builder.set_application(self)
