@@ -114,7 +114,7 @@ class WebPlayer(BasePlayer):
 
     @volume.setter
     def volume(self, volume):
-        # TODO can we set volume of webview?
+        # TODO: How to set volume of webview?
         self.config[CONFIG_KEY_VOLUME] = volume
 
     @property

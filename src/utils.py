@@ -278,6 +278,7 @@ class WindowHandler:
         window.connect("state-changed", self.eval, None)
 
     def eval(self, *args):
+        # TODO: #28 (Wallpaper stops animating on other monitor when app maximized on other)
         is_changed = False
 
         is_any_maximized, is_any_fullscreen = False, False
@@ -308,8 +309,7 @@ class WindowHandler:
 # class WindowHandlerGnome:
 #     """
 #     Handler for monitoring window events for Gnome only
-#     TODO:
-#     This is broken due to a change in GNOME. =(
+#     TODO: This is broken due to a change in GNOME =(
 #     https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/7298ee23e91b756c7009b4d7687dfd8673856f8b
 
 #     TLDR, there is no way to monitor window events in Wayland, unless we use an Shell extension.

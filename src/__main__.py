@@ -2,11 +2,13 @@ import argparse
 import logging
 import sys
 
+# TODO: Is there any way to make these imports look better?
 try:
     from commons import *
     from utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     import server
 except ModuleNotFoundError:
+    # These are imports for Flatpak
     from hidamari.commons import *
     from hidamari.utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
     from hidamari import server
@@ -14,8 +16,9 @@ except ModuleNotFoundError:
 logger = logging.getLogger(LOGGER_NAME)
 
 
+# TODO: Add locale support
 def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/share/locale"):
-    # Make sure that X11 is the backend. This makes sure Wayland reverts to XWayland.
+    # Make sure that X11 is the backend. Revert Wayland to XWayland.
     os.environ["GDK_BACKEND"] = "x11"
     # Suppress VLC Log
     os.environ["VLC_VERBOSE"] = "-1"

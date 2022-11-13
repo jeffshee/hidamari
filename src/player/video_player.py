@@ -34,7 +34,7 @@ except ModuleNotFoundError:
 logger = logging.getLogger(LOGGER_NAME)
 
 if is_wayland():
-    # TODO Window event monitoring for GNOME Wayland is broken ATM.
+    # TODO: Window event monitoring for GNOME Wayland is broken
     class WindowHandler:
         def __init__(self, _: callable):
             pass
@@ -381,7 +381,6 @@ class VideoPlayer(BasePlayer):
         if not self.window_handler:
             self.window_handler = WindowHandler(self._on_window_state_changed)
 
-        # TODO currently only support static wallpaper when mode==MODE_VIDEO
         if self.config[CONFIG_KEY_STATIC_WALLPAPER] and self.mode == MODE_VIDEO:
             self.set_static_wallpaper()
         else:

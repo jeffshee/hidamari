@@ -72,7 +72,7 @@ These are maintained by the community!
 ![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-2.png)
 ![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-3.png)
 
-<!-- TODO v3.0 demo -->
+<!-- TODO -->
 <!-- ## Demo 📽️
 
 Please click on the image to view <i>(redirect to YouTube)</i>
