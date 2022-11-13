@@ -34,7 +34,7 @@
     "modules": [
         "vlc-slim.json",
         "shared-modules/libappindicator/libappindicator-gtk3-introspection-12.10.json",
-        "pypi-dependencies.json",
+        "python3-requirements.json",
         {
             "name": "gnome-desktop",
             "buildsystem": "meson",
