@@ -26,8 +26,17 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="3.1" date="2022-11-05" type="stable">
+    <release version="3.2" date="2022-11-13" type="stable">
       <description>
+        <ul>
+          <li>Fixed for local video files which containing quotes in filename</li>
+          <li>Avoid shell injection vulnerability</li>
+          <li>Switched python multiprocessing method to forkserver for performance</li>
+          <li>Added titles to Hidamari's processes for easier debugging</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.1" date="2022-11-05" type="stable"><description>
         <ul>
           <li>Added desktop icon workaround for ZorinOS</li>
           <li>Fixed center-crop for widescreen</li>
