@@ -26,19 +26,25 @@ def get_best(formats):
 
 
 def get_best_audio(formats):
-    filtered = list(filter_audio(formats))
+    filtered = list(filter_video(formats))
+    if not filtered:
+        filtered = list(filter_audio_video(formats))
     best = max(filtered, key=lambda x: x.get("quality", -1))
     return best["url"]
 
 
 def get_best_video(formats):
     filtered = list(filter_video(formats))
+    if not filtered:
+        filtered = list(filter_audio_video(formats))
     best = max(filtered, key=lambda x: x.get("quality", -1))
     return best["url"], best["width"], best["height"]
 
 
 def get_optimal_video(formats, height):
     filtered = list(filter_video(formats))
+    if not filtered:
+        filtered = list(filter_audio_video(formats))
     best = min(filtered, key=lambda x: abs(x.get("height", 0) - height))
     return best["url"], best["width"], best["height"]
 
