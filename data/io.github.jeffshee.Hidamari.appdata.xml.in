@@ -26,8 +26,14 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="3.2" date="2022-11-13" type="stable">
+    <release version="3.3" date="2023-02-18" type="stable">
       <description>
+        <ul>
+          <li>Fix crash in streaming mode</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.2" date="2022-11-13" type="stable"><description>
         <ul>
           <li>Fixed for local video files which containing quotes in filename</li>
           <li>Avoid shell injection vulnerability</li>
