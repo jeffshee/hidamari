@@ -366,6 +366,9 @@ class VideoPlayer(BasePlayer):
                 window.set_media(media)
                 if monitor.is_primary():
                     window.add_audio_track(audio_url)
+                else:
+                    # `get_optimal_video` now might return video with audio.
+                    media.add_option("no-audio")
                 window.set_position(0.0)
                 window.centercrop(video_width, video_height)
         else:
