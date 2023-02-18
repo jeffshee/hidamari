@@ -26,7 +26,7 @@ def get_best(formats):
 
 
 def get_best_audio(formats):
-    filtered = list(filter_video(formats))
+    filtered = list(filter_audio(formats))
     if not filtered:
         filtered = list(filter_audio_video(formats))
     best = max(filtered, key=lambda x: x.get("quality", -1))
