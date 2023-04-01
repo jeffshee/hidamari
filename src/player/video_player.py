@@ -291,6 +291,8 @@ class VideoPlayer(BasePlayer):
                 self.pause_playback()
 
     def _on_window_state_changed(self, state):
+        if not self.config[CONFIG_KEY_DETECT_MAXIMIZED]:
+            return
         self.is_any_maximized, self.is_any_fullscreen = state[
             "is_any_maximized"], state["is_any_fullscreen"]
         if self._should_playback_start():
