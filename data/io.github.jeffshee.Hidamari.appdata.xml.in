@@ -26,10 +26,11 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="3.3" date="2023-02-18" type="stable">
+    <release version="3.3" date="2023-04-01" type="stable">
       <description>
         <ul>
           <li>Fix crash in streaming mode</li>
+          <li>Update dependecies</li>
         </ul>
       </description>
     </release>
