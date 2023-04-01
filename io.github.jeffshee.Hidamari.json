@@ -1,7 +1,7 @@
 {
     "app-id": "io.github.jeffshee.Hidamari",
     "runtime": "org.gnome.Platform",
-    "runtime-version": "42",
+    "runtime-version": "44",
     "sdk": "org.gnome.Sdk",
     "command": "hidamari",
     "finish-args": [
@@ -32,7 +32,7 @@
         "*.a"
     ],
     "modules": [
-        "vlc.json",
+        "vlc-slim.json",
         "shared-modules/libappindicator/libappindicator-gtk3-introspection-12.10.json",
         "python3-requirements.json",
         {
