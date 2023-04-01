@@ -30,6 +30,7 @@
       <description>
         <ul>
           <li>Fix crash in streaming mode</li>
+          <li>Fix incorrect sound fading behavior</li>
           <li>Update dependecies</li>
         </ul>
       </description>
