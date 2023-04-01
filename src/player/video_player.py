@@ -291,6 +291,8 @@ class VideoPlayer(BasePlayer):
                 self.pause_playback()
 
     def _on_window_state_changed(self, state):
+        if not self.config[CONFIG_KEY_DETECT_MAXIMIZED]:
+            return
         self.is_any_maximized, self.is_any_fullscreen = state[
             "is_any_maximized"], state["is_any_fullscreen"]
         if self._should_playback_start():
@@ -366,6 +368,9 @@ class VideoPlayer(BasePlayer):
                 window.set_media(media)
                 if monitor.is_primary():
                     window.add_audio_track(audio_url)
+                else:
+                    # `get_optimal_video` now might return video with audio.
+                    media.add_option("no-audio")
                 window.set_position(0.0)
                 window.centercrop(video_width, video_height)
         else:
