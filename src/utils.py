@@ -24,7 +24,7 @@ def is_gnome():
     On Fedora 34, $XDG_CURRENT_DESKTOP = GNOME
     Hence we do the detection by looking for the word "gnome"
     """
-    return "gnome" in os.environ.get("XDG_CURRENT_DESKTOP").lower()
+    return "gnome" in str(os.environ.get("XDG_CURRENT_DESKTOP") or '').lower()
 
 
 def is_wayland():
