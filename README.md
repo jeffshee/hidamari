@@ -64,7 +64,7 @@ flatpak run io.github.jeffshee.Hidamari
 These are maintained by the community!
 | Distro     | URL                                     | Maintainer                            |
 |------------|-----------------------------------------|---------------------------------------|
-| Arch Linux | [![AUR](https://img.shields.io/aur/version/hidamari?style=for-the-badge)](https://aur.archlinux.org/packages/hidamari) | [laymoth](https://github.com/laymoth) |
+| Arch Linux | [![AUR](https://img.shields.io/aur/version/hidamari?style=for-the-badge)](https://aur.archlinux.org/packages/hidamari) | None |
 
 ## Screenshot 📸
 
