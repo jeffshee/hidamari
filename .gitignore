@@ -1,6 +1,9 @@
 # Byte-compiled
 __pycache__/
 
+# Build
+build/
+
 # Project exclude paths
 /venv/
 .flatpak/
