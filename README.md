@@ -11,6 +11,10 @@ If you like my project, please consider buying me a coffee!! (⁎˃ ꇴ ˂⁎)�
 Also please don't forget to click that star button! 🌟  
 Your support is truly appreciated!
 
+## Join our Discord!
+
+[![](https://dcbadge.vercel.app/api/server/mP7yg4gX7g?compact=true)](https://discord.gg/mP7yg4gX7g)
+
 ## For GNOME user 🐾
 Please also check my new project [Hanabi](https://github.com/jeffshee/gnome-ext-hanabi)! While the project is still in its infancy, it has the potential to become more integrated with GNOME Shell
 
