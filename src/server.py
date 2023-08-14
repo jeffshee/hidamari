@@ -116,6 +116,12 @@ class HidamariServer(object):
 
         # Quit current then create a new player
         self._quit_player()
+
+        # Terminate old player process
+        if self.player_process:
+            self.player_process.terminate()
+            self.player_process = None
+
         if mode in [MODE_VIDEO, MODE_STREAM]:
             self.player_process = Process(
                 name=f"hidamari-player-{self._player_count}", target=video_player_main)
