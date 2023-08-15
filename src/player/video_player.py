@@ -82,7 +82,10 @@ class VLCWidget(Gtk.DrawingArea):
         Gtk.DrawingArea.__init__(self)
 
         # Spawn a VLC instance and create a new media player to embed.
-        self.instance = vlc.Instance()
+        # Some options need to be specified when instantiating VLC.
+        # --no-disable-screensaver: Allow screensaver.
+        vlc_options = ["--no-disable-screensaver"]
+        self.instance = vlc.Instance(vlc_options)
         self.player = self.instance.media_player_new()
 
         def handle_embed(*args):
@@ -344,8 +347,6 @@ class VideoPlayer(BasePlayer):
                 cause the program to stop playback if it's left on for a very long time.
                 """
                 media.add_option("input-repeat=65535")
-                # Allow screensaver (screen blank) if playback is paused.
-                media.add_option("no-disable-screensaver")
                 # Prevent awful ear-rape with multiple instances.
                 if not monitor.is_primary():
                     media.add_option("no-audio")
@@ -364,7 +365,6 @@ class VideoPlayer(BasePlayer):
             for monitor, window in self.windows.items():
                 media = window.media_new(video_url)
                 media.add_option("input-repeat=65535")
-                media.add_option("no-disable-screensaver")
                 window.set_media(media)
                 if monitor.is_primary():
                     window.add_audio_track(audio_url)
