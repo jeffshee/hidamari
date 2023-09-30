@@ -8,7 +8,7 @@
             "name": "Launch Hidamari",
             "type": "python",
             "request": "launch",
-            "module": "hidamari",
+            "program": "__main__.py",
             "justMyCode": true,
             "cwd": "${workspaceFolder}/src",
             "args": ["-d"]

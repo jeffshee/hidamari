@@ -44,7 +44,10 @@ class ControlPanel(Gtk.Application):
         # Builder init
         self.builder = Gtk.Builder()
         self.builder.set_application(self)
-        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
+        try:
+            self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
+        except GLib.Error:
+            self.builder.add_from_file(os.path.abspath("./assets/control.ui"))
         # Handlers declared in `control.ui``
         signals = {"on_volume_changed": self.on_volume_changed,
                    "on_streaming_activate": self.on_streaming_activate,
@@ -282,8 +285,10 @@ class ControlPanel(Gtk.Application):
             self.server.is_detect_maximized = self.config[CONFIG_KEY_DETECT_MAXIMIZED]
 
     def on_about(self, *_):
-        # self.builder.add_from_file(APP_UI_PATH)
-        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
+        try:
+            self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
+        except GLib.Error:
+            self.builder.add_from_file(os.path.abspath("./assets/control.ui"))
         about_dialog: Gtk.AboutDialog = self.builder.get_object("AboutDialog")
         about_dialog.set_transient_for(self.window)
         about_dialog.set_version(self.version)
@@ -394,12 +399,15 @@ class ControlPanel(Gtk.Application):
 
 
 def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/share/locale"):
-    resource = Gio.Resource.load(
-        os.path.join(pkgdatadir, 'hidamari.gresource'))
-    resource._register()
-    icon_theme = Gtk.IconTheme.get_default()
-    icon_theme.add_resource_path("/io/jeffshee/Hidamari/icons")
-
+    try:
+        resource = Gio.Resource.load(
+            os.path.join(pkgdatadir, 'hidamari.gresource'))
+        resource._register()
+        icon_theme = Gtk.IconTheme.get_default()
+        icon_theme.add_resource_path("/io/jeffshee/Hidamari/icons")
+    except GLib.Error:
+        logger.error("[GUI] Couldn't load resource")
+    
     app = ControlPanel(version)
     app.run(sys.argv)
 
