@@ -54,6 +54,20 @@ class Monitors:
         else:
             return None
 
+    def get_primary_monitor(self):
+        for monitor in self.monitors:
+            if monitor.primary:
+                return monitor
+
+        return self.monitors[0]
+
+    def get_primary_monitor_index(self):
+        for i, monitor in enumerate(self.monitors):
+            if monitor.primary:
+                return i
+
+        return 0
+
     def get_monitors(self):
         return self.monitors
 
