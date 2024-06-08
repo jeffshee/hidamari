@@ -273,7 +273,7 @@ class VideoPlayer(BasePlayer):
         self.is_any_maximized, self.is_any_fullscreen = False, False
         self.is_paused_by_user = False
         self.mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
-        self._stateOf_mute_when_maximized = False
+        self._stateOf_mute_when_maximized = True
 
     def new_window(self, gdk_monitor):
         rect = gdk_monitor.get_geometry()
