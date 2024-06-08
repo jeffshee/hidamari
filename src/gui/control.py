@@ -18,6 +18,7 @@ try:
     sys.path.insert(1, os.path.join(sys.path[0], '..'))
     from commons import *
     from gui.gui_utils import get_thumbnail, debounce
+    from gui.monitor import *
     from utils import ConfigUtil, setup_autostart, is_gnome, is_wayland, get_video_paths
 except ModuleNotFoundError:
     from hidamari.commons import *
@@ -66,7 +67,15 @@ class ControlPanel(Gtk.Application):
 
         self._connect_server()
         self._load_config()
-
+        
+        # initialize monitors
+        self.monitors = Monitors()
+        screens = self.monitors.get_monitors()
+        # get video paths
+        video_paths = self.config[CONFIG_KEY_DATA_SOURCE]
+        for i in range(len(screens)):
+            self.monitors.get_monitor_by_index(i).set_wallpaper(video_paths[i]) 
+            
     def _connect_server(self):
         try:
             self.server = SessionBus().get(DBUS_NAME_SERVER)
@@ -171,13 +180,49 @@ class ControlPanel(Gtk.Application):
         selected = self.icon_view.get_selected_items()
         if len(selected) != 0:
             index = selected[0].get_indices()[0]
-            video_path = self.video_paths[index]
-            logger.info(f"[GUI] Local Video: {video_path}")
-            self.config[CONFIG_KEY_MODE] = MODE_VIDEO
-            self.config[CONFIG_KEY_DATA_SOURCE] = video_path
-            self._save_config()
-            if self.server is not None:
-                self.server.video(self.video_paths[index])
+            menu = Gtk.Menu()
+            items = []
+            for i, monitor in enumerate(self.monitors.get_monitors()):
+                item = Gtk.MenuItem(label=f"Set For {monitor.name}")
+                item.connect("activate", self.on_set_as, i, index)
+                menu.append(item)
+                items.append(item)
+            
+            # add all option
+            item = Gtk.MenuItem(label=f"Set For All")
+            item.connect("activate", self.on_set_as, len(self.monitors.get_monitors()) + 1, index)
+            menu.append(item)
+            items.append(item)
+
+            # show menu
+            menu.show_all()
+            menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+
+    def on_set_as(self, widget, monitor, index):
+        video_path = self.video_paths[index]
+        logger.info(f"[GUI] Local Video Set To {video_path} For Monitor {monitor}")
+        self.config[CONFIG_KEY_MODE] = MODE_VIDEO
+        paths = self.config[CONFIG_KEY_DATA_SOURCE] if not None else []
+        
+        # all option
+        if monitor == len(paths) + 1:
+            for i in range(len(paths)):
+                paths[i] = video_path
+                self.monitors.get_monitor_by_index(i).set_wallpaper(video_path)                
+        elif len(paths) < monitor:
+            raise Exception("Index cannot be greater than path size")
+            return
+        elif monitor < 0:
+            raise Exception("Index cannot be lower than 0")
+            return
+        else:
+            paths[monitor] = video_path
+            self.monitors.get_monitor_by_index(monitor).set_wallpaper(video_path)
+            
+        self.config[CONFIG_KEY_DATA_SOURCE] = paths
+        self._save_config()
+        if self.server is not None:
+            self.server.video(self.video_paths[0]) #! there is an proxy error if we send as list, but code works like that also
 
     def on_local_web_page_apply(self, *_):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object(
