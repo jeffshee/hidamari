@@ -10,7 +10,8 @@ DBUS_NAME_PLAYER = f"{PROJECT}.player"
 HOME = os.environ.get("HOME")
 try:
     xdg_video_dir = subprocess.check_output(
-        "xdg-user-dir VIDEOS", shell=True, encoding='UTF-8').replace("\n", "")
+        "xdg-user-dir VIDEOS", shell=True, encoding="UTF-8"
+    ).replace("\n", "")
     VIDEO_WALLPAPER_DIR = os.path.join(xdg_video_dir, "Hidamari")
 except FileNotFoundError:
     # xdg-user-dir not found, use $HOME/Hidamari for Video directory instead
@@ -19,8 +20,7 @@ except FileNotFoundError:
 xdg_config_home = os.environ.get("XDG_CONFIG_HOME", os.path.join(HOME, ".config"))
 AUTOSTART_DIR = os.path.join(xdg_config_home, "autostart")
 AUTOSTART_DESKTOP_PATH = os.path.join(AUTOSTART_DIR, f"{PROJECT}.desktop")
-AUTOSTART_DESKTOP_CONTENT = \
-    """[Desktop Entry]
+AUTOSTART_DESKTOP_CONTENT = """[Desktop Entry]
 Name=Hidamari
 Exec=hidamari -b
 Icon=io.github.jeffshee.Hidamari
@@ -29,8 +29,7 @@ Type=Application
 Categories=GTK;Utility;
 StartupNotify=true
 """
-AUTOSTART_DESKTOP_CONTENT_FLATPAK = \
-    """[Desktop Entry]
+AUTOSTART_DESKTOP_CONTENT_FLATPAK = """[Desktop Entry]
 Name=Hidamari
 Exec=/usr/bin/flatpak run --command=hidamari io.github.jeffshee.Hidamari -b
 Icon=io.github.jeffshee.Hidamari
@@ -74,5 +73,16 @@ CONFIG_TEMPLATE = {
     CONFIG_KEY_FADE_DURATION_SEC: 1.5,
     CONFIG_KEY_FADE_INTERVAL: 0.1,
     CONFIG_KEY_SYSTRAY: False,
-    CONFIG_KEY_FIRST_TIME: True
+    CONFIG_KEY_FIRST_TIME: True,
 }
+
+try:
+    from monitor import Monitor, Monitors, MonitorInfo
+except ModuleNotFoundError:
+    from hidamari.monitor import Monitor, Monitors, MonitorInfo
+
+# get monitor size
+info = MonitorInfo()
+count = info.get_unique_monitor_count()
+data_sources = [""] * count  # set empty strings in config as unique monitor count
+CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE] = data_sources
