@@ -273,6 +273,7 @@ class VideoPlayer(BasePlayer):
         self.is_any_maximized, self.is_any_fullscreen = False, False
         self.is_paused_by_user = False
         self.mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
+        self._stateOf_mute_when_maximized = False
 
     def new_window(self, gdk_monitor):
         rect = gdk_monitor.get_geometry()
@@ -414,6 +415,10 @@ class VideoPlayer(BasePlayer):
 
     @mute_when_maximized.setter
     def mute_when_maximized(self, maximized):
+        state = maximized and (self.is_any_fullscreen or self.is_any_maximized)
+        if hasattr(self, '_stateOf_mute_when_maximized'):
+            if state == self._stateOf_mute_when_maximized:
+                return
         self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] = maximized
         for monitor, window in self.windows.items():
             if window and monitor.is_primary():
@@ -423,6 +428,7 @@ class VideoPlayer(BasePlayer):
                 else:
                     window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
                                 fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+        self._stateOf_mute_when_maximized = maximized and (self.is_any_fullscreen or self.is_any_maximized)
 
     @property
     def is_mute(self):
