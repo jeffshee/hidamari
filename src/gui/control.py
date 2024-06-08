@@ -9,7 +9,7 @@ import setproctitle
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio, GLib, GdkPixbuf
+from gi.repository import Gtk, Gio, GLib, GdkPixbuf, Gdk
 
 from pydbus import SessionBus
 import yt_dlp
@@ -86,12 +86,29 @@ class ControlPanel(Gtk.Application):
         video_paths = self.config[CONFIG_KEY_DATA_SOURCE]
         for i in range(len(screens)):
             self.monitors.get_monitor_by_index(i).set_wallpaper(video_paths[i])
+        
+        self._setup_context_menu() # setup context menu for selecting monitors
 
     def _connect_server(self):
         try:
             self.server = SessionBus().get(DBUS_NAME_SERVER)
         except GLib.Error:
             logger.error("[GUI] Couldn't connect to server")
+    
+    def _setup_context_menu(self):
+        self.contextMenu_monitors = Gtk.Menu()
+        self.contextMenu_monitors.show_all()
+
+        
+        for i, monitor in enumerate(self.monitors.get_monitors()):
+            item = Gtk.MenuItem(label=f"Set For {monitor.name}")
+            item.connect("activate", self.on_set_as, i)
+            self.contextMenu_monitors.append(item)
+
+        # add all option
+        item = Gtk.MenuItem(label=f"Set For All")
+        item.connect("activate", self.on_set_as, len(self.monitors.get_monitors()) + 1)
+        self.contextMenu_monitors.append(item)
 
     def _load_config(self):
         self.config = ConfigUtil().load()
@@ -143,6 +160,11 @@ class ControlPanel(Gtk.Application):
                 "detect_maximized",
                 self.config[CONFIG_KEY_DETECT_MAXIMIZED],
                 self.on_detect_maximized,
+            ),
+            (
+                "muted_when_maximized",
+                self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED],
+                self.on_detect_mute_when_maximized,
             ),
         ]
 
@@ -214,26 +236,9 @@ class ControlPanel(Gtk.Application):
     def on_local_video_apply(self, *_):
         selected = self.icon_view.get_selected_items()
         if len(selected) != 0:
-            index = selected[0].get_indices()[0]
-            menu = Gtk.Menu()
-            items = []
-            for i, monitor in enumerate(self.monitors.get_monitors()):
-                item = Gtk.MenuItem(label=f"Set For {monitor.name}")
-                item.connect("activate", self.on_set_as, i, index)
-                menu.append(item)
-                items.append(item)
-
-            # add all option
-            item = Gtk.MenuItem(label=f"Set For All")
-            item.connect(
-                "activate", self.on_set_as, len(self.monitors.get_monitors()) + 1, index
-            )
-            menu.append(item)
-            items.append(item)
-
             # show menu
-            menu.show_all()
-            menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+            self.contextMenu_monitors.show_all()
+            self.contextMenu_monitors.popup(None, None, None, None, 0, Gtk.get_current_event_time())
         else:
             dialog = Gtk.MessageDialog(
                 parent=self.window,
@@ -248,7 +253,8 @@ class ControlPanel(Gtk.Application):
             dialog.run()
             dialog.destroy()
 
-    def on_set_as(self, widget, monitor, index):
+    def on_set_as(self, widget, monitor):
+        index = self.icon_view.get_selected_items()[0].get_indices()[0]
         video_path = self.video_paths[index]
         logger.info(f"[GUI] Local Video Set To {video_path} For Monitor {monitor}")
         self.config[CONFIG_KEY_MODE] = MODE_VIDEO
@@ -271,10 +277,10 @@ class ControlPanel(Gtk.Application):
 
         self.config[CONFIG_KEY_DATA_SOURCE] = paths
         self._save_config()
+        primary_monitor_index = self.monitors.get_primary_monitor_index()
         if self.server is not None:
-            self.server.video(
-                self.video_paths[0]
-            )  #! there is an proxy error if we send as list, but code works like that also
+            # we will set primary monitor because of voice.
+            self.server.video(self.video_paths[primary_monitor_index])  #! there is an proxy error if we send as list, but code works like that also
 
     def on_local_web_page_apply(self, *_):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
@@ -379,6 +385,14 @@ class ControlPanel(Gtk.Application):
         if self.server is not None:
             self.server.is_detect_maximized = self.config[CONFIG_KEY_DETECT_MAXIMIZED]
 
+    def on_detect_mute_when_maximized(self, action, state):
+        action.set_state(state)
+        self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] = bool(state)
+        logger.info(f"[GUI] {action.get_name()}: {state}")
+        self._save_config()
+        if self.server is not None:
+            self.server.is_muted_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
+
     def on_about(self, *_):
         try:
             self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
@@ -441,6 +455,18 @@ class ControlPanel(Gtk.Application):
         self._save_config()
         if self.server is not None:
             self.server.webpage(url)
+    
+    def on_icon_view_button_press(self, widget, event):
+        if event.button == Gdk.BUTTON_SECONDARY:  # Right click
+            path_info = widget.get_path_at_pos(event.x, event.y)
+            if path_info is not None:
+                tree_path = Gtk.TreePath(path_info[0])
+                self.icon_view.grab_focus()  
+                widget.select_path(tree_path)
+                self.contextMenu_monitors.show_all()
+                self.contextMenu_monitors.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+                return True 
+        return False
 
     def on_quit(self, *_):
         if self.server is not None:
@@ -483,6 +509,7 @@ class ControlPanel(Gtk.Application):
         self.icon_view.set_pixbuf_column(0)
         self.icon_view.set_text_column(1)
         self.icon_view.set_model(list_store)
+        self.icon_view.connect("button-press-event", self.on_icon_view_button_press)
         for idx, video_path in enumerate(self.video_paths):
             pixbuf = Gtk.IconTheme().get_default().load_icon("video-x-generic", 96, 0)
             list_store.append([pixbuf, os.path.basename(video_path)])

@@ -129,6 +129,21 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           </packing>
         </child>
         <child>
+          <object class="GtkModelButton" id="ToggleMuteWhenMaximized">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Automatically mutes playback when maximized window or full screen mode is detected</property>
+            <property name="action-name">app.muted_when_maximized</property>
+            <property name="text" translatable="yes">Mute when maximized window</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">4</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkSeparator">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
@@ -136,7 +151,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">4</property>
+            <property name="position">5</property>
           </packing>
         </child>
         <child>
@@ -152,7 +167,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">5</property>
+            <property name="position">6</property>
           </packing>
         </child>
         <child>
@@ -197,7 +212,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">6</property>
+            <property name="position">7</property>
           </packing>
         </child>
         <child>
@@ -213,7 +228,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">7</property>
+            <property name="position">8</property>
           </packing>
         </child>
         <child>
@@ -228,7 +243,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">8</property>
+            <property name="position">9</property>
           </packing>
         </child>
         <child>
@@ -239,7 +254,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">9</property>
+            <property name="position">10</property>
           </packing>
         </child>
         <child>
@@ -253,7 +268,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">10</property>
+            <property name="position">11</property>
           </packing>
         </child>
         <child>
@@ -267,7 +282,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">11</property>
+            <property name="position">12</property>
           </packing>
         </child>
         <child>
@@ -281,7 +296,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">12</property>
+            <property name="position">13</property>
           </packing>
         </child>
       </object>
