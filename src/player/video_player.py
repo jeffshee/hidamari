@@ -328,19 +328,20 @@ class VideoPlayer(BasePlayer):
         if self.mode == MODE_VIDEO:
             # Get the dimension of the video
             try:
-                dimension = subprocess.check_output([
-                    'ffprobe', '-v', 'error', '-select_streams', 'v:0',
-                    '-show_entries', 'stream=width,height', '-of',
-                    'csv=s=x:p=0', self.data_source
-                ], shell=False, encoding='UTF-8').replace('\n', '')
-                dimension = dimension.split("x")
-                video_width, video_height = int(
-                    dimension[0]), int(dimension[1])
+                for i in range(len(data_source)):
+                    dimension = subprocess.check_output([
+                        'ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                        '-show_entries', 'stream=width,height', '-of',
+                        'csv=s=x:p=0', self.data_source[i]
+                        ], shell=False, encoding='UTF-8').replace('\n', '')
+                    dimension = dimension.split("x")
+                    video_width, video_height = int(
+                        dimension[0]), int(dimension[1])
             except subprocess.CalledProcessError:
                 video_width, video_height = None, None
 
-            for monitor, window in self.windows.items():
-                media = window.media_new(data_source)
+            for i, (monitor, window) in enumerate(self.windows.items()):
+                media = window.media_new(data_source[i])
                 """
                 This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
                 based on reading, this probably only repeats 65535 times, which is still a lot of time, but might
