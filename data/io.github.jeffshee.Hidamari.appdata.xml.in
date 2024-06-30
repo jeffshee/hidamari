@@ -30,7 +30,7 @@
     <release version="3.5" date="2024-06-30" type="stable">
       <description>
         <ul>
-          <li>Update depedencies for Flatpak</li>
+          <li>Update dependencies for Flatpak</li>
         </ul>
       </description>
     </release>
