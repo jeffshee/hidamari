@@ -4,7 +4,7 @@
   <id>io.github.jeffshee.Hidamari</id>
   <name>Hidamari</name>
   <summary>Video wallpaper for Linux</summary>
-  <developer>
+  <developer id="io.github.jeffshee">
     <name>Jeff Shee</name>
   </developer>
   <metadata_license>CC0-1.0</metadata_license>
