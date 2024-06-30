@@ -6,14 +6,16 @@
 # Hidamari　ーひだまりー
 If you like my project, please consider buying me a coffee!! (⁎˃ ꇴ ˂⁎)ｯ
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jeffshee)
+[![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/jeffshee)
+[![Ko-Fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/jeffshee)
+[![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/jeffshee)
 
 Also please don't forget to click that star button! 🌟  
 Your support is truly appreciated!
 
 ## Join our Discord!
 
-[![](https://dcbadge.vercel.app/api/server/mP7yg4gX7g?compact=true)](https://discord.gg/mP7yg4gX7g)
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/mP7yg4gX7g)
 
 ## For GNOME user 🐾
 Please also check my new project [Hanabi](https://github.com/jeffshee/gnome-ext-hanabi)! While the project is still in its infancy, it has the potential to become more integrated with GNOME Shell
@@ -75,13 +77,6 @@ These are maintained by the community!
 ![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-1.png)
 ![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-2.png)
 ![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-3.png)
-
-<!-- TODO -->
-<!-- ## Demo 📽️
-
-Please click on the image to view <i>(redirect to YouTube)</i>
-
-[![](https://i3.ytimg.com/vi/GV_kL7g94nY/maxresdefault.jpg)](https://www.youtube.com/watch?v=GV_kL7g94nY) -->
 
 ## Please!! 🙏
 

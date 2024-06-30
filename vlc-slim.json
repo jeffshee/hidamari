@@ -64,36 +64,6 @@
             ]
         },
         {
-            "name": "gsm",
-            "no-autogen": true,
-            "build-options": {
-                "cflags": "-fPIC",
-                "cxxflags": "-c -fPIC"
-            },
-            "make-install-args": [
-                "-j1",
-                "INSTALL_ROOT=/app",
-                "GSM_INSTALL_INC=/app/include/gsm",
-                "GSM_INSTALL_MAN=/app/share/man/man3",
-                "TOAST_INSTALL_MAN=/app/share/man/man1"
-            ],
-            "sources": [
-                {
-                    "type": "archive",
-                    "url": "http://www.quut.com/gsm/gsm-1.0.17.tar.gz",
-                    "sha256": "855a57d1694941ddf3c73cb79b8d0b3891e9c9e7870b4981613b734e1ad07601"
-                },
-                {
-                    "type": "patch",
-                    "path": "libvlc/gsm.patch"
-                },
-                {
-                    "type": "patch",
-                    "path": "libvlc/gsm-makefile.patch"
-                }
-            ]
-        },
-        {
             "name": "libebml",
             "builddir": true,
             "buildsystem": "cmake-ninja",
@@ -105,8 +75,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://dl.matroska.org/downloads/libebml/libebml-1.4.4.tar.xz",
-                    "sha256": "82dc5f83356cc9340aee76ed7512210b3a4edf5f346bc9c2c7044f55052687a7"
+                    "url": "https://dl.matroska.org/downloads/libebml/libebml-1.4.5.tar.xz",
+                    "sha256": "4971640b0592da29c2d426f303e137a9b0b3d07e1b81d069c1e56a2f49ab221b"
                 }
             ]
         },
@@ -155,7 +125,7 @@
                 {
                     "type": "git",
                     "url": "https://code.videolan.org/videolan/x264.git",
-                    "commit": "baee400fa9ced6f5481a728138fed6e867b0ff7f"
+                    "commit": "a8b68ebfaa68621b5ac8907610d3335971839d52"
                 }
             ]
         },
@@ -172,8 +142,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://bitbucket.org/multicoreware/x265_git/downloads/x265_3.5.tar.gz",
-                    "sha256": "e70a3335cacacbba0b3a20ec6fecd6783932288ebc8163ad74bcc9606477cae8"
+                    "url": "https://bitbucket.org/multicoreware/x265_git/downloads/x265_3.6.tar.gz",
+                    "sha256": "663531f341c5389f460d730e62e10a4fcca3428ca2ca109693867bc5fe2e2807"
                 }
             ]
         },
@@ -183,8 +153,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://download.videolan.org/videolan/dav1d/1.1.0/dav1d-1.1.0.tar.xz",
-                    "sha256": "fb57aae7875f28c30fb3dbae4a3683d27e2f91dde09ce5c60c22cef9bc58dfd1"
+                    "url": "https://download.videolan.org/videolan/dav1d/1.4.2/dav1d-1.4.2.tar.xz",
+                    "sha256": "7392cf4c432734eebb383319b5e05e994bffdcdfe66f82287c38873601a4ef0b"
                 }
             ]
         },
@@ -206,8 +176,12 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://ffmpeg.org/releases/ffmpeg-4.4.3.tar.xz",
-                    "sha256": "6c5b6c195e61534766a0b5fe16acc919170c883362612816d0a1c7f4f947006e"
+                    "url": "https://ffmpeg.org/releases/ffmpeg-4.4.4.tar.xz",
+                    "sha256": "e80b380d595c809060f66f96a5d849511ef4a76a26b76eacf5778b94c3570309"
+                },
+                {
+                    "type": "patch",
+                    "path": "libvlc/ffmpeg_binutils241.patch"
                 }
             ]
         },
@@ -254,8 +228,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://github.com/Haivision/srt/archive/v1.5.1.tar.gz",
-                    "sha256": "af891e7a7ffab61aa76b296982038b3159da690f69ade7c119f445d924b3cf53"
+                    "url": "https://github.com/Haivision/srt/archive/v1.5.3.tar.gz",
+                    "sha256": "befaeb16f628c46387b898df02bc6fba84868e86a6f6d8294755375b9932d777"
                 }
             ]
         },
@@ -292,8 +266,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz",
-                    "sha256": "70de993af0b4f2ddacce59e62ba6d7b7e48faf48beb1b0d5f1ac0e1fb0a68423"
+                    "url": "https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz",
+                    "sha256": "4eab9b524aa5913c6fffb20b2a8abf5ef7f95a80bc0701f3a6dbb4c607f73460"
                 }
             ],
             "cleanup": [
@@ -362,9 +336,9 @@
             ],
             "sources": [
                 {
-                    "type": "git",
-                    "url": "https://code.videolan.org/videolan/vlc.git",
-                    "tag": "3.0.18"
+                    "type": "archive",
+                    "url": "https://download.videolan.org/videolan/vlc/3.0.21/vlc-3.0.21.tar.xz",
+                    "sha256": "24dbbe1d7dfaeea0994d5def0bbde200177347136dbfe573f5b6a4cee25afbb0"
                 },
                 {
                     "type": "patch",

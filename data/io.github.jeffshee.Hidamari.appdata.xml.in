@@ -1,11 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<component type="desktop">
-  <!--Created with jdAppStreamEdit 7.0-->
+<component type="desktop-application">
+  <!--Created with jdAppStreamEdit 9.1-->
   <id>io.github.jeffshee.Hidamari</id>
   <name>Hidamari</name>
   <summary>Video wallpaper for Linux</summary>
-  <developer_name>Jeff Shee</developer_name>
-  <launchable type="desktop-id">io.github.jeffshee.Hidamari.desktop</launchable>
+  <developer>
+    <name>Jeff Shee</name>
+  </developer>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
   <update_contact>jeffshee8969@gmail.com</update_contact>
@@ -26,6 +27,13 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="3.5" date="2024-06-30" type="stable">
+      <description>
+        <ul>
+          <li>Update dependencies for Flatpak</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.4" date="2023-08-20" type="stable">
       <description>
         <ul>
@@ -104,6 +112,7 @@
     <control>keyboard</control>
   </recommends>
   <content_rating type="oars-1.1"/>
+  <launchable type="desktop-id">io.github.jeffshee.Hidamari.desktop</launchable>
   <keywords>
     <keyword>Live Wallpaper</keyword>
     <keyword>Video Wallpaper</keyword>
