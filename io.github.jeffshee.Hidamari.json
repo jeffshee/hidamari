@@ -1,7 +1,7 @@
 {
     "app-id": "io.github.jeffshee.Hidamari",
     "runtime": "org.gnome.Platform",
-    "runtime-version": "44",
+    "runtime-version": "45",
     "sdk": "org.gnome.Sdk",
     "command": "hidamari",
     "finish-args": [
@@ -49,8 +49,8 @@
                 {
                     "type": "git",
                     "url": "https://gitlab.gnome.org/GNOME/gnome-desktop.git",
-                    "commit": "c3e756b28ddfeda0fa061d51cb11e47e09791770",
-                    "tag": "42.0"
+                    "commit": "97c0344b3ba955bb6f6fe74ca03cc399a81acaa5",
+                    "tag": "44.0"
                 }
             ]
         },
@@ -91,8 +91,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://download.gnome.org/sources/libwnck/40/libwnck-40.0.tar.xz",
-                    "sha256": "30cb79a839f90cd66f3e202f3f98cb5166fa0cd9b92eb571ad9c470a43021d83"
+                    "url": "https://download.gnome.org/sources/libwnck/43/libwnck-43.0.tar.xz",
+                    "sha256": "905bcdb85847d6b8f8861e56b30cd6dc61eae67ecef4cd994a9f925a26a2c1fe"
                 }
             ]
         },
@@ -130,8 +130,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://gitlab.freedesktop.org/vdpau/vdpauinfo/-/archive/1.4/vdpauinfo-1.4.tar.gz",
-                    "sha256": "52377604a4f27afdee67c85b62b66457a981747009c839953d3fba5c4c89cb66"
+                    "url": "https://gitlab.freedesktop.org/vdpau/vdpauinfo/-/archive/1.5/vdpauinfo-1.5.tar.gz",
+                    "sha256": "1878d54f6732d02cedef8eabe77e23fc2239b4ec202612403a383f4140a17bc3"
                 }
             ]
         },
@@ -139,14 +139,13 @@
             "name": "libportal",
             "buildsystem": "meson",
             "config-opts": [
-                "-Dbackends=gtk3",
                 "-Ddocs=false"
             ],
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://github.com/flatpak/libportal/releases/download/0.6/libportal-0.6.tar.xz",
-                    "sha256": "88a12c3ba71bc31acff7238c280de697d609cebc50830c3766776ec35abc6566",
+                    "url": "https://github.com/flatpak/libportal/releases/download/0.7.1/libportal-0.7.1.tar.xz",
+                    "sha256": "297b90b263fad22190a26b8c7e8ea938fe6b18fb936265e588927179920d3805",
                     "x-checker-data": {
                         "type": "json",
                         "url": "https://api.github.com/repos/flatpak/libportal/releases/latest",
@@ -163,7 +162,7 @@
             "sources": [
                 {
                     "type": "git",
-                    "url": "file:///home/jeffshee/Developer/Linux/Hidamari"
+                    "url": "file:///home/jeffshee/Dev/hidamari"
                 }
             ]
         }

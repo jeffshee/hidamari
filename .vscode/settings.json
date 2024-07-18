@@ -12,13 +12,13 @@
         ".flatpak/**": true,
         "_build/**": true
     },
-    "mesonbuild.configureOnOpen": false,
-    "mesonbuild.buildFolder": "_build",
-    "mesonbuild.mesonPath": "${workspaceFolder}/.flatpak/meson.sh",
     "grammarly.selectors": [
         {
             "language": "markdown",
             "scheme": "file"
         }
-    ]
+    ],
+    "mesonbuild.configureOnOpen": false,
+    "mesonbuild.buildFolder": "_build",
+    "mesonbuild.mesonPath": "${workspaceFolder}/.flatpak/meson.sh"
 }
