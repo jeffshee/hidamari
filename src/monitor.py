@@ -8,7 +8,7 @@ class Monitor:
         self.width = width
         self.height = height
         self.wallpaper = wallpaper
-        self.primary = is_primary
+        self.is_primary = is_primary
         self.x = x
         self.y = y
         self.name = name
@@ -17,7 +17,7 @@ class Monitor:
         self.wallpaper = wallpaper
 
     def __str__(self):
-        return f"Monitor(name={self.name}, x={self.x}, y={self.y}, width={self.width}, height={self.height}, primary={self.primary}, wallpaper={self.wallpaper})"
+        return f"Monitor(name={self.name}, x={self.x}, y={self.y}, width={self.width}, height={self.height}, is_primary={self.is_primary}, wallpaper={self.wallpaper})"
 
 
 class MonitorInfo:
@@ -72,15 +72,15 @@ class Monitors:
         return self.monitors[key]
 
     def get_primary_monitor(self):
-        for monitor in self.monitors:
-            if monitor.primary:
+        for (model, monitor) in self.monitors.items():
+            if monitor.is_primary:
                 return monitor
 
         return self.monitors.items[0]
 
     def get_primary_monitor_index(self):
-        for i, monitor in enumerate(self.monitors):
-            if monitor.primary:
+        for i, (model, monitor) in enumerate(self.monitors.items()):
+            if monitor.is_primary:
                 return i
 
         return 0

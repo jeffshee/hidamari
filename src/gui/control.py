@@ -73,6 +73,7 @@ class ControlPanel(Gtk.Application):
         self.server = None
         self.icon_view = None
         self.video_paths = None
+        self.all_key = "all"
 
         self.is_autostart = os.path.isfile(AUTOSTART_DESKTOP_PATH)
 
@@ -81,12 +82,11 @@ class ControlPanel(Gtk.Application):
 
         # initialize monitors
         self.monitors = Monitors()
-        screens = self.monitors.get_monitors()
         # get video paths
         video_paths = self.config[CONFIG_KEY_DATA_SOURCE]
-        for i in range(len(screens)):
-            self.monitors.get_monitor_by_index(i).set_wallpaper(video_paths[i])
-        
+        for monitor in self.monitors.get_monitors():
+            self.monitors.get_monitor(monitor).set_wallpaper(video_paths[monitor])
+
         self._setup_context_menu() # setup context menu for selecting monitors
 
     def _connect_server(self):
@@ -101,13 +101,13 @@ class ControlPanel(Gtk.Application):
 
         
         for i, monitor in enumerate(self.monitors.get_monitors()):
-            item = Gtk.MenuItem(label=f"Set For {monitor.name}")
-            item.connect("activate", self.on_set_as, i)
+            item = Gtk.MenuItem(label=f"Set For {monitor}")
+            item.connect("activate", self.on_set_as, monitor)
             self.contextMenu_monitors.append(item)
 
         # add all option
         item = Gtk.MenuItem(label=f"Set For All")
-        item.connect("activate", self.on_set_as, len(self.monitors.get_monitors()) + 1)
+        item.connect("activate", self.on_set_as, self.all_key)
         self.contextMenu_monitors.append(item)
 
     def _load_config(self):
@@ -259,28 +259,21 @@ class ControlPanel(Gtk.Application):
         logger.info(f"[GUI] Local Video Set To {video_path} For Monitor {monitor}")
         self.config[CONFIG_KEY_MODE] = MODE_VIDEO
         paths = self.config[CONFIG_KEY_DATA_SOURCE] if not None else []
-
         # all option
-        if monitor == len(paths) + 1:
+        if monitor == self.all_key:
             for i in range(len(paths)):
                 paths[i] = video_path
-                self.monitors.get_monitor_by_index(i).set_wallpaper(video_path)
-        elif len(paths) < monitor:
-            raise Exception("Index cannot be greater than path size")
-            return
-        elif monitor < 0:
-            raise Exception("Index cannot be lower than 0")
-            return
+                self.monitors.get_monitor(monitor).set_wallpaper(video_path)
         else:
             paths[monitor] = video_path
-            self.monitors.get_monitor_by_index(monitor).set_wallpaper(video_path)
+            self.monitors.get_monitor(monitor).set_wallpaper(video_path)
 
         self.config[CONFIG_KEY_DATA_SOURCE] = paths
         self._save_config()
-        primary_monitor_index = self.monitors.get_primary_monitor_index()
+        primary_monitor = self.monitors.get_primary_monitor_index()
         if self.server is not None:
             # we will set primary monitor because of voice.
-            self.server.video(self.video_paths[primary_monitor_index])  #! there is an proxy error if we send as list, but code works like that also
+            self.server.video(video_path)  #! there is an proxy error if we send as list, but code works like that also
 
     def on_local_web_page_apply(self, *_):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")

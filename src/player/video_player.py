@@ -98,11 +98,12 @@ class VLCWidget(Gtk.DrawingArea):
 
 
 class PlayerWindow(Gtk.ApplicationWindow):
-    def __init__(self, width, height, *args, **kwargs):
+    def __init__(self, name, width, height, *args, **kwargs):
         super(PlayerWindow, self).__init__(*args, **kwargs)
         # Setup a VLC widget given the provided width and height.
         self.width = width
         self.height = height
+        self.name = name
         self.__vlc_widget = VLCWidget(width, height)
         self.add(self.__vlc_widget)
         self.__vlc_widget.show()
@@ -208,6 +209,9 @@ class PlayerWindow(Gtk.ApplicationWindow):
             return True
         return False
 
+    def get_name(self):
+        return self.name
+
 
 class VideoPlayer(BasePlayer):
     """
@@ -277,7 +281,7 @@ class VideoPlayer(BasePlayer):
 
     def new_window(self, gdk_monitor):
         rect = gdk_monitor.get_geometry()
-        return PlayerWindow(rect.width, rect.height, application=self)
+        return PlayerWindow(gdk_monitor.get_model(), rect.width, rect.height, application=self)
 
     def do_activate(self):
         super().do_activate()
@@ -333,21 +337,23 @@ class VideoPlayer(BasePlayer):
 
         if self.mode == MODE_VIDEO:
             # Get the dimension of the video
+            video_width, video_height = {}, {}
             try:
-                for i in range(len(data_source)):
+                for monitor,video in data_source.items():
                     dimension = subprocess.check_output([
                         'ffprobe', '-v', 'error', '-select_streams', 'v:0',
                         '-show_entries', 'stream=width,height', '-of',
-                        'csv=s=x:p=0', self.data_source[i]
+                        'csv=s=x:p=0', video
                         ], shell=False, encoding='UTF-8').replace('\n', '')
                     dimension = dimension.split("x")
-                    video_width, video_height = int(
-                        dimension[0]), int(dimension[1])
+                    video_width[monitor] = int(dimension[0])
+                    video_height[monitor] = int(dimension[1])
             except subprocess.CalledProcessError:
-                video_width, video_height = None, None
-
-            for i, (monitor, window) in enumerate(self.windows.items()):
-                media = window.media_new(data_source[i])
+                video_width[monitor] = None
+                video_height[monitor] = None
+            
+            for (monitor, window) in self.windows.items():
+                media = window.media_new(data_source[monitor.get_model()])
                 """
                 This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
                 based on reading, this probably only repeats 65535 times, which is still a lot of time, but might
@@ -359,7 +365,7 @@ class VideoPlayer(BasePlayer):
                     media.add_option("no-audio")
                 window.set_media(media)
                 window.set_position(0.0)
-                window.centercrop(video_width, video_height)
+                window.centercrop(video_width[monitor.get_model()], video_height[monitor.get_model()])
 
         elif self.mode == MODE_STREAM:
             formats = get_formats(data_source)
