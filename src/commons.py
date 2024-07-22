@@ -83,8 +83,13 @@ try:
 except ModuleNotFoundError:
     from hidamari.monitor import Monitor, Monitors, MonitorInfo
 
-# get monitor size
+# initialize config according to monitors
 info = MonitorInfo()
-count = info.get_unique_monitor_count()
-data_sources = [""] * count  # set empty strings in config as unique monitor count
+monitors = info.monitors()
+data_sources = {}
+# create an 
+for monitor in monitors:
+    data_sources[monitor['name']] = ""
+data_sources['default'] = ""
+
 CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE] = data_sources
