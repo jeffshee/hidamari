@@ -4,7 +4,7 @@ from gi.repository import Gdk
 
 
 class Monitor:
-    def __init__(self, name, width, height, x, y, is_primary, wallpaper=None):
+    def __init__(self, name, width=0, height=0, x=0, y=0, is_primary=False, wallpaper=None):
         self.width = width
         self.height = height
         self.wallpaper = wallpaper
@@ -55,8 +55,9 @@ class MonitorInfo:
 
 class Monitors:
     def __init__(self):
-        self.monitors = [
-            Monitor(
+        self.monitors = {}
+        for monitor in MonitorInfo.monitors():
+            self.monitors[monitor['name']] = Monitor(
                 name=monitor['name'],
                 width=monitor['width'],
                 height=monitor['height'],
@@ -64,21 +65,18 @@ class Monitors:
                 y=monitor['y'],
                 is_primary=monitor['is_primary']
             )
-            for monitor in MonitorInfo.monitors()
-        ]        
+        # we should create default monitor
+        self.monitors['default'] = Monitor(name='default',width=0)
 
-    def get_monitor_by_index(self, index):
-        if 0 <= index < len(self.monitors):
-            return self.monitors[index]
-        else:
-            return None
+    def get_monitor(self, key):
+        return self.monitors[key]
 
     def get_primary_monitor(self):
         for monitor in self.monitors:
             if monitor.primary:
                 return monitor
 
-        return self.monitors[0]
+        return self.monitors.items[0]
 
     def get_primary_monitor_index(self):
         for i, monitor in enumerate(self.monitors):
