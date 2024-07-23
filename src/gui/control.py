@@ -261,9 +261,9 @@ class ControlPanel(Gtk.Application):
         paths = self.config[CONFIG_KEY_DATA_SOURCE] if not None else []
         # all option
         if monitor == self.all_key:
-            for i in range(len(paths)):
-                paths[i] = video_path
-                self.monitors.get_monitor(monitor).set_wallpaper(video_path)
+            for name,monitor in self.monitors.get_monitors().items():
+                paths[name] = video_path
+                monitor.set_wallpaper(video_path)
         else:
             paths[monitor] = video_path
             self.monitors.get_monitor(monitor).set_wallpaper(video_path)
