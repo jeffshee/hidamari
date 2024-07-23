@@ -397,6 +397,15 @@ class ConfigUtil:
         logger.debug(f"[Config] Invalid. A new config will be generated.")
         self.generate_template()
         return CONFIG_TEMPLATE
+        
+    def _migrateV3To4(self, config: dict):
+        logger.debug(f"[Config] Migration from version 3 to 4.")
+        curr_data_source = config['data_source']
+        config['data_source'] = CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE]
+        config['data_source']['default'] = curr_data_source
+        config['version'] = 4
+        # save config file
+        self.save(config)
 
     def load(self):
         if os.path.isfile(CONFIG_PATH):
@@ -404,6 +413,9 @@ class ConfigUtil:
                 json_str = f.read()
                 try:
                     config = json.loads(json_str)
+                    # migration to version 4 for data_source type change
+                    if config.get("version") <= 3 and CONFIG_VERSION >= 4:
+                        self._migrateV3To4(config)
                     if self._check(config):
                         logs = []
                         logs.append("--------- Config ---------")
