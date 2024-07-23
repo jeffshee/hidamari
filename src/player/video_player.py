@@ -340,6 +340,9 @@ class VideoPlayer(BasePlayer):
             video_width, video_height = {}, {}
             try:
                 for monitor,video in data_source.items():
+                    # fallback to Default video
+                    if len(video) == 0:
+                        video = data_source['Default']
                     dimension = subprocess.check_output([
                         'ffprobe', '-v', 'error', '-select_streams', 'v:0',
                         '-show_entries', 'stream=width,height', '-of',
@@ -349,11 +352,14 @@ class VideoPlayer(BasePlayer):
                     video_width[monitor] = int(dimension[0])
                     video_height[monitor] = int(dimension[1])
             except subprocess.CalledProcessError:
-                video_width[monitor] = None
-                video_height[monitor] = None
-            
+                for monitor, video in data_source.items():
+                    video_width.setdefault(monitor, None)
+                    video_height.setdefault(monitor, None)
+                    
             for (monitor, window) in self.windows.items():
-                media = window.media_new(data_source[monitor.get_model()])
+                source = data_source['Default'] if data_source[monitor.get_model()] == "" else  data_source[monitor.get_model()]
+                logger.info(f"Setting source {source} to {monitor.get_model()}")
+                media = window.media_new(source)
                 """
                 This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
                 based on reading, this probably only repeats 65535 times, which is still a lot of time, but might

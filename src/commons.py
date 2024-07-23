@@ -90,6 +90,6 @@ data_sources = {}
 # create an 
 for monitor in monitors:
     data_sources[monitor['name']] = ""
-data_sources['default'] = ""
+data_sources['Default'] = ""
 
 CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE] = data_sources

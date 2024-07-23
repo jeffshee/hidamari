@@ -402,7 +402,7 @@ class ConfigUtil:
         logger.debug(f"[Config] Migration from version 3 to 4.")
         curr_data_source = config['data_source']
         config['data_source'] = CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE]
-        config['data_source']['default'] = curr_data_source
+        config['data_source']['Default'] = curr_data_source
         config['version'] = 4
         # save config file
         self.save(config)
