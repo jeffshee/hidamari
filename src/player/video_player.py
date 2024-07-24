@@ -357,7 +357,7 @@ class VideoPlayer(BasePlayer):
                     video_height.setdefault(monitor, None)
                     
             for (monitor, window) in self.windows.items():
-                source = data_source['Default'] if data_source[monitor.get_model()] == "" else  data_source[monitor.get_model()]
+                source = data_source[monitor.get_model()] if monitor.get_model() in data_source and len(data_source[monitor.get_model()]) != 0 else data_source['Default']
                 logger.info(f"Setting source {source} to {monitor.get_model()}")
                 media = window.media_new(source)
                 """
@@ -371,7 +371,10 @@ class VideoPlayer(BasePlayer):
                     media.add_option("no-audio")
                 window.set_media(media)
                 window.set_position(0.0)
-                window.centercrop(video_width[monitor.get_model()], video_height[monitor.get_model()])
+                if monitor.get_model() not in data_source or len(data_source[monitor.get_model()]) == 0:
+                    window.centercrop(video_width['Default'], video_height['Default'])
+                else:                
+                    window.centercrop(video_width[monitor.get_model()], video_height[monitor.get_model()])
 
         elif self.mode == MODE_STREAM:
             formats = get_formats(data_source)

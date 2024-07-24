@@ -406,7 +406,43 @@ class ConfigUtil:
         config['version'] = 4
         # save config file
         self.save(config)
+        
+    def _checkMissingMonitors(self, old_config: dict, template: dict):
+         # Extract the monitors from both configurations
+        old_monitors = old_config.get("data_source", {}).keys()
+        template_monitors = template.get("data_source", {}).keys()
+        # Find monitors in the template that are not in the old configuration
+        missing_monitors = set(template_monitors) - set(old_monitors)
+        if len(missing_monitors) > 0:
+            logger.warning(f"[Config] There are missing {len(missing_monitors)} monitors in config. Creating default one")
+            self._createMissingMonitors(missing_monitors, old_config)
+    
+    def _createMissingMonitors(self, keys: set, config: dict):
+        # we will set to Default new monitor sources
+        for key in keys:
+            config['data_source'][key] = config['data_source']['Default']
+        self.save(config)
+        
+    def _checkDefaultSource(self, config: dict):
+        # Check if the 'Default' source is empty
+        default_source = config['data_source'].get('Default', '')
 
+        if not default_source:
+            logger.warning("[Config] Default source is empty. Setting to the first one available.")
+            
+            # Get all values from the 'data_source' dictionary
+            values = list(config['data_source'].values())
+            # If there are no values in 'data_source', return early
+            if not values:
+                return
+            
+            # Set the 'Default' source to the first value available
+            for value in values:
+                if len(value) > 0: 
+                    first_val = value
+            config['data_source']['Default'] = first_val
+            self.save(config)
+            
     def load(self):
         if os.path.isfile(CONFIG_PATH):
             with open(CONFIG_PATH, "r") as f:
@@ -416,6 +452,8 @@ class ConfigUtil:
                     # migration to version 4 for data_source type change
                     if config.get("version") <= 3 and CONFIG_VERSION >= 4:
                         self._migrateV3To4(config)
+                    self._checkDefaultSource(config)
+                    self._checkMissingMonitors(config, CONFIG_TEMPLATE)
                     if self._check(config):
                         logs = []
                         logs.append("--------- Config ---------")
