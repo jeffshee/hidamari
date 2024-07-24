@@ -85,7 +85,11 @@ class ControlPanel(Gtk.Application):
         # get video paths
         video_paths = self.config[CONFIG_KEY_DATA_SOURCE]
         for monitor in self.monitors.get_monitors():
-            self.monitors.get_monitor(monitor).set_wallpaper(video_paths[monitor])
+            # check if monitor exists in paths
+            if monitor in video_paths:
+                self.monitors.get_monitor(monitor).set_wallpaper(video_paths[monitor])
+            else:
+                self.monitors.get_monitor(monitor).set_wallpaper(video_paths['Default'])
 
         self._setup_context_menu() # setup context menu for selecting monitors
 
