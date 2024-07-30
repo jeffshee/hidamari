@@ -440,9 +440,10 @@ class ConfigUtil:
             for value in values:
                 if len(value) > 0: 
                     first_val = value
-            config['data_source']['Default'] = first_val
-            self.save(config)
-            
+                    config['data_source']['Default'] = first_val
+                    self.save(config)
+                    break
+                    
     def load(self):
         if os.path.isfile(CONFIG_PATH):
             with open(CONFIG_PATH, "r") as f:
