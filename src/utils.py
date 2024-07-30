@@ -408,7 +408,7 @@ class ConfigUtil:
         self.save(config)
         
     def _checkMissingMonitors(self, old_config: dict, template: dict):
-         # Extract the monitors from both configurations
+        # Extract the monitors from both configurations
         old_monitors = old_config.get("data_source", {}).keys()
         template_monitors = template.get("data_source", {}).keys()
         # Find monitors in the template that are not in the old configuration
@@ -426,9 +426,9 @@ class ConfigUtil:
     def _checkDefaultSource(self, config: dict):
         # Check if the 'Default' source is empty
         default_source = config['data_source'].get('Default', '')
-
-        if not default_source:
-            logger.warning("[Config] Default source is empty. Setting to the first one available.")
+        mode = config.get('mode')
+        if mode == MODE_VIDEO and not os.path.isfile(default_source):
+            logger.warning("[Config] Default source is empty or not a valid file. Setting to the first on available.")
             
             # Get all values from the 'data_source' dictionary
             values = list(config['data_source'].values())
@@ -438,9 +438,8 @@ class ConfigUtil:
             
             # Set the 'Default' source to the first value available
             for value in values:
-                if len(value) > 0: 
-                    first_val = value
-                    config['data_source']['Default'] = first_val
+                if len(value) > 0 and os.path.isfile(value):
+                    config['data_source']['Default'] = value
                     self.save(config)
                     break
                     

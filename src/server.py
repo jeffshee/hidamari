@@ -15,6 +15,7 @@ try:
     from player.web_player import main as web_player_main
     from gui.control import main as gui_main
     from menu import show_systray_icon
+    from monitor import *
     from utils import ConfigUtil, EndSessionHandler, get_video_paths
 except ModuleNotFoundError:
     from hidamari.commons import *
@@ -23,6 +24,7 @@ except ModuleNotFoundError:
     from hidamari.gui.control import main as gui_main
     from hidamari.menu import show_systray_icon
     from hidamari.utils import ConfigUtil, EndSessionHandler, get_video_paths
+    from hidamari.monitor import *
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
@@ -107,14 +109,16 @@ class HidamariServer(object):
     def _save_config(self):
         ConfigUtil().save(self.config)
 
-    def _setup_player(self, mode, data_source=None):
+    def _setup_player(self, mode, data_source=None, monitor=None):
         """Setup and run player"""
         logger.info(f"[Mode] {mode}")
         self.config[CONFIG_KEY_MODE] = mode
 
         # Set data source if specified
-        if data_source:
-            self.config[CONFIG_KEY_DATA_SOURCE] = data_source
+        if data_source and monitor:
+            self.config[CONFIG_KEY_DATA_SOURCE][monitor] = data_source
+        elif data_source:
+            self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source
 
         # Quit current then create a new player
         self._quit_player()
@@ -155,8 +159,8 @@ class HidamariServer(object):
         if player:
             player.quit_player()
 
-    def video(self, video_path=None):
-        self._setup_player(MODE_VIDEO, video_path)
+    def video(self, video_path=None, monitor=None):
+        self._setup_player(MODE_VIDEO, video_path, monitor)
 
     def stream(self, stream_url=None):
         self._setup_player(MODE_STREAM, stream_url)
@@ -190,15 +194,17 @@ class HidamariServer(object):
 
     def feeling_lucky(self):
         """Random play a video from the directory"""
-        file_list = get_video_paths()
-        # Remove current data source from the random selection
-        if self.config[CONFIG_KEY_DATA_SOURCE] in file_list:
-            file_list.remove(self.config[CONFIG_KEY_DATA_SOURCE])
-        if file_list:
-            video_path = random.choice(file_list)
-            self.config[CONFIG_KEY_MODE] = MODE_VIDEO
-            self.config[CONFIG_KEY_DATA_SOURCE] = video_path
-            self._save_config()
+        monitors = Monitors().get_monitors()
+        for monitor in monitors:
+            file_list = get_video_paths()   
+            # Remove current data source from the random selection
+            if self.config[CONFIG_KEY_DATA_SOURCE][monitor] in file_list:
+                file_list.remove(self.config[CONFIG_KEY_DATA_SOURCE][monitor])
+            if file_list:
+                video_path = random.choice(file_list)
+                self.config[CONFIG_KEY_MODE] = MODE_VIDEO
+                self.config[CONFIG_KEY_DATA_SOURCE][monitor] = video_path
+                self._save_config()
             self.video(video_path)
 
     def show_gui(self):
@@ -317,7 +323,6 @@ def get_instance(dbus_name):
     except GLib.Error:
         return None
     return instance
-
 
 def main(version, pkgdatadir, localedir, args):
     server = get_instance(DBUS_NAME_SERVER)
