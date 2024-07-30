@@ -102,9 +102,8 @@ class ControlPanel(Gtk.Application):
     def _setup_context_menu(self):
         self.contextMenu_monitors = Gtk.Menu()
         self.contextMenu_monitors.show_all()
-
         
-        for i, monitor in enumerate(self.monitors.get_monitors()):
+        for monitor in self.monitors.get_monitors():
             item = Gtk.MenuItem(label=f"Set For {monitor}")
             item.connect("activate", self.on_set_as, monitor)
             self.contextMenu_monitors.append(item)
@@ -274,10 +273,8 @@ class ControlPanel(Gtk.Application):
 
         self.config[CONFIG_KEY_DATA_SOURCE] = paths
         self._save_config()
-        primary_monitor = self.monitors.get_primary_monitor_index()
         if self.server is not None:
-            # we will set primary monitor because of voice.
-            self.server.video(video_path)  #! there is an proxy error if we send as list, but code works like that also
+            self.server.video(video_path)
 
     def on_local_web_page_apply(self, *_):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
@@ -288,7 +285,7 @@ class ControlPanel(Gtk.Application):
         file_path = choose.get_path()
         logger.info(f"[GUI] Local Webpage: {file_path}")
         self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
-        self.config[CONFIG_KEY_DATA_SOURCE] = file_path
+        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = file_path #! we dont want to break the config, webpage and stream modes will kept in Default source
         self._save_config()
         if self.server is not None:
             self.server.webpage(choose.get_path())
@@ -437,7 +434,7 @@ class ControlPanel(Gtk.Application):
             return
         logger.info(f"[GUI] Streaming: {url}")
         self.config[CONFIG_KEY_MODE] = MODE_STREAM
-        self.config[CONFIG_KEY_DATA_SOURCE] = url
+        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = url #! we dont want to break the config, webpage and stream modes will kept in Default source
         self._save_config()
         if self.server is not None:
             self.server.stream(url)
@@ -448,7 +445,7 @@ class ControlPanel(Gtk.Application):
             return
         logger.info(f"[GUI] Webpage: {url}")
         self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
-        self.config[CONFIG_KEY_DATA_SOURCE] = url
+        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = url #! we dont want to break the config, webpage and stream modes will kept in Default source
         self._save_config()
         if self.server is not None:
             self.server.webpage(url)

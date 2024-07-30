@@ -377,7 +377,8 @@ class VideoPlayer(BasePlayer):
                     window.centercrop(video_width[monitor.get_model()], video_height[monitor.get_model()])
 
         elif self.mode == MODE_STREAM:
-            formats = get_formats(data_source)
+            source = data_source['Default']
+            formats = get_formats(source)
             max_height = max(
                 self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
             video_url, video_width, video_height = get_optimal_video(
