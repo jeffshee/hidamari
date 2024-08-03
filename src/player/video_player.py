@@ -501,7 +501,7 @@ class VideoPlayer(BasePlayer):
         try:
             duration = float(subprocess.check_output([
                 'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-                '-of', 'default=noprint_wrappers=1:nokey=1', self.data_source
+                '-of', 'default=noprint_wrappers=1:nokey=1', self.data_source['Default']
             ], shell = False))
         except subprocess.CalledProcessError:
             duration = 0
@@ -511,7 +511,7 @@ class VideoPlayer(BasePlayer):
         static_wallpaper_path = os.path.join(
             CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
         ret = subprocess.run([
-            'ffmpeg', '-y', '-ss', ss, '-i', self.data_source,
+            'ffmpeg', '-y', '-ss', ss, '-i', self.data_source['Default'],
             '-vframes', '1', static_wallpaper_path
         ], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         if ret.returncode == 0 and os.path.isfile(static_wallpaper_path):
