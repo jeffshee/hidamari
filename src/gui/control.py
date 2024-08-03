@@ -160,14 +160,14 @@ class ControlPanel(Gtk.Application):
                 self.on_static_wallpaper,
             ),
             (
-                "detect_maximized",
-                self.config[CONFIG_KEY_DETECT_MAXIMIZED],
-                self.on_detect_maximized,
+                "pause_when_maximized",
+                self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED],
+                self.on_pause_when_maximized,
             ),
             (
-                "muted_when_maximized",
+                "mute_when_maximized",
                 self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED],
-                self.on_detect_mute_when_maximized,
+                self.on_mute_when_maximized,
             ),
         ]
 
@@ -179,7 +179,8 @@ class ControlPanel(Gtk.Application):
             self.add_action(action)
 
         if is_wayland():
-            self.builder.get_object("ToggleDetectMaximized").set_visible(False)
+            self.builder.get_object("TogglePauseWhenMaximized").set_visible(False)
+            self.builder.get_object("ToggleMuteWhenMaximized").set_visible(False)
 
         if not is_gnome():
             # Disable static wallpaper functionality for non-GNOME DE
@@ -371,21 +372,21 @@ class ControlPanel(Gtk.Application):
             self.server.is_static_wallpaper = self.config[CONFIG_KEY_STATIC_WALLPAPER]
         self.set_spin_blur_radius_sensitive()
 
-    def on_detect_maximized(self, action, state):
+    def on_pause_when_maximized(self, action, state):
         action.set_state(state)
-        self.config[CONFIG_KEY_DETECT_MAXIMIZED] = bool(state)
+        self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] = bool(state)
         logger.info(f"[GUI] {action.get_name()}: {state}")
         self._save_config()
         if self.server is not None:
-            self.server.is_detect_maximized = self.config[CONFIG_KEY_DETECT_MAXIMIZED]
+            self.server.is_pause_when_maximized = self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]
 
-    def on_detect_mute_when_maximized(self, action, state):
+    def on_mute_when_maximized(self, action, state):
         action.set_state(state)
         self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] = bool(state)
         logger.info(f"[GUI] {action.get_name()}: {state}")
         self._save_config()
         if self.server is not None:
-            self.server.is_muted_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
+            self.server.is_mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
 
     def on_about(self, *_):
         try:
