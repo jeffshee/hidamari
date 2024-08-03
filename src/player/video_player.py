@@ -145,6 +145,12 @@ class PlayerWindow(Gtk.ApplicationWindow):
         self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume,
                         complete_callback=self.pause)
 
+    def volume_fade(self, target, fade_duration_sec, fade_interval):
+        cur = self.get_volume()
+        step = (target - cur) / (fade_duration_sec / fade_interval)
+        self.fade.cancel()
+        self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume)
+
     def media_new(self, *args):
         return self.__vlc_widget.instance.media_new(*args)
 
@@ -223,7 +229,6 @@ class VideoPlayer(BasePlayer):
         <property name="is_mute" type="b" access="readwrite"/>
         <property name="is_playing" type="b" access="read"/>
         <property name="is_paused_by_user" type="b" access="readwrite"/>
-        <property name="mute_when_maximized" type="b" access="readwrite"/>
         <method name='reload_config'/>
         <method name='pause_playback'/>
         <method name='start_playback'/>
@@ -276,8 +281,6 @@ class VideoPlayer(BasePlayer):
         self.active_handler, self.window_handler = None, None
         self.is_any_maximized, self.is_any_fullscreen = False, False
         self.is_paused_by_user = False
-        self.mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
-        self._stateOf_mute_when_maximized = True
 
     def new_window(self, gdk_monitor):
         rect = gdk_monitor.get_geometry()
@@ -301,27 +304,31 @@ class VideoPlayer(BasePlayer):
                 self.pause_playback()
 
     def _on_window_state_changed(self, state):
-        self.is_any_maximized, self.is_any_fullscreen = state[
-            "is_any_maximized"], state["is_any_fullscreen"]
-        if not self.config[CONFIG_KEY_DETECT_MAXIMIZED]:
-            self.mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] # call again to mute if window state requires mute
-            return
-        if self._should_playback_start():
-            self.start_playback()
-        else:
-            self.pause_playback()
-        
-        self.mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] # call again to mute if window state requires mute
+        self.is_any_maximized, self.is_any_fullscreen = state["is_any_maximized"], state["is_any_fullscreen"]
+        logger.info(f"is_any_maximized: {self.is_any_maximized}, is_any_fullscreen: {self.is_any_fullscreen}")
+
+        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]:
+            if self._should_playback_start():
+                self.start_playback()
+            else:
+                self.pause_playback()
+        elif self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]:
+            for monitor, window in self.windows.items():
+                if not monitor.is_primary():
+                    continue
+                if self.is_any_fullscreen or self.is_any_maximized:
+                    window.volume_fade(target=0, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+                else:
+                    window.volume_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
         
     def _should_playback_start(self):
-        result = True
-        if self.config[CONFIG_KEY_DETECT_MAXIMIZED] and self.is_any_maximized:
-            result = False
-        if self.is_any_fullscreen:
-            result = False
+        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] and (self.is_any_maximized or self.is_any_fullscreen):
+            return False
         if self.is_paused_by_user:
-            result = False
-        return result
+            return False
+        return True
 
     @property
     def mode(self):
@@ -426,27 +433,6 @@ class VideoPlayer(BasePlayer):
                 self.windows[monitor].set_volume(volume)
 
     @property
-    def mute_when_maximized(self):
-        return self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
-
-    @mute_when_maximized.setter
-    def mute_when_maximized(self, maximized):
-        state = maximized and (self.is_any_fullscreen or self.is_any_maximized)
-        if hasattr(self, '_stateOf_mute_when_maximized'):
-            if state == self._stateOf_mute_when_maximized:
-                return
-        self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] = maximized
-        for monitor, window in self.windows.items():
-            if window and monitor.is_primary():
-                if maximized and (self.is_any_fullscreen or self.is_any_maximized):
-                    window.play_fade(target=0, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
-                else:
-                    window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
-        self._stateOf_mute_when_maximized = maximized and (self.is_any_fullscreen or self.is_any_maximized)
-
-    @property
     def is_mute(self):
         return self.config[CONFIG_KEY_MUTE]
 
@@ -469,12 +455,8 @@ class VideoPlayer(BasePlayer):
     def start_playback(self):
         if self._should_playback_start():
             for monitor, window in self.windows.items():
-                if self.mute_when_maximized:
-                    window.play_fade(target=0, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
-                else:
-                    window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+                window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                            fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
 
     def monitor_sync(self):
         primary_monitor = None

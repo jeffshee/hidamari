@@ -114,13 +114,13 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
           </packing>
         </child>
         <child>
-          <object class="GtkModelButton" id="ToggleDetectMaximized">
+          <object class="GtkModelButton" id="TogglePauseWhenMaximized">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
             <property name="tooltip-text" translatable="yes">Automatically pauses playback when maximized window or full screen mode is detected</property>
-            <property name="action-name">app.detect_maximized</property>
-            <property name="text" translatable="yes">Detect maximized window</property>
+            <property name="action-name">app.pause_when_maximized</property>
+            <property name="text" translatable="yes">Pause when maximized window</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -134,7 +134,7 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
             <property name="tooltip-text" translatable="yes">Automatically mutes playback when maximized window or full screen mode is detected</property>
-            <property name="action-name">app.muted_when_maximized</property>
+            <property name="action-name">app.mute_when_maximized</property>
             <property name="text" translatable="yes">Mute when maximized window</property>
           </object>
           <packing>

@@ -57,8 +57,8 @@ class HidamariServer(object):
         <property name="is_playing" type="b" access="read"/>
         <property name="is_paused_by_user" type="b" access="readwrite"/>
         <property name="is_static_wallpaper" type="b" access="readwrite"/>
-        <property name="is_detect_maximized" type="b" access="readwrite"/>
-        <property name="is_muted_when_maximized" type="b" access="readwrite"/>
+        <property name="is_pause_when_maximized" type="b" access="readwrite"/>
+        <property name="is_mute_when_maximized" type="b" access="readwrite"/>
     </interface>
     </node>
     """
@@ -100,7 +100,6 @@ class HidamariServer(object):
         if not args.background:
             self.show_gui()
 
-        self.is_muted_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
         logger.info("[Server] Started")
 
     def _load_config(self):
@@ -294,26 +293,26 @@ class HidamariServer(object):
             player.reload_config()
 
     @property
-    def is_detect_maximized(self):
-        return self.config[CONFIG_KEY_DETECT_MAXIMIZED]
+    def is_pause_when_maximized(self):
+        return self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]
 
-    @is_detect_maximized.setter
-    def is_detect_maximized(self, is_detect_maximized):
-        self.config[CONFIG_KEY_DETECT_MAXIMIZED] = is_detect_maximized
+    @is_pause_when_maximized.setter
+    def is_pause_when_maximized(self, is_pause_when_maximized):
+        self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] = is_pause_when_maximized
         player = get_instance(DBUS_NAME_PLAYER)
         if player is not None:
             player.reload_config()
 
     @property
-    def is_muted_when_maximized(self):
-        return self.config[CONFIG_KEY_DETECT_MAXIMIZED]
+    def is_mute_when_maximized(self):
+        return self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
 
-    @is_muted_when_maximized.setter
-    def is_muted_when_maximized(self, is_muted_when_maximized):
-        self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] = is_muted_when_maximized
+    @is_mute_when_maximized.setter
+    def is_mute_when_maximized(self, is_mute_when_maximized):
+        self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] = is_mute_when_maximized
         player = get_instance(DBUS_NAME_PLAYER)
         if player is not None:
-            player.mute_when_maximized = is_muted_when_maximized
+            player.reload_config()
 
 
 def get_instance(dbus_name):
