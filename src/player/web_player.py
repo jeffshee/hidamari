@@ -80,7 +80,7 @@ class WebPlayer(BasePlayer):
 
     def do_activate(self):
         super().do_activate()
-        self.data_source = self.config[CONFIG_KEY_DATA_SOURCE]
+        self.data_source = self.config[CONFIG_KEY_DATA_SOURCE]['Default']
 
     @property
     def mode(self):
@@ -92,7 +92,7 @@ class WebPlayer(BasePlayer):
 
     @data_source.setter
     def data_source(self, data_source: str):
-        self.config[CONFIG_KEY_DATA_SOURCE] = data_source
+        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source
         if self.mode != MODE_WEBPAGE:
             raise ValueError("Invalid mode")
 
@@ -104,7 +104,7 @@ class WebPlayer(BasePlayer):
         for monitor, window in self.windows.items():
             window.load_uri(data_source)
             if not monitor.is_primary():
-                monitor.set_is_mute(True)
+                window.set_is_mute(True)
         self.volume = self.config[CONFIG_KEY_VOLUME]
         self.is_mute = self.config[CONFIG_KEY_MUTE]
 
