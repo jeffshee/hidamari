@@ -103,8 +103,8 @@ class ControlPanel(Gtk.Application):
         self.contextMenu_monitors = Gtk.Menu()
         self.contextMenu_monitors.show_all()
         
-        for monitor in self.monitors.get_monitors():
-            item = Gtk.MenuItem(label=f"Set For {monitor}")
+        for monitor_name,monitor in self.monitors.get_monitors().items():
+            item = Gtk.MenuItem(label=f"Set For {monitor_name}")
             item.connect("activate", self.on_set_as, monitor)
             self.contextMenu_monitors.append(item)
 
@@ -269,13 +269,16 @@ class ControlPanel(Gtk.Application):
                 paths[name] = video_path
                 monitor.set_wallpaper(video_path)
         else:
-            paths[monitor] = video_path
-            self.monitors.get_monitor(monitor).set_wallpaper(video_path)
+            paths[monitor.name] = video_path
+            self.monitors.get_monitor(monitor.name).set_wallpaper(video_path)
 
+        # also update the Default video
+        paths['Default'] = video_path
         self.config[CONFIG_KEY_DATA_SOURCE] = paths
         self._save_config()
+        print(video_path, monitor.name)
         if self.server is not None:
-            self.server.video(video_path)
+            self.server.video(video_path, monitor.name)
 
     def on_local_web_page_apply(self, *_):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
