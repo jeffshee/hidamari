@@ -65,8 +65,6 @@ class Monitors:
                 y=monitor['y'],
                 is_primary=monitor['is_primary']
             )
-        # we should create Default monitor
-        self.monitors['Default'] = Monitor(name='Default',width=0)
 
     def get_monitor(self, key):
         return self.monitors[key]

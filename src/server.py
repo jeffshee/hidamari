@@ -37,6 +37,7 @@ class HidamariServer(object):
         <method name='null'/>
         <method name='video'>
             <arg type='s' name='video_path' direction='in'/>
+            <arg type='s' name='monitor' direction='in'/>
         </method>
         <method name='stream'>
             <arg type='s' name='stream_url' direction='in'/>
@@ -116,8 +117,7 @@ class HidamariServer(object):
         # Set data source if specified
         if data_source and monitor:
             self.config[CONFIG_KEY_DATA_SOURCE][monitor] = data_source
-        elif data_source:
-            self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source
+        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source # always update default source
 
         # Quit current then create a new player
         self._quit_player()
