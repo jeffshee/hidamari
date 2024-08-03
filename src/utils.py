@@ -403,6 +403,9 @@ class ConfigUtil:
         curr_data_source = config['data_source']
         config['data_source'] = CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE]
         config['data_source']['Default'] = curr_data_source
+        config['is_pause_when_maximized'] = config["is_detect_maximized"]
+        del config["is_detect_maximized"]
+        config['is_mute_when_maximized'] = CONFIG_TEMPLATE[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
         config['version'] = 4
         # save config file
         self.save(config)
