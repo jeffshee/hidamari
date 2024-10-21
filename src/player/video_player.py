@@ -98,11 +98,12 @@ class VLCWidget(Gtk.DrawingArea):
 
 
 class PlayerWindow(Gtk.ApplicationWindow):
-    def __init__(self, width, height, *args, **kwargs):
+    def __init__(self, name, width, height, *args, **kwargs):
         super(PlayerWindow, self).__init__(*args, **kwargs)
         # Setup a VLC widget given the provided width and height.
         self.width = width
         self.height = height
+        self.name = name
         self.__vlc_widget = VLCWidget(width, height)
         self.add(self.__vlc_widget)
         self.__vlc_widget.show()
@@ -143,6 +144,12 @@ class PlayerWindow(Gtk.ApplicationWindow):
         self.fade.cancel()
         self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume,
                         complete_callback=self.pause)
+
+    def volume_fade(self, target, fade_duration_sec, fade_interval):
+        cur = self.get_volume()
+        step = (target - cur) / (fade_duration_sec / fade_interval)
+        self.fade.cancel()
+        self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume)
 
     def media_new(self, *args):
         return self.__vlc_widget.instance.media_new(*args)
@@ -207,6 +214,9 @@ class PlayerWindow(Gtk.ApplicationWindow):
             self.menu.popup_at_pointer()
             return True
         return False
+
+    def get_name(self):
+        return self.name
 
 
 class VideoPlayer(BasePlayer):
@@ -274,7 +284,7 @@ class VideoPlayer(BasePlayer):
 
     def new_window(self, gdk_monitor):
         rect = gdk_monitor.get_geometry()
-        return PlayerWindow(rect.width, rect.height, application=self)
+        return PlayerWindow(gdk_monitor.get_model(), rect.width, rect.height, application=self)
 
     def do_activate(self):
         super().do_activate()
@@ -294,24 +304,31 @@ class VideoPlayer(BasePlayer):
                 self.pause_playback()
 
     def _on_window_state_changed(self, state):
-        if not self.config[CONFIG_KEY_DETECT_MAXIMIZED]:
-            return
-        self.is_any_maximized, self.is_any_fullscreen = state[
-            "is_any_maximized"], state["is_any_fullscreen"]
-        if self._should_playback_start():
-            self.start_playback()
-        else:
-            self.pause_playback()
+        self.is_any_maximized, self.is_any_fullscreen = state["is_any_maximized"], state["is_any_fullscreen"]
+        logger.info(f"is_any_maximized: {self.is_any_maximized}, is_any_fullscreen: {self.is_any_fullscreen}")
 
+        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]:
+            if self._should_playback_start():
+                self.start_playback()
+            else:
+                self.pause_playback()
+        elif self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]:
+            for monitor, window in self.windows.items():
+                if not monitor.is_primary():
+                    continue
+                if self.is_any_fullscreen or self.is_any_maximized:
+                    window.volume_fade(target=0, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+                else:
+                    window.volume_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+        
     def _should_playback_start(self):
-        result = True
-        if self.config[CONFIG_KEY_DETECT_MAXIMIZED] and self.is_any_maximized:
-            result = False
-        if self.is_any_fullscreen:
-            result = False
+        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] and (self.is_any_maximized or self.is_any_fullscreen):
+            return False
         if self.is_paused_by_user:
-            result = False
-        return result
+            return False
+        return True
 
     @property
     def mode(self):
@@ -327,20 +344,29 @@ class VideoPlayer(BasePlayer):
 
         if self.mode == MODE_VIDEO:
             # Get the dimension of the video
+            video_width, video_height = {}, {}
             try:
-                dimension = subprocess.check_output([
-                    'ffprobe', '-v', 'error', '-select_streams', 'v:0',
-                    '-show_entries', 'stream=width,height', '-of',
-                    'csv=s=x:p=0', self.data_source
-                ], shell=False, encoding='UTF-8').replace('\n', '')
-                dimension = dimension.split("x")
-                video_width, video_height = int(
-                    dimension[0]), int(dimension[1])
+                for monitor,video in data_source.items():
+                    # fallback to Default video
+                    if len(video) == 0:
+                        video = data_source['Default']
+                    dimension = subprocess.check_output([
+                        'ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                        '-show_entries', 'stream=width,height', '-of',
+                        'csv=s=x:p=0', video
+                        ], shell=False, encoding='UTF-8').replace('\n', '')
+                    dimension = dimension.split("x")
+                    video_width[monitor] = int(dimension[0])
+                    video_height[monitor] = int(dimension[1])
             except subprocess.CalledProcessError:
-                video_width, video_height = None, None
-
-            for monitor, window in self.windows.items():
-                media = window.media_new(data_source)
+                for monitor, video in data_source.items():
+                    video_width.setdefault(monitor, None)
+                    video_height.setdefault(monitor, None)
+                    
+            for (monitor, window) in self.windows.items():
+                source = data_source[monitor.get_model()] if monitor.get_model() in data_source and len(data_source[monitor.get_model()]) != 0 else data_source['Default']
+                logger.info(f"Setting source {source} to {monitor.get_model()}")
+                media = window.media_new(source)
                 """
                 This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
                 based on reading, this probably only repeats 65535 times, which is still a lot of time, but might
@@ -352,10 +378,14 @@ class VideoPlayer(BasePlayer):
                     media.add_option("no-audio")
                 window.set_media(media)
                 window.set_position(0.0)
-                window.centercrop(video_width, video_height)
+                if monitor.get_model() not in data_source or len(data_source[monitor.get_model()]) == 0:
+                    window.centercrop(video_width['Default'], video_height['Default'])
+                else:                
+                    window.centercrop(video_width[monitor.get_model()], video_height[monitor.get_model()])
 
         elif self.mode == MODE_STREAM:
-            formats = get_formats(data_source)
+            source = data_source['Default']
+            formats = get_formats(source)
             max_height = max(
                 self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
             video_url, video_width, video_height = get_optimal_video(
@@ -426,7 +456,7 @@ class VideoPlayer(BasePlayer):
         if self._should_playback_start():
             for monitor, window in self.windows.items():
                 window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                                 fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+                            fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
 
     def monitor_sync(self):
         primary_monitor = None
@@ -453,7 +483,7 @@ class VideoPlayer(BasePlayer):
         try:
             duration = float(subprocess.check_output([
                 'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-                '-of', 'default=noprint_wrappers=1:nokey=1', self.data_source
+                '-of', 'default=noprint_wrappers=1:nokey=1', self.data_source['Default']
             ], shell = False))
         except subprocess.CalledProcessError:
             duration = 0
@@ -463,7 +493,7 @@ class VideoPlayer(BasePlayer):
         static_wallpaper_path = os.path.join(
             CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
         ret = subprocess.run([
-            'ffmpeg', '-y', '-ss', ss, '-i', self.data_source,
+            'ffmpeg', '-y', '-ss', ss, '-i', self.data_source['Default'],
             '-vframes', '1', static_wallpaper_path
         ], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         if ret.returncode == 0 and os.path.isfile(static_wallpaper_path):
