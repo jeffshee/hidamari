@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <component type="desktop-application">
-  <!--Created with jdAppStreamEdit 9.1-->
+  <!--Created with jdAppStreamEdit 9.2-->
   <id>io.github.jeffshee.Hidamari</id>
   <name>Hidamari</name>
   <summary>Video wallpaper for Linux</summary>
@@ -27,6 +27,13 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="3.6" date="2025-01-03" type="stable">
+      <description>
+        <ul>
+          <li>Add multi monitor feature for video (@xaprier)</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.5" date="2024-06-30" type="stable">
       <description>
         <ul>

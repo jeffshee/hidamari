@@ -10,7 +10,8 @@ DBUS_NAME_PLAYER = f"{PROJECT}.player"
 HOME = os.environ.get("HOME")
 try:
     xdg_video_dir = subprocess.check_output(
-        "xdg-user-dir VIDEOS", shell=True, encoding='UTF-8').replace("\n", "")
+        "xdg-user-dir VIDEOS", shell=True, encoding="UTF-8"
+    ).replace("\n", "")
     VIDEO_WALLPAPER_DIR = os.path.join(xdg_video_dir, "Hidamari")
 except FileNotFoundError:
     # xdg-user-dir not found, use $HOME/Hidamari for Video directory instead
@@ -19,8 +20,7 @@ except FileNotFoundError:
 xdg_config_home = os.environ.get("XDG_CONFIG_HOME", os.path.join(HOME, ".config"))
 AUTOSTART_DIR = os.path.join(xdg_config_home, "autostart")
 AUTOSTART_DESKTOP_PATH = os.path.join(AUTOSTART_DIR, f"{PROJECT}.desktop")
-AUTOSTART_DESKTOP_CONTENT = \
-    """[Desktop Entry]
+AUTOSTART_DESKTOP_CONTENT = """[Desktop Entry]
 Name=Hidamari
 Exec=hidamari -b
 Icon=io.github.jeffshee.Hidamari
@@ -29,8 +29,7 @@ Type=Application
 Categories=GTK;Utility;
 StartupNotify=true
 """
-AUTOSTART_DESKTOP_CONTENT_FLATPAK = \
-    """[Desktop Entry]
+AUTOSTART_DESKTOP_CONTENT_FLATPAK = """[Desktop Entry]
 Name=Hidamari
 Exec=/usr/bin/flatpak run --command=hidamari io.github.jeffshee.Hidamari -b
 Icon=io.github.jeffshee.Hidamari
@@ -49,7 +48,7 @@ MODE_VIDEO = "MODE_VIDEO"
 MODE_STREAM = "MODE_STREAM"
 MODE_WEBPAGE = "MODE_WEBPAGE"
 
-CONFIG_VERSION = 3
+CONFIG_VERSION = 4
 CONFIG_KEY_VERSION = "version"
 CONFIG_KEY_MODE = "mode"
 CONFIG_KEY_DATA_SOURCE = "data_source"
@@ -57,7 +56,8 @@ CONFIG_KEY_MUTE = "is_mute"
 CONFIG_KEY_VOLUME = "audio_volume"
 CONFIG_KEY_STATIC_WALLPAPER = "is_static_wallpaper"
 CONFIG_KEY_BLUR_RADIUS = "static_wallpaper_blur_radius"
-CONFIG_KEY_DETECT_MAXIMIZED = "is_detect_maximized"
+CONFIG_KEY_PAUSE_WHEN_MAXIMIZED = "is_pause_when_maximized"
+CONFIG_KEY_MUTE_WHEN_MAXIMIZED = "is_mute_when_maximized"
 CONFIG_KEY_FADE_DURATION_SEC = "fade_duration_sec"
 CONFIG_KEY_FADE_INTERVAL = "fade_interval"
 CONFIG_KEY_SYSTRAY = "is_show_systray"
@@ -70,9 +70,26 @@ CONFIG_TEMPLATE = {
     CONFIG_KEY_VOLUME: 50,
     CONFIG_KEY_STATIC_WALLPAPER: True,
     CONFIG_KEY_BLUR_RADIUS: 5,
-    CONFIG_KEY_DETECT_MAXIMIZED: False,
+    CONFIG_KEY_PAUSE_WHEN_MAXIMIZED: True,
+    CONFIG_KEY_MUTE_WHEN_MAXIMIZED: False,
     CONFIG_KEY_FADE_DURATION_SEC: 1.5,
     CONFIG_KEY_FADE_INTERVAL: 0.1,
     CONFIG_KEY_SYSTRAY: False,
-    CONFIG_KEY_FIRST_TIME: True
+    CONFIG_KEY_FIRST_TIME: True,
 }
+
+try:
+    from monitor import Monitor, Monitors, MonitorInfo
+except ModuleNotFoundError:
+    from hidamari.monitor import Monitor, Monitors, MonitorInfo
+
+# initialize config according to monitors
+info = MonitorInfo()
+monitors = info.monitors()
+data_sources = {}
+# create an 
+for monitor in monitors:
+    data_sources[monitor['name']] = ""
+data_sources['Default'] = ""
+
+CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE] = data_sources
