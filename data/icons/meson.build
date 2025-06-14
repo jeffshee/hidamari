@@ -1,4 +1,4 @@
-application_id = 'page.codeberg.zynequ.Kapitano'
+application_id = 'io.github.jeffshee.Hidamari'
 
 scalable_dir = 'hicolor' / 'scalable' / 'apps'
 install_data(

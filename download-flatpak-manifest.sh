@@ -3,7 +3,7 @@
 set -e
 
 # Define the Flatpak app ID once
-APP_ID="page.codeberg.zynequ.Kapitano"
+APP_ID="io.github.jeffshee.Hidamari"
 
 # Derive the manifest filename and URL
 MANIFEST_FILE="$APP_ID.json"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>page.codeberg.zynequ.Kapitano</id>
+  <id>io.github.jeffshee.Hidamari</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
 
@@ -27,7 +27,7 @@
   <url type="faq">https://codeberg.org/zynequ/Kapitano/wiki</url>
 
   <translation type="gettext">kapitano</translation>
-  <launchable type="desktop-id">page.codeberg.zynequ.Kapitano.desktop</launchable>
+  <launchable type="desktop-id">io.github.jeffshee.Hidamari.desktop</launchable>
   <content_rating type="oars-1.1" />
 
   <branding>
