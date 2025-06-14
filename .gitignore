@@ -2,4 +2,17 @@ build/
 builddir/
 .flatpak-builder/
 *.tmp
-page.codeberg.zynequ.*.json
+
+# TODO: uncomment this to track the upstream Flathub repository
+# io.github.jeffshee.Hidamari.json
+
+# Byte-compiled
+__pycache__/
+
+# Project exclude paths
+/venv/
+.flatpak/
+*.flatpak
+
+# Visual Studio Code
+.vscode

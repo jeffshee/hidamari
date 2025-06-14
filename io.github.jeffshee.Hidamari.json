@@ -1,0 +1,86 @@
+{
+    "id": "page.codeberg.zynequ.Kapitano",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "48",
+    "sdk": "org.gnome.Sdk",
+    "sdk-extensions": [
+        "org.freedesktop.Sdk.Extension.rust-stable"
+    ],
+    "command": "kapitano",
+    "finish-args": [
+        "--share=ipc",
+        "--device=dri",
+        "--socket=wayland",
+        "--socket=fallback-x11",
+        "--share=network"
+    ],
+    "cleanup": [
+        "/include",
+        "/lib/pkgconfig",
+        "/lib/cmake",
+        "/sbin",
+        "/man",
+        "/share/doc",
+        "/share/gtk-doc",
+        "/share/man",
+        "/share/pkgconfig",
+        "*.pc",
+        "*.c",
+        "*.h",
+        "*.la",
+        "*.a"
+    ],
+    "modules": [
+        {
+            "name": "json-c",
+            "buildsystem": "cmake-ninja",
+            "builddir": true,
+            "config-opts": [
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/json-c/json-c.git",
+                    "tag": "json-c-0.18-20240915"
+                }
+            ]
+        },
+        {
+            "name": "clamav",
+            "buildsystem": "cmake-ninja",
+            "builddir": true,
+            "build-options": {
+                "append-path": "/usr/lib/sdk/rust-stable/bin"
+            },
+            "config-opts": [
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DENABLE_MILTER=OFF",
+                "-DENABLE_CLAMONACC=OFF",
+                "-DENABLE_TESTS=OFF",
+                "-DENABLE_EXAMPLES=OFF",
+                "-DENABLE_SYSTEMD=OFF",
+                "-DENABLE_MAN_PAGES=OFF"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/Cisco-Talos/clamav/releases/download/clamav-1.4.2/clamav-1.4.2.tar.gz",
+                    "sha256": "8c92f8ade2a8f2c9d6688d1d63ee57f6caf965d74dce06d0971c6709c8e6c04c"
+                }
+            ]
+        },
+        {
+            "name": "kapitano",
+            "builddir": true,
+            "buildsystem": "meson",
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://codeberg.org/zynequ/Kapitano.git",
+                    "commit": "48ac648dc4e320fb25aebe8d84231f3125e37a27"
+                }
+            ]
+        }
+    ]
+}
