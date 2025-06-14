@@ -6,7 +6,7 @@
     "sdk-extensions": [
         "org.freedesktop.Sdk.Extension.rust-stable"
     ],
-    "command": "kapitano",
+    "command": "hidamari",
     "finish-args": [
         "--share=ipc",
         "--device=dri",
@@ -71,13 +71,13 @@
             ]
         },
         {
-            "name": "kapitano",
+            "name": "hidamari",
             "builddir": true,
             "buildsystem": "meson",
             "sources": [
                 {
                     "type": "git",
-                    "url": "https://codeberg.org/zynequ/Kapitano.git",
+                    "url": "https://codeberg.org/zynequ/Hidamari.git",
                     "commit": "48ac648dc4e320fb25aebe8d84231f3125e37a27"
                 }
             ]

@@ -4,7 +4,7 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
 
-  <name>Kapitano</name>
+  <name>Hidamari</name>
   <summary>Stay safe from malware</summary>
   <description>
     <p>Your antivirus captain for detecting malware, viruses, and threats!</p>
@@ -21,12 +21,12 @@
     <name translate="no">zynequ</name>
   </developer>
 
-  <url type="homepage">https://codeberg.org/zynequ/Kapitano</url>
-  <url type="bugtracker">https://codeberg.org/zynequ/Kapitano/issues</url>
-  <url type="translate">https://translate.codeberg.org/engage/kapitano</url>
-  <url type="faq">https://codeberg.org/zynequ/Kapitano/wiki</url>
+  <url type="homepage">https://codeberg.org/zynequ/Hidamari</url>
+  <url type="bugtracker">https://codeberg.org/zynequ/Hidamari/issues</url>
+  <url type="translate">https://translate.codeberg.org/engage/hidamari</url>
+  <url type="faq">https://codeberg.org/zynequ/Hidamari/wiki</url>
 
-  <translation type="gettext">kapitano</translation>
+  <translation type="gettext">hidamari</translation>
   <launchable type="desktop-id">io.github.jeffshee.Hidamari.desktop</launchable>
   <content_rating type="oars-1.1" />
 
@@ -38,27 +38,27 @@
   <screenshots>
 
     <screenshot type="default">
-      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/logbook.png</image>
+      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/logbook.png</image>
       <caption>View scan reports</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/radar.png</image>
+      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/radar.png</image>
       <caption>Scan files and folders</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/hostile_contact.png</image>
+      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/hostile_contact.png</image>
       <caption>Review suspicious finds</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/condition_green.png</image>
+      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/condition_green.png</image>
       <caption>No dangers spotted</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/update.png</image>
+      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/update.png</image>
       <caption>Update malware definitions</caption>
     </screenshot>
 
@@ -67,7 +67,7 @@
   <releases>
 
     <release version="1.1" date="2025-06-14">
-      <url type="details">https://codeberg.org/zynequ/Kapitano/releases/tag/1.1</url>
+      <url type="details">https://codeberg.org/zynequ/Hidamari/releases/tag/1.1</url>
       <description translate="no">
         <p>Added new languages</p>
         <ul>
@@ -77,11 +77,11 @@
     </release>
 
     <release version="1.0" date="2025-06-12">
-      <url type="details">https://codeberg.org/zynequ/Kapitano/releases/tag/1.0</url>
+      <url type="details">https://codeberg.org/zynequ/Hidamari/releases/tag/1.0</url>
       <description translate="no">
         <p>Initial release</p>
         <ul>
-          <li>Kapitano sets sail, ready to hunt malware and guard yer digital seas!</li>
+          <li>Hidamari sets sail, ready to hunt malware and guard yer digital seas!</li>
         </ul>
       </description>
     </release>

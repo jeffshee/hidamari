@@ -12,16 +12,16 @@ localedir = '@localedir@'
 
 sys.path.insert(1, pkgdatadir)
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-locale.bindtextdomain('kapitano', localedir)
-locale.textdomain('kapitano')
-gettext.install('kapitano', localedir)
+locale.bindtextdomain('hidamari', localedir)
+locale.textdomain('hidamari')
+gettext.install('hidamari', localedir)
 
 if __name__ == '__main__':
     import gi
 
     from gi.repository import Gio
-    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'kapitano.gresource'))
+    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'hidamari.gresource'))
     resource._register()
 
-    from kapitano import main
+    from hidamari import main
     sys.exit(main.main(VERSION))

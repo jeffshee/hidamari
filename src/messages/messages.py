@@ -19,12 +19,12 @@ SHOW_SHORTCUTS = _("Show Shortcuts")
 GENERAL = _("General")
 
 # config/ui_config.py
-KAPITANO = _("Kapitano")
+KAPITANO = _("Hidamari")
 STAY_SAFE_FROM_MALWARE = _("Stay safe from malware")
 COMMUNITY_CONTRIBUTORS = _("Community Contributors")
 MAIN_MENU = _("Main Menu")
 KEYBOARD_SHORTCUTS = _("Keyboard Shortcuts")
-ABOUT_KAPITANO = _("About Kapitano")
+ABOUT_KAPITANO = _("About Hidamari")
 
 # utils/clamav.py
 NO_FILES_AVAILABLE_FOR_SCANNING = _("No files available for scanning.")

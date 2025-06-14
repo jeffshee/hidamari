@@ -1,12 +1,12 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the kapitano package.
+# This file is distributed under the same license as the hidamari package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: kapitano\n"
+"Project-Id-Version: hidamari\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-06-14 06:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -21,7 +21,7 @@ msgstr ""
 #: data/io.github.jeffshee.Hidamari.desktop.in:2
 #: data/io.github.jeffshee.Hidamari.metainfo.xml.in:7
 #: src/messages/messages.py:22
-msgid "Kapitano"
+msgid "Hidamari"
 msgstr ""
 
 #: data/io.github.jeffshee.Hidamari.desktop.in:8
@@ -143,7 +143,7 @@ msgid "Keyboard Shortcuts"
 msgstr ""
 
 #: src/messages/messages.py:27
-msgid "About Kapitano"
+msgid "About Hidamari"
 msgstr ""
 
 #. utils/clamav.py

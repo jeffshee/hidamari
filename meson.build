@@ -1,5 +1,5 @@
-project('kapitano',
-          version: '1.1',
+project('hidamari',
+          version: '4.0-edge',
     meson_version: '>= 1.0.0',
   default_options: [ 'warning_level=2', 'werror=false', ],
 )

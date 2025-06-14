@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Kapitano
-Exec=kapitano
+Name=Hidamari
+Exec=hidamari
 Icon=io.github.jeffshee.Hidamari
 Terminal=false
 Type=Application

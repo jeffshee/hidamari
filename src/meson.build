@@ -1,11 +1,11 @@
 pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
-moduledir = pkgdatadir / 'kapitano'
+moduledir = pkgdatadir / 'hidamari'
 appdatadir = get_option('prefix') / get_option('datadir') / 'data'
 
 gnome = import('gnome')
 
-gnome.compile_resources('kapitano',
-  'kapitano.gresource.xml',
+gnome.compile_resources('hidamari',
+  'hidamari.gresource.xml',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
@@ -22,8 +22,8 @@ conf.set('moduledir', moduledir)
 conf.set('appdatadir', appdatadir)
 
 configure_file(
-  input: 'kapitano.in',
-  output: 'kapitano',
+  input: 'hidamari.in',
+  output: 'hidamari',
   configuration: conf,
   install: true,
   install_dir: get_option('bindir'),
@@ -37,7 +37,7 @@ build_config_file = configure_file(
   install: false,
 )
 
-kapitano_sources = [
+hidamari_sources = [
   '__init__.py',
   'main.py',
   'actions/app_actions.py',
@@ -71,6 +71,6 @@ kapitano_sources = [
   'widgets/window.py'
 ]
 
-install_data(kapitano_sources, install_dir: moduledir)
+install_data(hidamari_sources, install_dir: moduledir)
 
 install_data(build_config_file, install_dir: moduledir)

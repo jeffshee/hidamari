@@ -1,6 +1,6 @@
 from gi.repository import Gtk
 
-APP = "Kapitano"
+APP = "Hidamari"
 DEVELOPER = "zynequ"
 RELEASE_YEAR = "2025"
 
