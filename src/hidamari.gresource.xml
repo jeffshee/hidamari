@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/page/codeberg/zynequ/Hidamari">
+  <gresource prefix="/page/codeberg/jeffshee/Hidamari">
     <file preprocess="xml-stripblanks">widgets/window.ui</file>
   </gresource>
 </gresources>

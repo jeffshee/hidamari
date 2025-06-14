@@ -17,14 +17,14 @@
     <p>Keeping your system safe and secure every day!</p>
   </description>
 
-  <developer id="page.codeberg.zynequ">
-    <name translate="no">zynequ</name>
+  <developer id="page.codeberg.jeffshee">
+    <name translate="no">jeffshee</name>
   </developer>
 
-  <url type="homepage">https://codeberg.org/zynequ/Hidamari</url>
-  <url type="bugtracker">https://codeberg.org/zynequ/Hidamari/issues</url>
-  <url type="translate">https://translate.codeberg.org/engage/hidamari</url>
-  <url type="faq">https://codeberg.org/zynequ/Hidamari/wiki</url>
+  <url type="homepage">https://github.com/jeffshee/Hidamari</url>
+  <url type="bugtracker">https://github.com/jeffshee/Hidamari/issues</url>
+  <url type="translate">https://translate.github.com/engage/hidamari</url>
+  <url type="faq">https://github.com/jeffshee/Hidamari/wiki</url>
 
   <translation type="gettext">hidamari</translation>
   <launchable type="desktop-id">io.github.jeffshee.Hidamari.desktop</launchable>
@@ -38,27 +38,27 @@
   <screenshots>
 
     <screenshot type="default">
-      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/logbook.png</image>
+      <image>https://github.com/jeffshee/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/logbook.png</image>
       <caption>View scan reports</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/radar.png</image>
+      <image>https://github.com/jeffshee/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/radar.png</image>
       <caption>Scan files and folders</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/hostile_contact.png</image>
+      <image>https://github.com/jeffshee/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/hostile_contact.png</image>
       <caption>Review suspicious finds</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/condition_green.png</image>
+      <image>https://github.com/jeffshee/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/condition_green.png</image>
       <caption>No dangers spotted</caption>
     </screenshot>
 
     <screenshot>
-      <image>https://codeberg.org/zynequ/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/update.png</image>
+      <image>https://github.com/jeffshee/Hidamari/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/update.png</image>
       <caption>Update malware definitions</caption>
     </screenshot>
 
@@ -67,17 +67,17 @@
   <releases>
 
     <release version="1.1" date="2025-06-14">
-      <url type="details">https://codeberg.org/zynequ/Hidamari/releases/tag/1.1</url>
+      <url type="details">https://github.com/jeffshee/Hidamari/releases/tag/1.1</url>
       <description translate="no">
         <p>Added new languages</p>
         <ul>
-          <li>Dutch (@Vistaus), Esperanto (@zynequ), French (@Hoscko), Italian (@albanobattistella), Portuguese (@carinhena, @N4ta), Russian (@semicov)</li>
+          <li>Dutch (@Vistaus), Esperanto (@jeffshee), French (@Hoscko), Italian (@albanobattistella), Portuguese (@carinhena, @N4ta), Russian (@semicov)</li>
         </ul>
       </description>
     </release>
 
     <release version="1.0" date="2025-06-12">
-      <url type="details">https://codeberg.org/zynequ/Hidamari/releases/tag/1.0</url>
+      <url type="details">https://github.com/jeffshee/Hidamari/releases/tag/1.0</url>
       <description translate="no">
         <p>Initial release</p>
         <ul>

@@ -77,7 +77,7 @@
             "sources": [
                 {
                     "type": "git",
-                    "url": "https://codeberg.org/zynequ/Hidamari.git",
+                    "url": "https://github.com/jeffshee/Hidamari.git",
                     "commit": "48ac648dc4e320fb25aebe8d84231f3125e37a27"
                 }
             ]
