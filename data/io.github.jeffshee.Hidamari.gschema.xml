@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="hidamari">
-	<schema id="io.github.jeffshee.Hidamari" path="/page/codeberg/jeffshee/Hidamari/">
+	<schema id="io.github.jeffshee.Hidamari" path="/io/github/jeffshee/Hidamari/">
 	</schema>
 </schemalist>

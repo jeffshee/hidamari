@@ -7,12 +7,12 @@ RELEASE_YEAR = "2025"
 LICENSE = Gtk.License.GPL_3_0
 
 DOMAIN = APP.lower()
-NAMESPACE = ("page", "codeberg", DEVELOPER, APP)
+NAMESPACE = ("io", "github", DEVELOPER, APP)
 APP_ID = ".".join(NAMESPACE)
 
 REPOSITORY_URL = f"https://github.com/{DEVELOPER}/{APP}"
 ISSUES_URL = f"{REPOSITORY_URL}/issues"
 
-WEBLATE_URL = "https://translate.github.com"
+WEBLATE_URL = "https://hosted.weblate.org"
 TRANSLATE_URL = f"{WEBLATE_URL}/projects/{DOMAIN}"
 TRANSLATE_CREDITS_URL = f"{WEBLATE_URL}/user/?q=%20contributes:{DOMAIN}"
