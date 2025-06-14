@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/jeffshee/hidamari/resource/hidamari.svg" width="256"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/hidamari.svg" width="256"></p>
 
 <p align="center">Video wallpaper for Linux. Written in Python. 🐍</p>  
 <p align="center">Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
@@ -74,9 +74,9 @@ These are maintained by the community!
 
 ## Screenshot 📸
 
-![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-1.png)
-![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-2.png)
-![](https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-3.png)
+![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-1.png)
+![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-2.png)
+![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-3.png)
 
 ## Please!! 🙏
 
