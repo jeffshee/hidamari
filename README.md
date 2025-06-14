@@ -1,93 +1,65 @@
-<p align="center"><img src="https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/hidamari.svg" width="256"></p>
+<p>
+  <img src="assets/logo.png" width="150"/>
+</p>
 
-<p align="center">Video wallpaper for Linux. Written in Python. 🐍</p>  
-<p align="center">Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
+# Kapitano
 
-# Hidamari　ーひだまりー
-If you like my project, please consider buying me a coffee!! (⁎˃ ꇴ ˂⁎)ｯ
+A modern, user-friendly malware scanner for Linux.
 
-[![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/jeffshee)
-[![Ko-Fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/jeffshee)
-[![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/jeffshee)
-
-Also please don't forget to click that star button! 🌟  
-Your support is truly appreciated!
-
-## Join our Discord!
-
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/mP7yg4gX7g)
-
-## For GNOME user 🐾
-Please also check my new project [Hanabi](https://github.com/jeffshee/gnome-ext-hanabi)! While the project is still in its infancy, it has the potential to become more integrated with GNOME Shell
-
-## Features 🔥
-
-There are several solutions to achieve video as wallpaper on Linux, for example:
-
-1. [Xwinwrap + mpv](https://www.linuxuprising.com/2019/05/livestream-wallpaper-for-your-gnome.html)
-2. [Komorebi](https://github.com/cheesecakeufo/komorebi)
-
-Hidamari offers similar feature as above, with additional features listed below:
-
-- [x] Autostart after login
-- [x] Apply static wallpaper with blur effect <sup>1</sup>
-- [x] Detect maximized window and fullscreen mode <sup>2</sup>
-- [x] Volume control
-- [x] Mute/Pause the playback anytime with just 2 clicks!
-- [x] I'm feeling lucky <sup>3</sup>
-- [x] Hardware accelerated video decoding! <sup>4</sup>
-- [x] Gnome Wayland support!
-- [x] Multi-monitor support!
-- [x] Streaming URL support! <sup>5</sup>
-- [x] Webpage as wallpaper! <sup>6</sup>
-- [ ] You name it! =)
-
-<sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i> (currently GNOME exclusive, support for other DE might be added if requested...)  
-<sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (currently X11 only...)  
-<sup>3</sup> Randomly select and play a video  
-<sup>4</sup> Use <i>vlc</i> as backend (currently HW acceleration doesn't work with Nvidia+Wayland combination...)     
-<sup>5</sup> Use <i>yt-dlp</i> as backend, tested with YouTube videos  
-<sup>6</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
-
-## Installation ⏬
-### Flatpak 📦
-It is available on Flathub!
-
-<a href='https://flathub.org/apps/details/io.github.jeffshee.Hidamari'><img width='240' alt='Download Hidamari on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
-
-#### Command line instructions
-Install:  
-Make sure to follow the [setup guide](https://flatpak.org/setup/) before installing
-```
-flatpak install flathub io.github.jeffshee.Hidamari
-```
-Run:  
-```
-flatpak run io.github.jeffshee.Hidamari
-```
-
-### Unofficial package
-These are maintained by the community!
-| Distro     | URL                                     | Maintainer                            |
-|------------|-----------------------------------------|---------------------------------------|
-| Arch Linux | [![AUR](https://img.shields.io/aur/version/hidamari?style=for-the-badge)](https://aur.archlinux.org/packages/hidamari) | None |
-
-## Screenshot 📸
-
-![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-1.png)
-![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-2.png)
-![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-3.png)
-
-## Please!! 🙏
-
-Collaboration is welcome! Let's make it better together~  
-Feel free to open an issue if you have any problem or suggestion 🤗  
-
-## Contributors ✨
-
-<a href="https://github.com/jeffshee/hidamari/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=jeffshee/hidamari" />
+<a href='https://flathub.org/apps/page.codeberg.zynequ.Kapitano'>
+  <img width='200' alt='Get it on Flathub' src='https://flathub.org/api/badge?locale=en'/>
 </a>
 
-Made with [contributors-img](https://contrib.rocks).  
-Icons made by [Freepik](http://www.freepik.com/) from [Flaticon](https://www.flaticon.com)
+
+## About
+
+Kapitano is a personal hobby project with no corporate backing. I'm not affiliated with ClamAV, Cisco Talos, or any other organization. 
+
+As a solo developer and FOSS supporter, this is my way of learning and giving back to the community.
+
+Development time is limited, but if you find Kapitano useful, feel free to contribute via pull requests or buy me a coffee.
+
+
+## Mission
+
+* 🔍 Scan files and folders for malware
+* ☠️ Detect viruses, unwanted software, and threats
+* 📜 View logs of past scans
+* 🔄 Update virus definitions using ClamAV
+* 🧼 Built with GTK 4 and libadwaita for a polished experience
+
+
+## Support
+
+Need help or more information?  
+Check out the [wiki](https://codeberg.org/zynequ/Kapitano/wiki) for FAQs and build instructions.
+
+
+## License
+
+This project is licensed under the [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.html).
+
+### Disclaimer
+
+Kapitano is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of **MERCHANTABILITY** or **FITNESS FOR A PARTICULAR PURPOSE**. See the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.html) for more details.
+
+### Dependencies
+
+* **Logo:** Icon by Smashicons on Flaticon — [source](https://www.flaticon.com/free-icons/pirate)
+* **JSON-C:** [MIT License](https://opensource.org/licenses/MIT) — [repository](https://github.com/json-c/json-c)
+* **ClamAV:** [GPL-2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html) — [license info](https://github.com/Cisco-Talos/clamav#licensing)
+
+
+## Contributing
+
+Contributions are welcome — whether code, translations, or feedback.
+
+<a href="https://translate.codeberg.org/engage/kapitano/">
+  <img src="https://translate.codeberg.org/widget/kapitano/kapitano/horizontal-auto.svg" />
+</a>
+
+
+## Thank You
+
+Thanks to [all contributors](https://codeberg.org/zynequ/Kapitano/activity/contributors) and users who support the project.  
+

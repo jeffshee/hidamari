@@ -1,10 +1,5 @@
-# Byte-compiled
-__pycache__/
-
-# Build
 build/
-
-# Project exclude paths
-/venv/
-.flatpak/
-*.flatpak
+builddir/
+.flatpak-builder/
+*.tmp
+page.codeberg.zynequ.*.json

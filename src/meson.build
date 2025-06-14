@@ -1,9 +1,11 @@
-pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
-moduledir = join_paths(pkgdatadir, 'hidamari')
+pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
+moduledir = pkgdatadir / 'kapitano'
+appdatadir = get_option('prefix') / get_option('datadir') / 'data'
+
 gnome = import('gnome')
 
-gnome.compile_resources('hidamari',
-  'hidamari.gresource.xml',
+gnome.compile_resources('kapitano',
+  'kapitano.gresource.xml',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
@@ -12,34 +14,63 @@ gnome.compile_resources('hidamari',
 python = import('python')
 
 conf = configuration_data()
-conf.set('PYTHON', python.find_installation('python3').path())
+conf.set('PYTHON', python.find_installation('python3').full_path())
 conf.set('VERSION', meson.project_version())
-conf.set('localedir', join_paths(get_option('prefix'), get_option('localedir')))
+conf.set('localedir', get_option('prefix') / get_option('localedir'))
 conf.set('pkgdatadir', pkgdatadir)
+conf.set('moduledir', moduledir)
+conf.set('appdatadir', appdatadir)
 
 configure_file(
-  input: 'hidamari.in',
-  output: 'hidamari',
+  input: 'kapitano.in',
+  output: 'kapitano',
   configuration: conf,
   install: true,
-  install_dir: get_option('bindir')
+  install_dir: get_option('bindir'),
+  install_mode: 'r-xr-xr-x'
 )
 
-hidamari_sources = [
+build_config_file = configure_file(
+  input: 'config/build_config.py.in',
+  output: 'build_config.py',
+  configuration: conf,
+  install: false,
+)
+
+kapitano_sources = [
   '__init__.py',
-  '__main__.py',
-  'commons.py',
-  'menu.py',
-  'server.py',
-  'monitor.py',
-  'utils.py',
-  'yt_utils.py'
+  'main.py',
+  'actions/app_actions.py',
+  'config/app_config.py',
+  'config/paths_config.py',
+  'config/preferences_config.py',
+  'config/shortcuts_config.py',
+  'config/stores_config.py',
+  'config/ui_config.py',
+  'messages/messages.py',
+  'stores/freshclam_config_store.py',
+  'stores/logbook_store.py',
+  'stores/preferences_store.py',
+  'utils/clamav.py',
+  'utils/i18n.py',
+  'utils/process.py',
+  'utils/ui_helpers.py',
+  'widgets/base/base_list_view.py',
+  'widgets/base/base_status_page.py',
+  'widgets/base/conditional_stack.py',
+  'widgets/base/preferences_window.py',
+  'widgets/base/progress_page.py',
+  'widgets/dialogues/about_dialog.py',
+  'widgets/dialogues/logbook_entry_dialog.py',
+  'widgets/dialogues/shortcuts_dialog.py',
+  'widgets/logbook/logbook.py',
+  'widgets/radar/radar.py',
+  'widgets/radar/scan_result_page.py',
+  'widgets/radar/scan_target_selector.py',
+  'widgets/update/update.py',
+  'widgets/window.py'
 ]
 
-exclude_dir = [
-  '__pycache__'
-]
+install_data(kapitano_sources, install_dir: moduledir)
 
-install_subdir('gui', install_dir: moduledir, exclude_directories: exclude_dir)
-install_subdir('player', install_dir: moduledir, exclude_directories: exclude_dir)
-install_data(hidamari_sources, install_dir: moduledir)
+install_data(build_config_file, install_dir: moduledir)

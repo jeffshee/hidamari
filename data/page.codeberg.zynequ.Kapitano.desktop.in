@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Kapitano
+Exec=kapitano
+Icon=page.codeberg.zynequ.Kapitano
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true

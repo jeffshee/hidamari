@@ -1,43 +1,46 @@
 desktop_file = i18n.merge_file(
-  input: 'io.github.jeffshee.Hidamari.desktop.in',
-  output: 'io.github.jeffshee.Hidamari.desktop',
-  type: 'desktop',
-  po_dir: '../po',
-  install: true,
-  install_dir: join_paths(get_option('datadir'), 'applications')
+        input: 'page.codeberg.zynequ.Kapitano.desktop.in',
+       output: 'page.codeberg.zynequ.Kapitano.desktop',
+         type: 'desktop',
+       po_dir: '../po',
+      install: true,
+  install_dir: get_option('datadir') / 'applications'
 )
 
 desktop_utils = find_program('desktop-file-validate', required: false)
 if desktop_utils.found()
-  test('Validate desktop file', desktop_utils,
-    args: [desktop_file]
-  )
+  test('Validate desktop file', desktop_utils, args: [desktop_file])
 endif
 
 appstream_file = i18n.merge_file(
-  input: 'io.github.jeffshee.Hidamari.appdata.xml.in',
-  output: 'io.github.jeffshee.Hidamari.appdata.xml',
-  po_dir: '../po',
-  install: true,
-  install_dir: join_paths(get_option('datadir'), 'appdata')
+        input: 'page.codeberg.zynequ.Kapitano.metainfo.xml.in',
+       output: 'page.codeberg.zynequ.Kapitano.metainfo.xml',
+       po_dir: '../po',
+      install: true,
+  install_dir: get_option('datadir') / 'metainfo'
 )
 
-appstream_util = find_program('appstream-util', required: false)
-if appstream_util.found()
-  test('Validate appstream file', appstream_util,
-    args: ['validate', appstream_file]
-  )
-endif
+appstreamcli = find_program('appstreamcli', required: false, disabler: true)
+test('Validate appstream file', appstreamcli,
+     args: ['validate', '--no-net', '--explain', appstream_file])
 
-install_data('io.github.jeffshee.Hidamari.gschema.xml',
-  install_dir: join_paths(get_option('datadir'), 'glib-2.0/schemas')
+install_data('page.codeberg.zynequ.Kapitano.gschema.xml',
+  install_dir: get_option('datadir') / 'glib-2.0' / 'schemas'
 )
 
-compile_schemas = find_program('glib-compile-schemas', required: false)
-if compile_schemas.found()
-  test('Validate schema file', compile_schemas,
-    args: ['--strict', '--dry-run', meson.current_source_dir()]
-  )
-endif
+compile_schemas = find_program('glib-compile-schemas', required: false, disabler: true)
+test('Validate schema file',
+     compile_schemas,
+     args: ['--strict', '--dry-run', meson.current_source_dir()])
+
+
+service_conf = configuration_data()
+service_conf.set('bindir', get_option('prefix') / get_option('bindir'))
+configure_file(
+  input: 'page.codeberg.zynequ.Kapitano.service.in',
+  output: 'page.codeberg.zynequ.Kapitano.service',
+  configuration: service_conf,
+  install_dir: get_option('datadir') / 'dbus-1' / 'services'
+)
 
 subdir('icons')

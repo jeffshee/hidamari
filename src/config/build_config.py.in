@@ -1,0 +1,5 @@
+BUILD_VERSION = '@VERSION@'
+LOCALEDIR = '@localedir@'
+PKGDATADIR = '@pkgdatadir@'
+MODULEDIR = '@moduledir@'
+APPDATADIR = '@appdatadir@'

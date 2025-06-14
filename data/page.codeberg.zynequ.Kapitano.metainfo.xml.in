@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>page.codeberg.zynequ.Kapitano</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Kapitano</name>
+  <summary>Stay safe from malware</summary>
+  <description>
+    <p>Your antivirus captain for detecting malware, viruses, and threats!</p>
+    <ul>
+      <li>Scans files and folders for hidden dangers, spyware, and harmful software.</li>
+      <li>Detects trojans, worms, backdoors, adware, and unwanted programs.</li>
+      <li>Logs every infection, alert, and suspicious finding on your system.</li>
+      <li>Updates virus definitions regularly—if you allow—to keep your system protected.</li>
+    </ul>
+    <p>Keeping your system safe and secure every day!</p>
+  </description>
+
+  <developer id="page.codeberg.zynequ">
+    <name translate="no">zynequ</name>
+  </developer>
+
+  <url type="homepage">https://codeberg.org/zynequ/Kapitano</url>
+  <url type="bugtracker">https://codeberg.org/zynequ/Kapitano/issues</url>
+  <url type="translate">https://translate.codeberg.org/engage/kapitano</url>
+  <url type="faq">https://codeberg.org/zynequ/Kapitano/wiki</url>
+
+  <translation type="gettext">kapitano</translation>
+  <launchable type="desktop-id">page.codeberg.zynequ.Kapitano.desktop</launchable>
+  <content_rating type="oars-1.1" />
+
+  <branding>
+    <color type="primary" scheme_preference="light">#3b9be3</color>
+    <color type="primary" scheme_preference="dark">#0a355f</color>
+  </branding>
+
+  <screenshots>
+
+    <screenshot type="default">
+      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/logbook.png</image>
+      <caption>View scan reports</caption>
+    </screenshot>
+
+    <screenshot>
+      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/radar.png</image>
+      <caption>Scan files and folders</caption>
+    </screenshot>
+
+    <screenshot>
+      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/hostile_contact.png</image>
+      <caption>Review suspicious finds</caption>
+    </screenshot>
+
+    <screenshot>
+      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/condition_green.png</image>
+      <caption>No dangers spotted</caption>
+    </screenshot>
+
+    <screenshot>
+      <image>https://codeberg.org/zynequ/Kapitano/media/commit/70aa8769f82043b5fa55215cd9ef2a74bce9a099/assets/update.png</image>
+      <caption>Update malware definitions</caption>
+    </screenshot>
+
+  </screenshots>
+
+  <releases>
+
+    <release version="1.1" date="2025-06-14">
+      <url type="details">https://codeberg.org/zynequ/Kapitano/releases/tag/1.1</url>
+      <description translate="no">
+        <p>Added new languages</p>
+        <ul>
+          <li>Dutch (@Vistaus), Esperanto (@zynequ), French (@Hoscko), Italian (@albanobattistella), Portuguese (@carinhena, @N4ta), Russian (@semicov)</li>
+        </ul>
+      </description>
+    </release>
+
+    <release version="1.0" date="2025-06-12">
+      <url type="details">https://codeberg.org/zynequ/Kapitano/releases/tag/1.0</url>
+      <description translate="no">
+        <p>Initial release</p>
+        <ul>
+          <li>Kapitano sets sail, ready to hunt malware and guard yer digital seas!</li>
+        </ul>
+      </description>
+    </release>
+
+  </releases>
+
+</component>
+

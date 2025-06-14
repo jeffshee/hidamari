@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=page.codeberg.zynequ.Kapitano
+Exec=@bindir@/kapitano --gapplication-service

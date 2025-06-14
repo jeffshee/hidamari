@@ -1,0 +1,313 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the kapitano package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: kapitano\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-14 06:26+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. config/ui_config.py
+#: data/page.codeberg.zynequ.Kapitano.desktop.in:2
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:7
+#: src/messages/messages.py:22
+msgid "Kapitano"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.desktop.in:8
+msgid "GTK;"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:8
+#: src/messages/messages.py:23
+msgid "Stay safe from malware"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:10
+msgid "Your antivirus captain for detecting malware, viruses, and threats!"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:12
+msgid ""
+"Scans files and folders for hidden dangers, spyware, and harmful software."
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:13
+msgid "Detects trojans, worms, backdoors, adware, and unwanted programs."
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:14
+msgid "Logs every infection, alert, and suspicious finding on your system."
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:15
+msgid ""
+"Updates virus definitions regularly—if you allow—to keep your system "
+"protected."
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:17
+msgid "Keeping your system safe and secure every day!"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:42
+msgid "Review suspicious finds"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:47
+msgid "No dangers spotted"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:52
+msgid "Scan files and folders"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:57
+msgid "View scan reports"
+msgstr ""
+
+#: data/page.codeberg.zynequ.Kapitano.metainfo.xml.in:62
+msgid "Update malware definitions"
+msgstr ""
+
+#. config/preferences_config.py
+#: src/messages/messages.py:4
+msgid "Scan directories recursively"
+msgstr ""
+
+#: src/messages/messages.py:5
+msgid "Detect potentially unwanted applications"
+msgstr ""
+
+#: src/messages/messages.py:6
+msgid "Detect sensitive data"
+msgstr ""
+
+#: src/messages/messages.py:8
+msgid "Social Security Numbers and credit card details"
+msgstr ""
+
+#: src/messages/messages.py:10
+msgid "Enable heuristic alerting"
+msgstr ""
+
+#: src/messages/messages.py:11
+msgid "Delete logs automatically on exit"
+msgstr ""
+
+#: src/messages/messages.py:12
+msgid "Update malware database at launch"
+msgstr ""
+
+#. config/shortcuts_config.py
+#: src/messages/messages.py:15
+msgid "Quit"
+msgstr ""
+
+#: src/messages/messages.py:16
+msgid "Preferences"
+msgstr ""
+
+#: src/messages/messages.py:17
+msgid "About"
+msgstr ""
+
+#: src/messages/messages.py:18
+msgid "Show Shortcuts"
+msgstr ""
+
+#: src/messages/messages.py:19
+msgid "General"
+msgstr ""
+
+#: src/messages/messages.py:24
+msgid "Community Contributors"
+msgstr ""
+
+#: src/messages/messages.py:25
+msgid "Main Menu"
+msgstr ""
+
+#: src/messages/messages.py:26
+msgid "Keyboard Shortcuts"
+msgstr ""
+
+#: src/messages/messages.py:27
+msgid "About Kapitano"
+msgstr ""
+
+#. utils/clamav.py
+#: src/messages/messages.py:30
+msgid "No files available for scanning."
+msgstr ""
+
+#: src/messages/messages.py:31
+msgid "Unknown"
+msgstr ""
+
+#. utils/process.py
+#: src/messages/messages.py:34
+msgid "Error"
+msgstr ""
+
+#: src/messages/messages.py:35
+msgid "No command provided."
+msgstr ""
+
+#: src/messages/messages.py:36
+msgid "This action is not permitted."
+msgstr ""
+
+#: src/messages/messages.py:37
+msgid "The output is binary."
+msgstr ""
+
+#. utils/ui_helpers.py
+#: src/messages/messages.py:40
+msgid "Hostiles"
+msgstr ""
+
+#: src/messages/messages.py:41
+msgid "Report"
+msgstr ""
+
+#: src/messages/messages.py:42
+msgid "Date"
+msgstr ""
+
+#: src/messages/messages.py:43
+msgid "Hostiles Detected"
+msgstr ""
+
+#: src/messages/messages.py:44
+msgid "Duration"
+msgstr ""
+
+#: src/messages/messages.py:45
+msgid "Engine"
+msgstr ""
+
+#. widgets/base/base_list_view.py
+#: src/messages/messages.py:48
+msgid "No items found"
+msgstr ""
+
+#: src/messages/messages.py:49
+msgid "There are no entries to show."
+msgstr ""
+
+#: src/messages/messages.py:50
+msgid "Delete"
+msgstr ""
+
+#. widgets/logbook/logbook.py
+#: src/messages/messages.py:53
+msgid "All Clear"
+msgstr ""
+
+#: src/messages/messages.py:54
+msgid "No hostiles logged during operation."
+msgstr ""
+
+#: src/messages/messages.py:55
+#, python-brace-format
+msgid "{n} hostile(s)"
+msgstr ""
+
+#. widgets/radar/scan_result_page.py
+#: src/messages/messages.py:58
+msgid "Scan Another"
+msgstr ""
+
+#: src/messages/messages.py:59
+msgid "Identify Threat"
+msgstr ""
+
+#: src/messages/messages.py:60
+msgid "Recheck Readiness"
+msgstr ""
+
+#: src/messages/messages.py:61
+msgid "Condition Green"
+msgstr ""
+
+#: src/messages/messages.py:62
+msgid "All systems secure!"
+msgstr ""
+
+#: src/messages/messages.py:63
+msgid "Hostile Contact"
+msgstr ""
+
+#: src/messages/messages.py:64
+msgid "Battle stations, prepare to engage!"
+msgstr ""
+
+#: src/messages/messages.py:65
+msgid "Mission Abort"
+msgstr ""
+
+#: src/messages/messages.py:66
+msgid "Red alert! Damage control teams, report!"
+msgstr ""
+
+#: src/messages/messages.py:67
+msgid "Not Combat-Ready"
+msgstr ""
+
+#: src/messages/messages.py:68
+msgid "Update malware definitions before scanning."
+msgstr ""
+
+#. widgets/radar/scan_target_selector.py
+#: src/messages/messages.py:71
+msgid "Awaiting Orders"
+msgstr ""
+
+#: src/messages/messages.py:72
+msgid "Designate targets to initiate scan."
+msgstr ""
+
+#: src/messages/messages.py:73
+msgid "Select Files"
+msgstr ""
+
+#: src/messages/messages.py:74
+msgid "Select Folders"
+msgstr ""
+
+#. widgets/update/update.py
+#: src/messages/messages.py:77
+msgid "Check for Updates"
+msgstr ""
+
+#: src/messages/messages.py:78
+msgid "Logistics Failure"
+msgstr ""
+
+#: src/messages/messages.py:79
+msgid "Unable to refresh malware definitions!"
+msgstr ""
+
+#. widgets/window.py
+#: src/messages/messages.py:82
+msgid "Radar"
+msgstr ""
+
+#: src/messages/messages.py:83
+msgid "Logbook"
+msgstr ""
+
+#: src/messages/messages.py:84
+msgid "Update"
+msgstr ""

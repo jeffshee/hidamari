@@ -1,1 +1,1 @@
-i18n.gettext('hidamari', preset: 'glib')
+i18n.gettext('kapitano', preset: 'glib')

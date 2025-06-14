@@ -1,0 +1,8 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+
+data/page.codeberg.zynequ.Kapitano.desktop.in
+data/page.codeberg.zynequ.Kapitano.metainfo.xml.in
+data/page.codeberg.zynequ.Kapitano.gschema.xml
+
+src/messages/messages.py
