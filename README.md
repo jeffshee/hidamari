@@ -1,4 +1,11 @@
-<p align="center"><img src="https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/hidamari.svg" width="256"></p>
+# ⚠️ A quick disclaimer
+
+The `edge` branch is currently undergoing a large-scale refactor to migrate to GTK4/libadwaita.
+
+
+---
+
+<p align="center"><img src="/assets/hidamari.svg" width="256"></p>
 
 <p align="center">Video wallpaper for Linux. Written in Python. 🐍</p>  
 <p align="center">Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
@@ -74,9 +81,9 @@ These are maintained by the community!
 
 ## Screenshot 📸
 
-![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-1.png)
-![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-2.png)
-![](https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-3.png)
+![](/assets/screenshot-1.png)
+![](/assets/screenshot-2.png)
+![](/assets/screenshot-3.png)
 
 ## Please!! 🙏
 
