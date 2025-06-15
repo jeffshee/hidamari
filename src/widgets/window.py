@@ -3,11 +3,11 @@ from src.config.paths_config import WINDOW_RESOURCE_PATH, USER_DATA_DIR
 from src.config.ui_config import APP_NAME, MENU_TOOLTIP_TEXT, MENU_ITEMS
 from src.stores.preferences_store import get_preference_bool
 
-from src.widgets.radar.radar import Radar
+from src.widgets.gallery.gallery import Gallery
 from src.widgets.logbook.logbook import Logbook
 from src.widgets.update.update import Update
 
-from src.messages.messages import RADAR, LOGBOOK, UPDATE
+from src.messages.messages import GALLERY, LOGBOOK, UPDATE
 
 
 @Gtk.Template(resource_path=WINDOW_RESOURCE_PATH)
@@ -64,11 +64,12 @@ class Window(Adw.ApplicationWindow):
         for name, action in MENU_ITEMS:
             self.menu_section.append(name, action)
 
-    def __add_radar_tab(self):
-        self.radar = Radar(application=self.application, window=self)
-        self.radar.connect("hostile-contact", lambda w: self.logbook.reload())
-        self.view_stack.add_titled(self.radar, "radar", RADAR)
-        self.view_stack.get_page(self.radar).set_icon_name("find-location-symbolic")
+    def __add_gallery_tab(self):
+        self.gallery = Gallery()
+        self.view_stack.add_titled(self.gallery, "gallery", GALLERY)
+        self.view_stack.get_page(self.gallery).set_icon_name(
+            "image-x-generic-symbolic"
+        )
 
     def __add_logbook_tab(self):
         self.logbook = Logbook(application=self.application, window=self)
@@ -91,7 +92,7 @@ class Window(Adw.ApplicationWindow):
         for page in self.view_stack.get_pages():
             self.view_stack.remove(page.get_child())
 
-        self.__add_radar_tab()
+        self.__add_gallery_tab()
         self.__add_logbook_tab()
         self.__add_update_tab()
 

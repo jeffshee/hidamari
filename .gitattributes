@@ -1,4 +1,4 @@
-*.png filter=lfs diff=lfs merge=lfs -text
+# *.png filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
@@ -21,5 +21,7 @@
 *.so filter=lfs diff=lfs merge=lfs -text
 *.dmg filter=lfs diff=lfs merge=lfs -text
 *.iso filter=lfs diff=lfs merge=lfs -text
-*.svg filter=lfs diff=lfs merge=lfs -text
+# *.svg filter=lfs diff=lfs merge=lfs -text
 *.mo filter=lfs diff=lfs merge=lfs -text
+
+# TODO: resolve temporary Git LFS exceptions above

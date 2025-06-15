@@ -82,3 +82,10 @@ UNABLE_TO_REFRESH_DEFINITIONS = _("Unable to refresh malware definitions!")
 RADAR = _("Radar")
 LOGBOOK = _("Logbook")
 UPDATE = _("Update")
+
+
+"""
+Hidamari
+"""
+
+GALLERY = _("Gallery")

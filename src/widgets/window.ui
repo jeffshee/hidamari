@@ -3,8 +3,8 @@
   <requires lib="gtk" version="4.0"/>
   <requires lib="Adw" version="1.0"/>
   <template class="Window" parent="AdwApplicationWindow">
-    <property name="default-width">800</property>
-    <property name="default-height">600</property>
+    <property name="default-width">1280</property>
+    <property name="default-height">720</property>
     <property name="content">
       <object class="AdwToolbarView" id="toolbar_view" />
     </property>

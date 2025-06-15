@@ -14,3 +14,11 @@ CLAMAV_FRESHCLAM_CONFIG_PATH = os.path.join(USER_DATA_DIR, "freshclam.conf")
 
 LOGBOOK_DB_PATH = os.path.join(USER_DATA_DIR, "logbook.db")
 PREFERENCES_PATH = os.path.join(USER_DATA_DIR, "preferences.ini")
+
+
+"""
+Hidamari
+"""
+
+GALLERY_DIR = os.path.join(USER_DATA_DIR, "gallery")
+THUMBNAILS_DIR = os.path.join(GALLERY_DIR, "thumbnails")
