@@ -1,0 +1,22 @@
+from gi.repository import Gtk
+from hidamari.config.app_config import TRANSLATE_CREDITS_URL
+from hidamari.messages.messages import (
+    HIDAMARI,
+    STAY_SAFE_FROM_MALWARE,
+    COMMUNITY_CONTRIBUTORS,
+    MAIN_MENU,
+    PREFERENCES,
+    KEYBOARD_SHORTCUTS,
+    ABOUT_HIDAMARI,
+)
+
+APP_NAME = HIDAMARI
+APP_SUMMARY = STAY_SAFE_FROM_MALWARE
+APP_TRANSLATOR_CREDITS = COMMUNITY_CONTRIBUTORS + TRANSLATE_CREDITS_URL
+
+MENU_TOOLTIP_TEXT = MAIN_MENU
+MENU_ITEMS = [
+    (PREFERENCES, "app.preferences"),
+    (KEYBOARD_SHORTCUTS, "app.shortcuts"),
+    (ABOUT_HIDAMARI, "app.about"),
+]
