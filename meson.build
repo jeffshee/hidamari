@@ -8,7 +8,7 @@ i18n = import('i18n')
 gnome = import('gnome')
 
 subdir('data')
-subdir('hidamari')
+subdir('src')
 subdir('po')
 
 gnome.post_install(
