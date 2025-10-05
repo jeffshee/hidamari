@@ -21,9 +21,19 @@ logger = logging.getLogger(LOGGER_NAME)
 APP_INDICATOR_ID = PROJECT
 APP_INDICATOR_ICON = "io.github.jeffshee.Hidamari"
 
+# Reuse SessionBus instance to avoid creating multiple connections
+_session_bus = None
+
+def get_session_bus():
+    """Get or create a singleton SessionBus instance"""
+    global _session_bus
+    if _session_bus is None:
+        _session_bus = SessionBus()
+    return _session_bus
+
 def connect():
-    # Connect to server
-    bus = SessionBus()
+    # Connect to server using singleton SessionBus
+    bus = get_session_bus()
     try:
         server = bus.get(DBUS_NAME_SERVER)
         return server

@@ -195,16 +195,34 @@ class ActiveHandler:
     """
 
     def __init__(self, on_active_changed: callable):
-        session_bus = pydbus.SessionBus()
+        self.session_bus = pydbus.SessionBus()
+        self.proxies = []
+        self.signal_subscriptions = []
+        
         screensaver_list = ["org.gnome.ScreenSaver",
                             "org.cinnamon.ScreenSaver",
                             "org.freedesktop.ScreenSaver"]
         for s in screensaver_list:
             try:
-                proxy = session_bus.get(s)
-                proxy.ActiveChanged.connect(on_active_changed)
+                proxy = self.session_bus.get(s)
+                # Store proxy reference to prevent garbage collection
+                self.proxies.append(proxy)
+                subscription = proxy.ActiveChanged.connect(on_active_changed)
+                self.signal_subscriptions.append((proxy, subscription))
             except GLib.Error:
                 pass
+
+    def cleanup(self):
+        """Cleanup signal subscriptions"""
+        for proxy, subscription in self.signal_subscriptions:
+            try:
+                # Note: pydbus doesn't have a direct disconnect method
+                # The connection will be cleaned up when the proxy is garbage collected
+                pass
+            except Exception as e:
+                logger.warning(f"[ActiveHandler] Error during cleanup: {e}")
+        self.signal_subscriptions.clear()
+        self.proxies.clear()
 
 
 class EndSessionHandler:
@@ -264,18 +282,37 @@ class WindowHandler:
         self.on_window_state_changed = on_window_state_changed
         self.screen = Wnck.Screen.get_default()
         self.screen.force_update()
-        self.screen.connect("window-opened", self.window_opened, None)
-        self.screen.connect("window-closed", self.eval, None)
-        self.screen.connect("active-workspace-changed", self.eval, None)
+        
+        # Store signal handler IDs for cleanup
+        self.signal_handlers = []
+        self.window_signal_handlers = {}
+        
+        # Connect screen signals and store handler IDs
+        handler_id = self.screen.connect("window-opened", self.window_opened, None)
+        self.signal_handlers.append((self.screen, handler_id))
+        
+        handler_id = self.screen.connect("window-closed", self.eval, None)
+        self.signal_handlers.append((self.screen, handler_id))
+        
+        handler_id = self.screen.connect("active-workspace-changed", self.eval, None)
+        self.signal_handlers.append((self.screen, handler_id))
+        
+        # Connect to existing windows
         for window in self.screen.get_windows():
-            window.connect("state-changed", self.eval, None)
+            self._connect_window(window)
 
         self.prev_state = None
         # Initial check
         self.eval()
 
+    def _connect_window(self, window):
+        """Connect to a window and store the handler ID"""
+        if window not in self.window_signal_handlers:
+            handler_id = window.connect("state-changed", self.eval, None)
+            self.window_signal_handlers[window] = handler_id
+
     def window_opened(self, screen, window, _):
-        window.connect("state-changed", self.eval, None)
+        self._connect_window(window)
 
     def eval(self, *args):
         # TODO: #28 (Wallpaper stops animating on other monitor when app maximized on other)
@@ -304,6 +341,24 @@ class WindowHandler:
             self.on_window_state_changed(
                 {"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
             logger.debug(f"[WindowHandler] {cur_state}")
+
+    def cleanup(self):
+        """Cleanup all signal handlers to prevent memory leaks"""
+        # Disconnect screen signals
+        for obj, handler_id in self.signal_handlers:
+            try:
+                obj.disconnect(handler_id)
+            except Exception as e:
+                logger.warning(f"[WindowHandler] Error disconnecting screen signal: {e}")
+        self.signal_handlers.clear()
+        
+        # Disconnect window signals
+        for window, handler_id in self.window_signal_handlers.items():
+            try:
+                window.disconnect(handler_id)
+            except Exception as e:
+                logger.warning(f"[WindowHandler] Error disconnecting window signal: {e}")
+        self.window_signal_handlers.clear()
 
 
 # class WindowHandlerGnome:

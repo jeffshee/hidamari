@@ -122,9 +122,14 @@ class HidamariServer(object):
         # Quit current then create a new player
         self._quit_player()
 
-        # Terminate old player process
+        # Terminate old player process and wait for it to finish
         if self.player_process:
             self.player_process.terminate()
+            self.player_process.join(timeout=5)  # Wait up to 5 seconds
+            if self.player_process.is_alive():
+                logger.warning("[Server] Player process didn't terminate, killing it")
+                self.player_process.kill()
+                self.player_process.join(timeout=2)
             self.player_process = None
 
         if mode in [MODE_VIDEO, MODE_STREAM]:
@@ -146,6 +151,10 @@ class HidamariServer(object):
             if self._prev_mode != self.mode:
                 if self.sys_icon_process:
                     self.sys_icon_process.terminate()
+                    self.sys_icon_process.join(timeout=3)
+                    if self.sys_icon_process.is_alive():
+                        self.sys_icon_process.kill()
+                        self.sys_icon_process.join(timeout=1)
                 self.sys_icon_process = Process(
                     name="hidamari-systray", target=show_systray_icon, args=(mode,))
                 self.sys_icon_process.start()
@@ -217,10 +226,17 @@ class HidamariServer(object):
             self._quit_player()
         except GLib.Error:
             pass
-        # Quit all processes
+        
+        # Quit all processes with proper cleanup
         for process in [self.player_process, self.gui_process, self.sys_icon_process]:
-            if process:
+            if process and process.is_alive():
                 process.terminate()
+                process.join(timeout=3)
+                if process.is_alive():
+                    logger.warning(f"[Server] Process {process.name} didn't terminate, killing it")
+                    process.kill()
+                    process.join(timeout=1)
+        
         loop.quit()
         logger.info("[Server] Stopped")
 

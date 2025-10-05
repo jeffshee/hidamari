@@ -48,9 +48,19 @@ else:
 class Fade:
     def __init__(self):
         self.timer = None
+        self.is_active = False
 
     def start(self, cur, target, step, fade_interval, update_callback: callable = None,
               complete_callback: callable = None):
+        # Cancel any existing timer first
+        self.cancel()
+        self.is_active = True
+        self._fade_step(cur, target, step, fade_interval, update_callback, complete_callback)
+
+    def _fade_step(self, cur, target, step, fade_interval, update_callback, complete_callback):
+        if not self.is_active:
+            return
+            
         new_cur = cur + step
         if (step < 0 and new_cur <= target) or (step > 0 and new_cur >= target):
             new_cur = target
@@ -58,16 +68,20 @@ class Fade:
                 update_callback(int(new_cur))
             if complete_callback:
                 complete_callback()
+            self.is_active = False
         else:
             if update_callback:
                 update_callback(int(new_cur))
-            self.timer = Timer(fade_interval, self.start,
+            self.timer = Timer(fade_interval, self._fade_step,
                                args=[new_cur, target, step, fade_interval, update_callback, complete_callback])
+            self.timer.daemon = True  # Make timer daemon to prevent blocking shutdown
             self.timer.start()
 
     def cancel(self):
+        self.is_active = False
         if self.timer:
             self.timer.cancel()
+            self.timer = None
 
 
 class VLCWidget(Gtk.DrawingArea):
@@ -95,6 +109,19 @@ class VLCWidget(Gtk.DrawingArea):
         # Embed and set size.
         self.connect("realize", handle_embed)
         self.set_size_request(width, height)
+
+    def cleanup(self):
+        """Cleanup VLC resources to prevent memory leaks"""
+        try:
+            if self.player:
+                self.player.stop()
+                self.player.release()
+                self.player = None
+            if self.instance:
+                self.instance.release()
+                self.instance = None
+        except Exception as e:
+            logger.warning(f"[VLCWidget] Cleanup error: {e}")
 
 
 class PlayerWindow(Gtk.ApplicationWindow):
@@ -217,6 +244,12 @@ class PlayerWindow(Gtk.ApplicationWindow):
 
     def get_name(self):
         return self.name
+
+    def cleanup(self):
+        """Cleanup resources to prevent memory leaks"""
+        self.fade.cancel()
+        if self.__vlc_widget:
+            self.__vlc_widget.cleanup()
 
 
 class VideoPlayer(BasePlayer):
@@ -410,10 +443,11 @@ class VideoPlayer(BasePlayer):
         self.is_mute = self.config[CONFIG_KEY_MUTE]
         self.start_playback()
 
-        # Everything is initialized. Create handlers if haven't.
+        # Everything is initialized. Create handlers if haven't (singleton pattern).
         if not self.active_handler:
             self.active_handler = ActiveHandler(self._on_active_changed)
-        if not self.window_handler:
+        if not self.window_handler and not is_wayland():
+            # Only create WindowHandler on X11, not Wayland
             self.window_handler = WindowHandler(self._on_window_state_changed)
 
         if self.config[CONFIG_KEY_STATIC_WALLPAPER] and self.mode == MODE_VIDEO:
@@ -544,6 +578,21 @@ class VideoPlayer(BasePlayer):
 
     def quit_player(self):
         self.set_original_wallpaper()
+        
+        # Cleanup handlers
+        if self.active_handler:
+            self.active_handler.cleanup()
+            self.active_handler = None
+            
+        if self.window_handler:
+            self.window_handler.cleanup()
+            self.window_handler = None
+        
+        # Cleanup all windows
+        for monitor, window in self.windows.items():
+            if window:
+                window.cleanup()
+        
         super().quit_player()
 
 
