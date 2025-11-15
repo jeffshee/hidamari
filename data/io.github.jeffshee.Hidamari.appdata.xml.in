@@ -17,13 +17,13 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-1.png</image>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-1.png</image>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-2.png</image>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-2.png</image>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/resource/screenshot-3.png</image>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-3.png</image>
     </screenshot>
   </screenshots>
   <releases>
