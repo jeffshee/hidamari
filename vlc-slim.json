@@ -13,7 +13,7 @@
         "*.la",
         "*.a"
     ],
-    "cleanup-commands": [
+    "post-install": [
         "mkdir -p /app/share/vlc/extra",
         "ln -s /app/share/vlc/extra/plugins /app/lib/vlc/plugins/extra",
         "rm -f /app/lib/vlc/plugins/plugins.dat",
@@ -77,6 +77,10 @@
                     "type": "archive",
                     "url": "https://dl.matroska.org/downloads/libebml/libebml-1.4.5.tar.xz",
                     "sha256": "4971640b0592da29c2d426f303e137a9b0b3d07e1b81d069c1e56a2f49ab221b"
+                },
+                {
+                "type": "patch",
+                "path": "libvlc/cmake-min-version.patch"
                 }
             ]
         },
@@ -94,6 +98,10 @@
                     "type": "archive",
                     "url": "https://dl.matroska.org/downloads/libmatroska/libmatroska-1.7.1.tar.xz",
                     "sha256": "572a3033b8d93d48a6a858e514abce4b2f7a946fe1f02cbfeca39bfd703018b3"
+                },
+                {
+                "type": "patch",
+                "path": "libvlc/cmake-min-version.patch"
                 }
             ]
         },
@@ -125,7 +133,7 @@
                 {
                     "type": "git",
                     "url": "https://code.videolan.org/videolan/x264.git",
-                    "commit": "a8b68ebfaa68621b5ac8907610d3335971839d52"
+                    "commit": "0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee"
                 }
             ]
         },
@@ -142,8 +150,12 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://bitbucket.org/multicoreware/x265_git/downloads/x265_3.6.tar.gz",
-                    "sha256": "663531f341c5389f460d730e62e10a4fcca3428ca2ca109693867bc5fe2e2807"
+                    "url": "https://bitbucket.org/multicoreware/x265_git/downloads/x265_4.1.tar.gz",
+                    "sha256": "a31699c6a89806b74b0151e5e6a7df65de4b49050482fe5ebf8a4379d7af8f29"
+                },
+                {
+                    "type": "patch",
+                    "path": "libvlc/x265-cmake.patch"
                 }
             ]
         },
@@ -153,8 +165,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://download.videolan.org/videolan/dav1d/1.4.2/dav1d-1.4.2.tar.xz",
-                    "sha256": "7392cf4c432734eebb383319b5e05e994bffdcdfe66f82287c38873601a4ef0b"
+                    "url": "https://download.videolan.org/videolan/dav1d/1.5.2/dav1d-1.5.2.tar.xz",
+                    "sha256": "cce88ebcffd3f790bde49caa75f97b9cc2dd54ca8f57e38c62707266ec71bc4e"
                 }
             ]
         },
@@ -227,9 +239,9 @@
             ],
             "sources": [
                 {
-                    "type": "archive",
-                    "url": "https://github.com/Haivision/srt/archive/v1.5.3.tar.gz",
-                    "sha256": "befaeb16f628c46387b898df02bc6fba84868e86a6f6d8294755375b9932d777"
+                    "type": "git",
+                    "url": "https://github.com/Haivision/srt.git",
+                    "commit": "c09532f8edf28de91854f975bb16e643e8085ed9"
                 }
             ]
         },
@@ -278,6 +290,8 @@
             "name": "vlc",
             "config-opts": [
                 "BUILDCC=/usr/bin/gcc -std=gnu99",
+                "CFLAGS=-U_FORTIFY_SOURCE",
+                "CXXFLAGS=-U_FORTIFY_SOURCE",
                 "--disable-archive",
                 "--disable-dc1394",
                 "--disable-dv1394",

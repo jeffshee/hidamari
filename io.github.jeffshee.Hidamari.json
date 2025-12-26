@@ -1,7 +1,7 @@
 {
     "app-id": "io.github.jeffshee.Hidamari",
     "runtime": "org.gnome.Platform",
-    "runtime-version": "47",
+    "runtime-version": "48",
     "sdk": "org.gnome.Sdk",
     "command": "hidamari",
     "finish-args": [
@@ -49,8 +49,8 @@
                 {
                     "type": "git",
                     "url": "https://gitlab.gnome.org/GNOME/gnome-desktop.git",
-                    "commit": "97c0344b3ba955bb6f6fe74ca03cc399a81acaa5",
-                    "tag": "44.0"
+                    "commit": "33516379260c09db7435432c7a250ce64afaad6e",
+                    "tag": "44.4"
                 }
             ]
         },
@@ -76,7 +76,7 @@
                 {
                     "type": "git",
                     "url": "https://gitlab.gnome.org/GNOME/totem-video-thumbnailer.git",
-                    "commit": "78ddf6c113d439d8ad9ff1453cf433592fabe9fd"
+                    "commit": "6cb399918571a97591ff5a4a5a41d8e46b11027a"
                 }
             ]
         },
@@ -91,21 +91,18 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://download.gnome.org/sources/libwnck/43/libwnck-43.0.tar.xz",
-                    "sha256": "905bcdb85847d6b8f8861e56b30cd6dc61eae67ecef4cd994a9f925a26a2c1fe"
+                    "url": "https://download.gnome.org/sources/libwnck/43/libwnck-43.3.tar.xz",
+                    "sha256": "6af8ac41a8f067ade1d3caaed254a83423b5f61ad3f7a460fcacbac2e192bdf7"
                 }
             ]
         },
         {
             "name": "mesa-demos",
+            "buildsystem":"autotools",
             "config-opts": [
                 "--without-glut",
-                "--bindir=/app/lib/mesa-demos"
-            ],
-            "make-args": [
-                "-C",
-                "src/xdemos",
-                "glxinfo"
+                "--bindir=/app/lib/mesa-demos",
+                "--enable-autotools"
             ],
             "no-make-install": true,
             "build-commands": [
@@ -114,8 +111,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://mesa.freedesktop.org/archive/demos/mesa-demos-8.4.0.tar.bz2",
-                    "sha256": "01e99c94a0184e63e796728af89bfac559795fb2a0d6f506fa900455ca5fff7d"
+                    "url": "https://archive.mesa3d.org/demos/8.5.0/mesa-demos-8.5.0.tar.bz2",
+                    "sha256": "cea2df0a80f09a30f635c4eb1a672bf90c5ddee0b8e77f4d70041668ef71aac1"
                 }
             ],
             "cleanup": [
@@ -144,8 +141,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://github.com/flatpak/libportal/releases/download/0.8.1/libportal-0.8.1.tar.xz",
-                    "sha256": "281e54e4f8561125a65d20658f1462ab932b2b1258c376fed2137718441825ac",
+                    "url": "https://github.com/flatpak/libportal/releases/download/0.9.1/libportal-0.9.1.tar.xz",
+                    "sha256": "de801ee349ed3c255a9af3c01b1a401fab5b3fc1c35eb2fd7dfb35d4b8194d7f",
                     "x-checker-data": {
                         "type": "json",
                         "url": "https://api.github.com/repos/flatpak/libportal/releases/latest",
@@ -166,8 +163,5 @@
                 }
             ]
         }
-    ],
-    "build-options": {
-        "env": {}
-    }
+    ]
 }
