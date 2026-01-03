@@ -9,7 +9,7 @@ import setproctitle
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio, GLib, GdkPixbuf, Gdk
+from gi.repository import Gtk, Gio, GLib, GdkPixbuf, Gdk, GObject
 
 from pydbus import SessionBus
 import yt_dlp
@@ -58,12 +58,26 @@ class ControlPanel(Gtk.Application):
             self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
         except GLib.Error:
             self.builder.add_from_file(os.path.abspath("./assets/control.ui"))
+        
+        # Show timer scale when toggled
+
+        toggle_feelingluckytimer = self.builder.get_object("ToggleFeelingLuckyTimer")
+        scale_feelingluckytimer = self.builder.get_object("ScaleLuckyTimer")
+
+        toggle_feelingluckytimer.bind_property(
+            "active", 
+            scale_feelingluckytimer, 
+            "visible", 
+            GObject.BindingFlags.DEFAULT
+        )
+
         # Handlers declared in `control.ui``
         signals = {
             "on_volume_changed": self.on_volume_changed,
             "on_streaming_activate": self.on_streaming_activate,
             "on_web_page_activate": self.on_web_page_activate,
             "on_blur_radius_changed": self.on_blur_radius_changed,
+            "on_lucky_timer_changed": self.on_lucky_timer_changed
         }
         self.builder.connect_signals(signals)
 
@@ -92,6 +106,7 @@ class ControlPanel(Gtk.Application):
                 self.monitors.get_monitor(monitor).set_wallpaper(video_paths['Default'])
 
         self._setup_context_menu() # setup context menu for selecting monitors
+        self.lucky_timer_id = None
 
     def _connect_server(self):
         try:
@@ -138,6 +153,7 @@ class ControlPanel(Gtk.Application):
             ("local_web_page_apply", self.on_local_web_page_apply),
             ("play_pause", self.on_play_pause),
             ("feeling_lucky", self.on_feeling_lucky),
+            ("feeling_lucky_sync", self.on_feeling_lucky_sync),
             (
                 "config",
                 lambda *_: subprocess.run(["xdg-open", os.path.realpath(CONFIG_PATH)]),
@@ -158,6 +174,11 @@ class ControlPanel(Gtk.Application):
                 "static_wallpaper",
                 self.config[CONFIG_KEY_STATIC_WALLPAPER],
                 self.on_static_wallpaper,
+            ),
+            (
+                "feeling_lucky_timeron",
+                self.config[CONFIG_KEY_FEELING_LUCKY],
+                self.on_feeling_lucky_timeron,
             ),
             (
                 "pause_when_maximized",
@@ -308,6 +329,10 @@ class ControlPanel(Gtk.Application):
         if self.server is not None:
             self.server.feeling_lucky()
 
+    def on_feeling_lucky_sync(self, *_):
+        if self.server is not None:
+            self.server.feeling_lucky_sync()
+
     def set_mute_toggle_icon(self):
         toggle_icon: Gtk.Image = self.builder.get_object("ToggleMuteIcon")
         volume, is_mute = self.config[CONFIG_KEY_VOLUME], self.config[CONFIG_KEY_MUTE]
@@ -342,6 +367,15 @@ class ControlPanel(Gtk.Application):
         if self.server is not None:
             self.server.volume = self.config[CONFIG_KEY_VOLUME]
         self.set_mute_toggle_icon()
+    
+    def on_lucky_timer_changed(self, adjustment):
+        # If the timer is on, resets with new selected time
+        if self.config.get(CONFIG_KEY_FEELING_LUCKY_TIMER) != 0:
+            action = self.lookup_action("feeling_lucky_timeron")
+            self.on_feeling_lucky_timeron(action, GLib.Variant.new_boolean(True))
+        self.config[CONFIG_KEY_FEELING_LUCKY_TIMER] = int(adjustment.get_value())
+        logger.info(f"[GUI] Feeling Lucky Timer: {self.config[CONFIG_KEY_FEELING_LUCKY_TIMER]}")
+        self._save_config_delay()
 
     def on_blur_radius_changed(self, adjustment):
         self.config[CONFIG_KEY_BLUR_RADIUS] = int(adjustment.get_value())
@@ -374,6 +408,40 @@ class ControlPanel(Gtk.Application):
         if self.server is not None:
             self.server.is_static_wallpaper = self.config[CONFIG_KEY_STATIC_WALLPAPER]
         self.set_spin_blur_radius_sensitive()
+
+    def on_feeling_lucky_timeron(self, action, state):
+        action.set_state(state)
+        is_active = bool(state)
+        self.config[CONFIG_KEY_FEELING_LUCKY] = is_active
+        logger.info(f"[GUI] {action.get_name()}: {state}")
+        self._save_config()
+        if self.server is not None:
+            self.server.is_feeling_lucky = self.config[CONFIG_KEY_FEELING_LUCKY]
+
+        # If there is a timer running, stops it first
+        if self.lucky_timer_id is not None:
+            GLib.source_remove(self.lucky_timer_id)
+            self.lucky_timer_id = None
+        
+        # When turned on, starts a new timer
+        if is_active:
+            # Converts minutes to seconds
+            minutes = self.builder.get_object("AdjustmentTimer").get_value()
+            seconds = int(minutes) * 60
+
+            logger.info(f"[GUI] Starting Lucky Timer every {minutes} minutes")
+
+            self.lucky_timer_id = GLib.timeout_add_seconds(
+                seconds,
+                self._lucky_timer_callback
+            )
+
+    def _lucky_timer_callback(self):
+        if self.config[CONFIG_KEY_FEELING_LUCKY] and self.server is not None:
+            logger.info("[GUI] Lucky Timer Triggered!")
+            self.server.feeling_lucky_sync()
+            return True
+        return False
 
     def on_pause_when_maximized(self, action, state):
         action.set_state(state)
@@ -489,6 +557,13 @@ class ControlPanel(Gtk.Application):
         adjustment_volume.handler_block_by_func(self.on_volume_changed)
         scale_volume.set_value(self.config[CONFIG_KEY_VOLUME])
         adjustment_volume.handler_unblock_by_func(self.on_volume_changed)
+
+        scale_lucky_timer: Gtk.Scale = self.builder.get_object("ScaleLuckyTimer")
+        adjustment_lucky_timer: Gtk.Adjustment = self.builder.get_object("AdjustmentTimer")
+        # Temporary block signal
+        adjustment_lucky_timer.handler_block_by_func(self.on_lucky_timer_changed)
+        scale_lucky_timer.set_value(self.config[CONFIG_KEY_FEELING_LUCKY_TIMER])
+        adjustment_lucky_timer.handler_unblock_by_func(self.on_lucky_timer_changed)
 
         spin_blur_radius: Gtk.Scale = self.builder.get_object("SpinBlurRadius")
         adjustment_blur: Gtk.Adjustment = self.builder.get_object("AdjustmentBlur")

@@ -56,6 +56,110 @@ All Contributors https://github.com/jeffshee/hidamari/graphs/contributors</prope
     <property name="page-increment">10</property>
     <signal name="value-changed" handler="on_volume_changed" swapped="no"/>
   </object>
+  <object class="GtkAdjustment" id="AdjustmentTimer">
+    <property name="lower">1</property>
+    <property name="upper">60</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">5</property>
+    <signal name="value-changed" handler="on_lucky_timer_changed" swapped="no"/>
+  </object>
+  <object class="GtkPopover" id="PopoverLucky">
+    <property name="can-focus">False</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="margin-start">8</property>
+        <property name="margin-end">8</property>
+        <property name="margin-top">8</property>
+        <property name="margin-bottom">8</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can-focus">False</property>
+            <property name="label" translatable="yes">Feeling Lucky - Run now</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">app.feeling_lucky_sync</property>
+            <property name="text" translatable="yes">Sync monitors</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">app.feeling_lucky</property>
+            <property name="text" translatable="yes">Random for each monitor</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can-focus">False</property>
+            <property name="label" translatable="yes">Feeling Lucky - Timer</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton" id="ToggleFeelingLuckyTimer">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">app.feeling_lucky_timeron</property>
+            <property name="text" translatable="yes">Change from time to time</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScale" id="ScaleLuckyTimer">
+            <property name="visible">False</property>
+            <property name="can-focus">True</property>
+            <property name="adjustment">AdjustmentTimer</property>
+            <property name="draw-value">True</property>
+            <property name="round-digits">0</property>
+            <property name="digits">0</property>
+
+            <marks>
+              <mark value="0" translatable="yes">0m</mark>
+              <mark value="60" translatable="yes">1h</mark>
+            </marks>
+
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+          </packing>
+          </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkPopover" id="PopoverMain">
     <property name="can-focus">False</property>
     <child>
@@ -679,7 +783,7 @@ Set a web page as wallpaper</property>
                             <property name="can-focus">False</property>
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">💡	Check this website for some really amazing examples!
-	&lt;a href="https://alteredqualia.com/"&gt;https://alteredqualia.com/&lt;/a&gt;</property>
+&lt;a href="https://alteredqualia.com/"&gt;https://alteredqualia.com/&lt;/a&gt;</property>
                             <property name="use-markup">True</property>
                           </object>
                           <packing>
@@ -844,12 +948,12 @@ Set a web page as wallpaper</property>
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="ButtonFeelingLucky">
+          <object class="GtkMenuButton" id="ButtonFeelingLucky">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
             <property name="tooltip-text" translatable="yes">I'm Feeling Lucky</property>
-            <property name="action-name">app.feeling_lucky</property>
+            <property name="popover">PopoverLucky</property>
             <child>
               <object class="GtkImage" id="ButtonPlayPauseIcon1">
                 <property name="visible">True</property>
