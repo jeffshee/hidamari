@@ -49,6 +49,7 @@ class HidamariServer(object):
         <method name='start_playback'/>
         <method name="reload"/>
         <method name="feeling_lucky"/>
+        <method name="feeling_lucky_sync"/>
         <method name='show_gui'/>
         <method name='quit'/>
         <property name="mode" type="s" access="read"/>
@@ -58,6 +59,7 @@ class HidamariServer(object):
         <property name="is_playing" type="b" access="read"/>
         <property name="is_paused_by_user" type="b" access="readwrite"/>
         <property name="is_static_wallpaper" type="b" access="readwrite"/>
+        <property name="is_feeling_lucky" type="b" access="readwrite"/>
         <property name="is_pause_when_maximized" type="b" access="readwrite"/>
         <property name="is_mute_when_maximized" type="b" access="readwrite"/>
     </interface>
@@ -203,17 +205,39 @@ class HidamariServer(object):
     def feeling_lucky(self):
         """Random play a video from the directory"""
         monitors = Monitors().get_monitors()
+        file_list = get_video_paths()   
+
+        # Remove current data source from the random selection
+        current_sources = set(self.config[CONFIG_KEY_DATA_SOURCE].values())
+        file_list = [f for f in file_list if f not in current_sources]
+
         for monitor in monitors:
-            file_list = get_video_paths()   
-            # Remove current data source from the random selection
-            if self.config[CONFIG_KEY_DATA_SOURCE][monitor] in file_list:
-                file_list.remove(self.config[CONFIG_KEY_DATA_SOURCE][monitor])
             if file_list:
                 video_path = random.choice(file_list)
+                file_list.remove(video_path)
                 self.config[CONFIG_KEY_MODE] = MODE_VIDEO
                 self.config[CONFIG_KEY_DATA_SOURCE][monitor] = video_path
                 self._save_config()
             self.video(video_path)
+    
+    def feeling_lucky_sync(self):
+        """Random play a video from the directory"""
+        file_list = get_video_paths()   
+
+        # 1. Filter out videos currently playing on ANY monitor
+        current_sources = self.config[CONFIG_KEY_DATA_SOURCE].values()
+        file_list = [f for f in file_list if f not in current_sources]
+
+        if file_list:
+            video_path = random.choice(file_list)
+            self.config[CONFIG_KEY_MODE] = MODE_VIDEO
+            
+            # 2. Assign the SAME video_path to EVERY monitor in the config
+            for monitor_key in self.config[CONFIG_KEY_DATA_SOURCE].keys():
+                self.config[CONFIG_KEY_DATA_SOURCE][monitor_key] = video_path
+            self._save_config()
+
+            map(self.video(video_path), Monitors().get_monitors())    
 
     def show_gui(self):
         """Show main GUI"""
@@ -304,6 +328,17 @@ class HidamariServer(object):
     @is_static_wallpaper.setter
     def is_static_wallpaper(self, is_static_wallpaper):
         self.config[CONFIG_KEY_STATIC_WALLPAPER] = is_static_wallpaper
+        player = get_instance(DBUS_NAME_PLAYER)
+        if player is not None:
+            player.reload_config()
+    
+    @property
+    def is_feeling_lucky(self):
+        return self.config[CONFIG_KEY_FEELING_LUCKY]
+
+    @is_feeling_lucky.setter
+    def is_feeling_lucky(self, is_feeling_lucky):
+        self.config[CONFIG_KEY_FEELING_LUCKY] = is_feeling_lucky
         player = get_instance(DBUS_NAME_PLAYER)
         if player is not None:
             player.reload_config()
