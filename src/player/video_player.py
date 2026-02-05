@@ -178,8 +178,14 @@ class PlayerWindow(Gtk.ApplicationWindow):
         self.fade.cancel()
         self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume)
 
-    def media_new(self, *args):
-        return self.__vlc_widget.instance.media_new(*args)
+    def media_new(self, url, http_headers=None):
+        media = self.__vlc_widget.instance.media_new(url)
+        # Add HTTP headers if provided (needed for YouTube streams)
+        if http_headers:
+            for header_name, header_value in http_headers.items():
+                # VLC uses :http-header=Header-Name: Header-Value format
+                media.add_option(f":http-header={header_name}: {header_value}")
+        return media
 
     def set_media(self, *args):
         self.__vlc_widget.player.set_media(*args)
@@ -231,8 +237,14 @@ class PlayerWindow(Gtk.ApplicationWindow):
         logger.debug(f"[CenterCrop] Crop geometry: {crop_geometry}")
         self.__vlc_widget.player.video_set_crop_geometry(crop_geometry)
 
-    def add_audio_track(self, audio):
-        self.__vlc_widget.player.add_slave(vlc.MediaSlaveType(1), audio, True)
+    def add_audio_track(self, audio_url, http_headers=None):
+        # Create a media object for the audio track with headers
+        audio_media = self.__vlc_widget.instance.media_new(audio_url)
+        if http_headers:
+            for header_name, header_value in http_headers.items():
+                # VLC uses :http-header=Header-Name: Header-Value format
+                audio_media.add_option(f":http-header={header_name}: {header_value}")
+        self.__vlc_widget.player.add_slave(vlc.MediaSlaveType(1), audio_media, True)
 
     def _on_button_press_event(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
@@ -418,24 +430,35 @@ class VideoPlayer(BasePlayer):
 
         elif self.mode == MODE_STREAM:
             source = data_source['Default']
-            formats = get_formats(source)
-            max_height = max(
-                self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
-            video_url, video_width, video_height = get_optimal_video(
-                formats, max_height)
-            audio_url = get_best_audio(formats)
+            try:
+                formats = get_formats(source)
+                max_height = max(
+                    self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
+                video_url, video_width, video_height, video_headers = get_optimal_video(
+                    formats, max_height)
+                audio_url, audio_headers = get_best_audio(formats)
+                
+                logger.info(f"[Stream] Video URL: {video_url[:100]}...")
+                logger.info(f"[Stream] Audio URL: {audio_url[:100]}...")
+                logger.debug(f"[Stream] Video headers: {video_headers}")
+                logger.debug(f"[Stream] Audio headers: {audio_headers}")
 
-            for monitor, window in self.windows.items():
-                media = window.media_new(video_url)
-                media.add_option("input-repeat=65535")
-                window.set_media(media)
-                if monitor.is_primary():
-                    window.add_audio_track(audio_url)
-                else:
-                    # `get_optimal_video` now might return video with audio.
-                    media.add_option("no-audio")
-                window.set_position(0.0)
-                window.centercrop(video_width, video_height)
+                for monitor, window in self.windows.items():
+                    media = window.media_new(video_url, http_headers=video_headers)
+                    media.add_option("input-repeat=65535")
+                    # Add network caching for better streaming performance
+                    media.add_option(":network-caching=3000")
+                    window.set_media(media)
+                    if monitor.is_primary():
+                        window.add_audio_track(audio_url, http_headers=audio_headers)
+                    else:
+                        # `get_optimal_video` now might return video with audio.
+                        media.add_option("no-audio")
+                    window.set_position(0.0)
+                    window.centercrop(video_width, video_height)
+            except Exception as e:
+                logger.error(f"[Stream] Failed to setup stream: {e}", exc_info=True)
+                raise
         else:
             raise ValueError("Invalid mode")
 
