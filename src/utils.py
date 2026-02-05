@@ -5,7 +5,7 @@ from pprint import pformat
 
 import gi
 gi.require_version("Wnck", "3.0")
-from gi.repository import Gio, GLib, Wnck  # , Gdk
+from gi.repository import Gio, GLib, Wnck, Gdk
 
 import pydbus
 
@@ -287,6 +287,9 @@ class WindowHandler:
         self.signal_handlers = []
         self.window_signal_handlers = {}
         
+        # Cache monitor geometries for window-to-monitor matching
+        self.monitor_geometries = self._get_monitor_geometries()
+        
         # Connect screen signals and store handler IDs
         handler_id = self.screen.connect("window-opened", self.window_opened, None)
         self.signal_handlers.append((self.screen, handler_id))
@@ -305,6 +308,30 @@ class WindowHandler:
         # Initial check
         self.eval()
 
+    def _get_monitor_geometries(self):
+        """Get all monitor geometries as dict {name: (x, y, width, height)}"""
+        display = Gdk.Display.get_default()
+        geometries = {}
+        for i in range(display.get_n_monitors()):
+            monitor = display.get_monitor(i)
+            rect = monitor.get_geometry()
+            geometries[monitor.get_model()] = (rect.x, rect.y, rect.width, rect.height)
+        return geometries
+
+    def _get_window_monitor(self, window):
+        """Determine which monitor a window is on based on its center point"""
+        geo = window.get_geometry()
+        if geo is None:
+            return None
+        
+        center_x = geo[0] + geo[2] // 2
+        center_y = geo[1] + geo[3] // 2
+        
+        for name, (mx, my, mw, mh) in self.monitor_geometries.items():
+            if mx <= center_x < mx + mw and my <= center_y < my + mh:
+                return name
+        return None
+
     def _connect_window(self, window):
         """Connect to a window and store the handler ID"""
         if window not in self.window_signal_handlers:
@@ -315,31 +342,42 @@ class WindowHandler:
         self._connect_window(window)
 
     def eval(self, *args):
-        # TODO: #28 (Wallpaper stops animating on other monitor when app maximized on other)
         is_changed = False
 
-        is_any_maximized, is_any_fullscreen = False, False
+        monitor_states = {name: {"maximized": False, "fullscreen": False} 
+                         for name in self.monitor_geometries}
+
         for window in self.screen.get_windows():
             base_state = not Wnck.Window.is_minimized(window) and \
                 Wnck.Window.is_on_workspace(
                     window, self.screen.get_active_workspace())
-            window_name, is_maximized, is_fullscreen = window.get_name(), \
-                Wnck.Window.is_maximized(window) and base_state, \
-                Wnck.Window.is_fullscreen(window) and base_state
-            if is_maximized is True:
-                is_any_maximized = True
-            if is_fullscreen is True:
-                is_any_fullscreen = True
+            
+            is_maximized = Wnck.Window.is_maximized(window) and base_state
+            is_fullscreen = Wnck.Window.is_fullscreen(window) and base_state
+            
+            if is_maximized or is_fullscreen:
+                # Find which monitor this window is on
+                monitor_name = self._get_window_monitor(window)
+                if monitor_name and monitor_name in monitor_states:
+                    if is_maximized:
+                        monitor_states[monitor_name]["maximized"] = True
+                    if is_fullscreen:
+                        monitor_states[monitor_name]["fullscreen"] = True
 
-        cur_state = {"is_any_maximized": is_any_maximized,
-                     "is_any_fullscreen": is_any_fullscreen}
+        is_any_maximized = any(s["maximized"] for s in monitor_states.values())
+        is_any_fullscreen = any(s["fullscreen"] for s in monitor_states.values())
+
+        cur_state = {
+            "is_any_maximized": is_any_maximized,
+            "is_any_fullscreen": is_any_fullscreen,
+            "monitor_states": monitor_states
+        }
         if self.prev_state is None or self.prev_state != cur_state:
             is_changed = True
             self.prev_state = cur_state
 
         if is_changed:
-            self.on_window_state_changed(
-                {"is_any_maximized": is_any_maximized, "is_any_fullscreen": is_any_fullscreen})
+            self.on_window_state_changed(cur_state)
             logger.debug(f"[WindowHandler] {cur_state}")
 
     def cleanup(self):

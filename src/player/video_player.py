@@ -313,6 +313,7 @@ class VideoPlayer(BasePlayer):
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None
         self.is_any_maximized, self.is_any_fullscreen = False, False
+        self.monitor_states = {}  # Per-monitor maximized/fullscreen state
         self.is_paused_by_user = False
 
     def new_window(self, gdk_monitor):
@@ -337,14 +338,25 @@ class VideoPlayer(BasePlayer):
                 self.pause_playback()
 
     def _on_window_state_changed(self, state):
-        self.is_any_maximized, self.is_any_fullscreen = state["is_any_maximized"], state["is_any_fullscreen"]
-        logger.info(f"is_any_maximized: {self.is_any_maximized}, is_any_fullscreen: {self.is_any_fullscreen}")
+        self.is_any_maximized = state["is_any_maximized"]
+        self.is_any_fullscreen = state["is_any_fullscreen"]
+        self.monitor_states = state.get("monitor_states", {})
+        logger.info(f"Window state changed: {state}")
 
         if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]:
-            if self._should_playback_start():
-                self.start_playback()
-            else:
-                self.pause_playback()
+            # Per-monitor pause/play logic
+            for monitor, window in self.windows.items():
+                monitor_name = monitor.get_model()
+                mon_state = self.monitor_states.get(monitor_name, {})
+                
+                if mon_state.get("maximized") or mon_state.get("fullscreen"):
+                    window.pause_fade(fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                                      fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+                else:
+                    if not self.is_paused_by_user:
+                        window.play_fade(target=self.volume if monitor.is_primary() else 0,
+                                        fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                                        fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
         elif self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]:
             for monitor, window in self.windows.items():
                 if not monitor.is_primary():
@@ -356,11 +368,16 @@ class VideoPlayer(BasePlayer):
                     window.volume_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
                                 fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
         
-    def _should_playback_start(self):
-        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] and (self.is_any_maximized or self.is_any_fullscreen):
-            return False
+    def _should_playback_start(self, monitor_name=None):
+        """Check if playback should start. If monitor_name given, check that specific monitor."""
         if self.is_paused_by_user:
             return False
+        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]:
+            if monitor_name and hasattr(self, 'monitor_states'):
+                mon_state = self.monitor_states.get(monitor_name, {})
+                return not (mon_state.get("maximized") or mon_state.get("fullscreen"))
+            # Fallback to global check
+            return not (self.is_any_maximized or self.is_any_fullscreen)
         return True
 
     @property
