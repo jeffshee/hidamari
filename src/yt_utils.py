@@ -22,8 +22,11 @@ def get_formats(raw_url):
         
         # Ensure User-Agent is set (important for YouTube streams)
         if "User-Agent" not in http_headers:
-            # Use a standard browser User-Agent if not provided
             http_headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        
+        # Ensure Referer is set (YouTube checks this)
+        if "Referer" not in http_headers:
+            http_headers["Referer"] = raw_url
         
         # Ensure each format has http_headers (use format-specific or fallback to common)
         for fmt in formats:

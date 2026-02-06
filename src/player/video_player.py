@@ -182,9 +182,12 @@ class PlayerWindow(Gtk.ApplicationWindow):
         media = self.__vlc_widget.instance.media_new(url)
         # Add HTTP headers if provided (needed for YouTube streams)
         if http_headers:
-            for header_name, header_value in http_headers.items():
-                # VLC uses :http-header=Header-Name: Header-Value format
-                media.add_option(f":http-header={header_name}: {header_value}")
+            user_agent = http_headers.get("User-Agent")
+            if user_agent:
+                media.add_option(f":http-user-agent={user_agent}")
+            referrer = http_headers.get("Referer") or http_headers.get("Referrer")
+            if referrer:
+                media.add_option(f":http-referrer={referrer}")
         return media
 
     def set_media(self, *args):
@@ -238,13 +241,17 @@ class PlayerWindow(Gtk.ApplicationWindow):
         self.__vlc_widget.player.video_set_crop_geometry(crop_geometry)
 
     def add_audio_track(self, audio_url, http_headers=None):
-        # Create a media object for the audio track with headers
-        audio_media = self.__vlc_widget.instance.media_new(audio_url)
-        if http_headers:
-            for header_name, header_value in http_headers.items():
-                # VLC uses :http-header=Header-Name: Header-Value format
-                audio_media.add_option(f":http-header={header_name}: {header_value}")
-        self.__vlc_widget.player.add_slave(vlc.MediaSlaveType(1), audio_media, True)
+        # add_slave expects a URI string, not a Media object
+        # Set headers on the player's media so VLC uses them for audio too
+        media = self.__vlc_widget.player.get_media()
+        if media and http_headers:
+            user_agent = http_headers.get("User-Agent")
+            if user_agent:
+                media.add_option(f":http-user-agent={user_agent}")
+            referrer = http_headers.get("Referer") or http_headers.get("Referrer")
+            if referrer:
+                media.add_option(f":http-referrer={referrer}")
+        self.__vlc_widget.player.add_slave(vlc.MediaSlaveType(1), audio_url, True)
 
     def _on_button_press_event(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
