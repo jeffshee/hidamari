@@ -18,11 +18,15 @@
         "--talk-name=org.freedesktop.ScreenSaver",
         "--talk-name=org.kde.StatusNotifierWatcher",
         "--talk-name=org.freedesktop.Flatpak",
-        "--system-talk-name=org.freedesktop.login1"
+        "--system-talk-name=org.freedesktop.login1",
+        "--env=GI_TYPELIB_PATH=/app/lib/girepository-1.0:/app/lib64/girepository-1.0",
+        "--env=LD_LIBRARY_PATH=/app/lib:/app/lib64",
+        "--env=LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri/intel-vaapi-driver:/usr/lib/x86_64-linux-gnu/GL/lib/dri:/usr/lib/x86_64-linux-gnu/GL/default/lib/dri"
     ],
     "cleanup": [
         "/include",
         "/lib/pkgconfig",
+        "/lib64/pkgconfig",
         "/man",
         "/share/doc",
         "/share/gtk-doc",
@@ -162,12 +166,14 @@
             "sources": [
                 {
                     "type": "git",
-                    "url": "file:///home/jeffshee/Dev/hidamari"
+                    "url": "file:///home/rhafael/Documentos/Mantarraia/Estudos/hidamari"
                 }
             ]
         }
     ],
     "build-options": {
-        "env": {}
+        "env": {
+            "PKG_CONFIG_PATH": "/app/lib/pkgconfig:/app/lib64/pkgconfig:/app/share/pkgconfig"
+        }
     }
 }

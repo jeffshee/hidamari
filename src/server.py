@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import signal
@@ -44,6 +45,10 @@ class HidamariServer(object):
         </method>
         <method name='webpage'>
             <arg type='s' name='webpage_url' direction='in'/>
+        </method>
+        <method name='playlist'>
+            <arg type='s' name='playlist_json' direction='in'/>
+            <arg type='i' name='repeat_count' direction='in'/>
         </method>
         <method name='pause_playback'/>
         <method name='start_playback'/>
@@ -117,7 +122,9 @@ class HidamariServer(object):
         # Set data source if specified
         if data_source and monitor:
             self.config[CONFIG_KEY_DATA_SOURCE][monitor] = data_source
-        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source # always update default source
+        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source
+
+        self._save_config()
 
         # Quit current then create a new player
         self._quit_player()
@@ -132,7 +139,7 @@ class HidamariServer(object):
                 self.player_process.join(timeout=2)
             self.player_process = None
 
-        if mode in [MODE_VIDEO, MODE_STREAM]:
+        if mode in [MODE_VIDEO, MODE_STREAM, MODE_PLAYLIST]:
             self.player_process = Process(
                 name=f"hidamari-player-{self._player_count}", target=video_player_main)
         elif mode == MODE_WEBPAGE:
@@ -176,6 +183,14 @@ class HidamariServer(object):
     def webpage(self, webpage_url=None):
         self._setup_player(MODE_WEBPAGE, webpage_url)
 
+    def playlist(self, playlist_json, repeat_count):
+        video_list = json.loads(playlist_json)
+        self.config[CONFIG_KEY_PLAYLIST] = video_list
+        self.config[CONFIG_KEY_PLAYLIST_REPEAT_COUNT] = repeat_count
+
+        first_video = video_list[0] if video_list else None
+        self._setup_player(MODE_PLAYLIST, first_video)
+
     @staticmethod
     def pause_playback():
         player = get_instance(DBUS_NAME_PLAYER)
@@ -195,6 +210,10 @@ class HidamariServer(object):
             self.stream()
         elif self.config[CONFIG_KEY_MODE] == MODE_WEBPAGE:
             self.webpage()
+        elif self.config[CONFIG_KEY_MODE] == MODE_PLAYLIST:
+            playlist_data = self.config.get(CONFIG_KEY_PLAYLIST, [])
+            repeat_count = self.config.get(CONFIG_KEY_PLAYLIST_REPEAT_COUNT, 1)
+            self.playlist(json.dumps(playlist_data), repeat_count)
         elif self.config[CONFIG_KEY_MODE] == MODE_NULL:
             pass
         else:
@@ -244,12 +263,28 @@ class HidamariServer(object):
     def mode(self):
         return self.config[CONFIG_KEY_MODE]
 
+    def _is_audio_disabled_mode(self):
+        """Modes where the player runs without an audio backend.
+
+        In MODE_PLAYLIST the libVLC instance is built with --no-audio
+        --aout=none, so any volume/mute change would only mutate the
+        persisted config without producing sound. Used to short-circuit
+        DBus volume/mute writes coming from the GUI, the systray or any
+        other client.
+        """
+        return self.config.get(CONFIG_KEY_MODE) == MODE_PLAYLIST
+
     @property
     def volume(self):
         return self.config[CONFIG_KEY_VOLUME]
 
     @volume.setter
     def volume(self, volume):
+        if self._is_audio_disabled_mode():
+            logger.debug(
+                "[Server] Ignoring volume change in playlist mode (audio disabled)"
+            )
+            return
         self.config[CONFIG_KEY_VOLUME] = volume
         player = get_instance(DBUS_NAME_PLAYER)
         if player is not None:
@@ -272,6 +307,11 @@ class HidamariServer(object):
 
     @is_mute.setter
     def is_mute(self, is_mute):
+        if self._is_audio_disabled_mode():
+            logger.debug(
+                "[Server] Ignoring mute change in playlist mode (audio disabled)"
+            )
+            return
         self.config[CONFIG_KEY_MUTE] = is_mute
         player = get_instance(DBUS_NAME_PLAYER)
         if player is not None:
@@ -287,14 +327,14 @@ class HidamariServer(object):
     @property
     def is_paused_by_user(self):
         player = get_instance(DBUS_NAME_PLAYER)
-        if player is not None and player.mode in [MODE_VIDEO, MODE_STREAM]:
+        if player is not None and player.mode in [MODE_VIDEO, MODE_STREAM, MODE_PLAYLIST]:
             return player.is_paused_by_user
         return None
 
     @is_paused_by_user.setter
     def is_paused_by_user(self, is_paused_by_user):
         player = get_instance(DBUS_NAME_PLAYER)
-        if player is not None and player.mode in [MODE_VIDEO, MODE_STREAM]:
+        if player is not None and player.mode in [MODE_VIDEO, MODE_STREAM, MODE_PLAYLIST]:
             player.is_paused_by_user = is_paused_by_user
 
     @property

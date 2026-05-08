@@ -47,8 +47,9 @@ MODE_NULL = "MODE_NULL"
 MODE_VIDEO = "MODE_VIDEO"
 MODE_STREAM = "MODE_STREAM"
 MODE_WEBPAGE = "MODE_WEBPAGE"
+MODE_PLAYLIST = "MODE_PLAYLIST"
 
-CONFIG_VERSION = 4
+CONFIG_VERSION = 6
 CONFIG_KEY_VERSION = "version"
 CONFIG_KEY_MODE = "mode"
 CONFIG_KEY_DATA_SOURCE = "data_source"
@@ -62,6 +63,21 @@ CONFIG_KEY_FADE_DURATION_SEC = "fade_duration_sec"
 CONFIG_KEY_FADE_INTERVAL = "fade_interval"
 CONFIG_KEY_SYSTRAY = "is_show_systray"
 CONFIG_KEY_FIRST_TIME = "is_first_time"
+CONFIG_KEY_PLAYLIST = "playlist"
+CONFIG_KEY_PLAYLIST_REPEAT_COUNT = "playlist_repeat_count"
+CONFIG_KEY_PLAYLIST_MEDIA_INFO = "playlist_media_info"
+PLAYLIST_PROBLEM_CODE_UNSUPPORTED_HW_DECODE = "unsupported_hw_decode"
+PLAYLIST_PROBLEM_CODE_WATCHDOG_STALL = "watchdog_stall"
+PLAYLIST_RECOMMENDED_ACTION_CONVERT_H264 = "convert_to_h264"
+PLAYLIST_WARNING_TEXT_AV1 = (
+    "AV1 sem aceleracao suportada neste sistema. Recomenda-se converter para H.264. "
+    "Se mantido na playlist, o uso de CPU aumentara."
+)
+PLAYLIST_WARNING_TEXT_AV1_STALL = (
+    "Este video AV1 ja travou neste sistema mesmo apos recovery. Recomenda-se converter "
+    "para H.264. Se mantido na playlist, o uso de CPU aumentara e o wallpaper pode pular "
+    "para o proximo item."
+)
 CONFIG_TEMPLATE = {
     CONFIG_KEY_VERSION: CONFIG_VERSION,
     CONFIG_KEY_MODE: MODE_NULL,
@@ -76,6 +92,9 @@ CONFIG_TEMPLATE = {
     CONFIG_KEY_FADE_INTERVAL: 0.1,
     CONFIG_KEY_SYSTRAY: False,
     CONFIG_KEY_FIRST_TIME: True,
+    CONFIG_KEY_PLAYLIST: [],
+    CONFIG_KEY_PLAYLIST_REPEAT_COUNT: 1,
+    CONFIG_KEY_PLAYLIST_MEDIA_INFO: {},
 }
 
 try:
