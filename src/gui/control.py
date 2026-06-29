@@ -5,6 +5,12 @@ import requests
 import multiprocessing as mp
 import setproctitle
 
+# gettext fallback
+try:
+    _ = _
+except NameError:
+    _ = lambda s: s
+
 # TODO: Port to Gtk4/adwaita someday...
 import gi
 
@@ -104,12 +110,12 @@ class ControlPanel(Gtk.Application):
         self.contextMenu_monitors.show_all()
         
         for monitor_name,monitor in self.monitors.get_monitors().items():
-            item = Gtk.MenuItem(label=f"Set For {monitor_name}")
+            item = Gtk.MenuItem(label=_("Set For {monitor}").format(monitor=monitor_name))
             item.connect("activate", self.on_set_as, monitor)
             self.contextMenu_monitors.append(item)
 
         # add all option
-        item = Gtk.MenuItem(label=f"Set For All")
+        item = Gtk.MenuItem(label=_("Set For All"))
         item.connect("activate", self.on_set_as, self.all_key)
         self.contextMenu_monitors.append(item)
 
@@ -195,13 +201,13 @@ class ControlPanel(Gtk.Application):
             self.window: Gtk.ApplicationWindow = self.builder.get_object(
                 "ApplicationWindow"
             )
-            self.window.set_title("Hidamari")
+            self.window.set_title(_("Hidamari"))
             self.window.set_application(self)
             self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.present()
 
         if self.server is None:
-            self._show_error("Couldn't connect to server")
+            self._show_error(_("Couldn't connect to server"))
 
         if self.config[CONFIG_KEY_FIRST_TIME]:
             self._show_welcome()
@@ -214,10 +220,10 @@ class ControlPanel(Gtk.Application):
             parent=self.window,
             modal=True,
             destroy_with_parent=True,
-            text="Welcome to Hidamari 🤗",
+            text=_("Welcome to Hidamari 🤗"),
             message_type=Gtk.MessageType.INFO,
             #    secondary_text="You can bring up the Menu by <b>Right click</b> on the desktop",
-            secondary_text="Quickstart for adding local videos:\n ・Click the folder icon to open the Hidamari folder\n ・Put your videos there\n ・Click the refresh button",
+            secondary_text=_("Quickstart for adding local videos:\n ・Click the folder icon to open the Hidamari folder\n ・Put your videos there\n ・Click the refresh button"),
             secondary_use_markup=True,
             buttons=Gtk.ButtonsType.OK,
         )
@@ -229,7 +235,7 @@ class ControlPanel(Gtk.Application):
             parent=self.window,
             modal=True,
             destroy_with_parent=True,
-            text="Oops!",
+            text=_("Oops!"),
             message_type=Gtk.MessageType.ERROR,
             secondary_text=error,
             buttons=Gtk.ButtonsType.OK,
@@ -248,9 +254,9 @@ class ControlPanel(Gtk.Application):
                 parent=self.window,
                 modal=True,
                 destroy_with_parent=True,
-                text="No Video Selected",
+                text=_("No Video Selected"),
                 message_type=Gtk.MessageType.INFO,
-                secondary_text="There are no video selected.\nPlease choose one first.",
+                secondary_text=_("There are no video selected.\nPlease choose one first."),
                 secondary_use_markup=True,
                 buttons=Gtk.ButtonsType.OK,
             )
@@ -284,7 +290,7 @@ class ControlPanel(Gtk.Application):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
         choose: Gio.File = file_chooser.get_file()
         if choose is None:
-            self._show_error("Please choose a HTML file")
+            self._show_error(_("Please choose a HTML file"))
             return
         file_path = choose.get_path()
         logger.info(f"[GUI] Local Webpage: {file_path}")
@@ -408,14 +414,14 @@ class ControlPanel(Gtk.Application):
             response = requests.get(url)
         except requests.exceptions.RequestException as e:
             logger.error(f"[GUI] Failed to access {url}. Error:\n{e}")
-            self._show_error(f"Failed to access {url}. Error:\n{e}")
+            self._show_error(_("Failed to access {url}. Error:\n{error}").format(url=url, error=e))
             return False
         if response.status_code >= 400:
             logger.error(
                 f"[GUI] Failed to access {url}. Error code: {response.status_code}"
             )
             self._show_error(
-                f"Failed to access {url}. Error code: {response.status_code}"
+                _("Failed to access {url}. Error code: {code}").format(url=url, code=response.status_code)
             )
             return False
         return True
@@ -428,7 +434,7 @@ class ControlPanel(Gtk.Application):
         except yt_dlp.utils.DownloadError as e:
             s = " ".join(str(e).split(" ")[1:])
             logger.error(f"[GUI] Failed to stream {raw_url}. Error:\n{s}")
-            self._show_error(f"Failed to stream {raw_url}. Error:\n{s}")
+            self._show_error(_("Failed to stream {url}. Error:\n{error}").format(url=raw_url, error=s))
             return False
         return True
 

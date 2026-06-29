@@ -3,6 +3,12 @@ import threading
 import multiprocessing as mp
 import setproctitle
 
+# gettext fallback
+try:
+    _ = _
+except NameError:
+    _ = lambda s: s
+
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version('AppIndicator3', '0.1')
@@ -93,22 +99,22 @@ def start_action(f: callable):
 def build_menu(mode):
     menu = Gtk.Menu()
     #
-    item_show = Gtk.MenuItem(label="Show Hidamari")
+    item_show = Gtk.MenuItem(label=_("Show Hidamari"))
     item_show.connect("activate", lambda *_: start_action(on_item_show))
     #
-    item_mute = Gtk.MenuItem(label="Toggle Mute Audio")
+    item_mute = Gtk.MenuItem(label=_("Toggle Mute Audio"))
     item_mute.connect("activate", lambda *_: start_action(on_item_mute))
     #
-    item_pause = Gtk.MenuItem(label="Toggle Play/Pause")
+    item_pause = Gtk.MenuItem(label=_("Toggle Play/Pause"))
     item_pause.connect("activate", lambda *_: start_action(on_item_pause))
     #
-    item_reload = Gtk.MenuItem(label="Reload")
+    item_reload = Gtk.MenuItem(label=_("Reload"))
     item_reload.connect("activate", lambda *_: start_action(on_item_reload))
     #
-    item_lucky = Gtk.MenuItem(label="I'm Feeling Lucky")
+    item_lucky = Gtk.MenuItem(label=_("I'm Feeling Lucky"))
     item_lucky.connect("activate", lambda *_: start_action(on_item_lucky))
     #
-    item_quit = Gtk.MenuItem(label="Quit Hidamari")
+    item_quit = Gtk.MenuItem(label=_("Quit Hidamari"))
     item_quit.connect("activate", lambda *_: start_action(on_item_quit))
     #
     # Filter out unsupported action in current mode
