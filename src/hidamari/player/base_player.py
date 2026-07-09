@@ -1,32 +1,27 @@
 import logging
+import multiprocessing as mp
 import sys
 from abc import abstractmethod
-import multiprocessing as mp
-import setproctitle
 
 import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio, Gdk
+import setproctitle
 
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+from gi.repository import Gdk, Gio, Gtk
 from pydbus import SessionBus
 
-try:
-    import os
-    sys.path.insert(1, os.path.join(sys.path[0], '..'))
-    from commons import *
-    from utils import gnome_desktop_icon_workaround
-except ModuleNotFoundError:
-    from hidamari.commons import *
-    from hidamari.utils import gnome_desktop_icon_workaround
-
+from hidamari.commons import DBUS_NAME_PLAYER, LOGGER_NAME, PROJECT
+from hidamari.utils import gnome_desktop_icon_workaround
 
 logger = logging.getLogger(LOGGER_NAME)
 
 APP_ID = f"{PROJECT}.player"
 
+
 class DummyWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
-        super(DummyWindow, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class BasePlayer(Gtk.Application):
@@ -47,10 +42,7 @@ class BasePlayer(Gtk.Application):
 
     def __init__(self, *args, **kwargs):
         super().__init__(
-            *args,
-            application_id=APP_ID,
-            flags=Gio.ApplicationFlags.FLAGS_NONE,
-            **kwargs
+            *args, application_id=APP_ID, flags=Gio.ApplicationFlags.FLAGS_NONE, **kwargs
         )
         setproctitle.setproctitle(mp.current_process().name)
         self.windows = dict()

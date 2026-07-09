@@ -1,35 +1,49 @@
-import sys
-import glob
-import time
-import random
 import ctypes
+import glob
 import logging
+import os
 import pathlib
+import random
 import subprocess
+import sys
+import time
 from threading import Timer
 
 import gi
+
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio, Gdk
-
+gi.require_version("Gdk", "3.0")
 import vlc
-from pydbus import SessionBus
+from gi.repository import Gdk, Gio, Gtk
 from PIL import Image, ImageFilter
+from pydbus import SessionBus
 
-try:
-    import os
-    sys.path.insert(1, os.path.join(sys.path[0], '..'))
-    from player.base_player import BasePlayer
-    from menu import build_menu
-    from commons import *
-    from utils import ActiveHandler, ConfigUtil, is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
-    from yt_utils import get_formats, get_best_audio, get_optimal_video
-except ModuleNotFoundError:
-    from hidamari.player.base_player import BasePlayer
-    from hidamari.menu import build_menu
-    from hidamari.commons import *
-    from hidamari.utils import ActiveHandler, ConfigUtil, is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
-    from hidamari.yt_utils import get_formats, get_best_audio, get_optimal_video
+from hidamari.commons import (
+    CONFIG_DIR,
+    CONFIG_KEY_DATA_SOURCE,
+    CONFIG_KEY_FADE_DURATION_SEC,
+    CONFIG_KEY_FADE_INTERVAL,
+    CONFIG_KEY_MODE,
+    CONFIG_KEY_MUTE,
+    CONFIG_KEY_MUTE_WHEN_MAXIMIZED,
+    CONFIG_KEY_PAUSE_WHEN_MAXIMIZED,
+    CONFIG_KEY_STATIC_WALLPAPER,
+    CONFIG_KEY_VOLUME,
+    DBUS_NAME_PLAYER,
+    LOGGER_NAME,
+    MODE_STREAM,
+    MODE_VIDEO,
+)
+from hidamari.menu import build_menu
+from hidamari.player.base_player import BasePlayer
+from hidamari.utils import (
+    ActiveHandler,
+    ConfigUtil,
+    is_flatpak,
+    is_gnome,
+    is_wayland,
+)
+from hidamari.yt_utils import get_best_audio, get_formats, get_optimal_video
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -39,10 +53,7 @@ if is_wayland():
         def __init__(self, _: callable):
             pass
 else:
-    try:
-        from utils import WindowHandler
-    except ModuleNotFoundError:
-        from hidamari.utils import WindowHandler
+    from hidamari.utils import WindowHandler
 
 
 class Fade:
@@ -50,8 +61,15 @@ class Fade:
         self.timer = None
         self.is_active = False
 
-    def start(self, cur, target, step, fade_interval, update_callback: callable = None,
-              complete_callback: callable = None):
+    def start(
+        self,
+        cur,
+        target,
+        step,
+        fade_interval,
+        update_callback: callable = None,
+        complete_callback: callable = None,
+    ):
         # Cancel any existing timer first
         self.cancel()
         self.is_active = True
@@ -60,7 +78,7 @@ class Fade:
     def _fade_step(self, cur, target, step, fade_interval, update_callback, complete_callback):
         if not self.is_active:
             return
-            
+
         new_cur = cur + step
         if (step < 0 and new_cur <= target) or (step > 0 and new_cur >= target):
             new_cur = target
@@ -72,8 +90,11 @@ class Fade:
         else:
             if update_callback:
                 update_callback(int(new_cur))
-            self.timer = Timer(fade_interval, self._fade_step,
-                               args=[new_cur, target, step, fade_interval, update_callback, complete_callback])
+            self.timer = Timer(
+                fade_interval,
+                self._fade_step,
+                args=[new_cur, target, step, fade_interval, update_callback, complete_callback],
+            )
             self.timer.daemon = True  # Make timer daemon to prevent blocking shutdown
             self.timer.start()
 
@@ -90,6 +111,7 @@ class VLCWidget(Gtk.DrawingArea):
     Its player can be controlled through the 'player' attribute, which
     is a vlc.MediaPlayer() instance.
     """
+
     __gtype_name__ = "VLCWidget"
 
     def __init__(self, width, height):
@@ -98,7 +120,10 @@ class VLCWidget(Gtk.DrawingArea):
         # Spawn a VLC instance and create a new media player to embed.
         # Some options need to be specified when instantiating VLC.
         # --no-disable-screensaver: Allow screensaver.
-        vlc_options = ["--no-disable-screensaver"]
+        # --aout=pulse: Force PulseAudio output. VLC's PipeWire audio-output
+        #   plugin segfaults (pw_thread_loop_lock) when multiple instances are
+        #   active, e.g. one per monitor. See the Flatpak, which uses Pulse too.
+        vlc_options = ["--no-disable-screensaver", "--aout=pulse"]
         self.instance = vlc.Instance(vlc_options)
         self.player = self.instance.media_player_new()
 
@@ -126,7 +151,7 @@ class VLCWidget(Gtk.DrawingArea):
 
 class PlayerWindow(Gtk.ApplicationWindow):
     def __init__(self, name, width, height, *args, **kwargs):
-        super(PlayerWindow, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Setup a VLC widget given the provided width and height.
         self.width = width
         self.height = height
@@ -154,8 +179,13 @@ class PlayerWindow(Gtk.ApplicationWindow):
         cur = 0
         step = (target - cur) / (fade_duration_sec / fade_interval)
         self.fade.cancel()
-        self.fade.start(cur=cur, target=target, step=step,
-                        fade_interval=fade_interval, update_callback=self.set_volume)
+        self.fade.start(
+            cur=cur,
+            target=target,
+            step=step,
+            fade_interval=fade_interval,
+            update_callback=self.set_volume,
+        )
 
     def is_playing(self):
         return self.__vlc_widget.player.is_playing()
@@ -169,14 +199,26 @@ class PlayerWindow(Gtk.ApplicationWindow):
         target = 0
         step = (target - cur) / (fade_duration_sec / fade_interval)
         self.fade.cancel()
-        self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume,
-                        complete_callback=self.pause)
+        self.fade.start(
+            cur=cur,
+            target=target,
+            step=step,
+            fade_interval=fade_interval,
+            update_callback=self.set_volume,
+            complete_callback=self.pause,
+        )
 
     def volume_fade(self, target, fade_duration_sec, fade_interval):
         cur = self.get_volume()
         step = (target - cur) / (fade_duration_sec / fade_interval)
         self.fade.cancel()
-        self.fade.start(cur=cur, target=target, step=step, fade_interval=fade_interval, update_callback=self.set_volume)
+        self.fade.start(
+            cur=cur,
+            target=target,
+            step=step,
+            fade_interval=fade_interval,
+            update_callback=self.set_volume,
+        )
 
     def media_new(self, *args):
         return self.__vlc_widget.instance.media_new(*args)
@@ -219,13 +261,17 @@ class PlayerWindow(Gtk.ApplicationWindow):
             # For example video ratio (4:3)=1.33..., window ratio (16:9)=1.77...
             crop_height = video_width / window_ratio
             top_offset = (video_height - crop_height) / 2
-            crop_geometry = f"{int(video_width)}x{int(crop_height+top_offset)}+0+{int(top_offset)}"
+            crop_geometry = (
+                f"{int(video_width)}x{int(crop_height + top_offset)}+0+{int(top_offset)}"
+            )
 
         else:
             # If video is wider than window
             crop_width = video_height * window_ratio
             left_offset = (video_width - crop_width) / 2
-            crop_geometry = f"{int(crop_width+left_offset)}x{int(video_height)}+{int(left_offset)}+0"
+            crop_geometry = (
+                f"{int(crop_width + left_offset)}x{int(video_height)}+{int(left_offset)}+0"
+            )
 
         # Crop geometry WxH+L+T: Width x Height + Left Offset + top Offset
         logger.debug(f"[CenterCrop] Crop geometry: {crop_geometry}")
@@ -271,23 +317,19 @@ class VideoPlayer(BasePlayer):
     """
 
     def __init__(self, *args, **kwargs):
-        super(VideoPlayer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        # We need to initialize X11 threads so we can use hardware decoding.
+        # Initialize X11 threads so VLC can use hardware decoding.
         # `libX11.so.6` fix for Fedora 33
         x11 = None
-        if is_wayland() and is_nvidia_proprietary() and not is_vdpau_ok():
-            logger.warning(
-                "Proprietary Nvidia driver detected! HW Acceleration is not yet working in Wayland.")
-        else:
-            for lib in ["libX11.so", "libX11.so.6"]:
-                try:
-                    x11 = ctypes.cdll.LoadLibrary(lib)
-                except OSError:
-                    pass
-                if x11 is not None:
-                    x11.XInitThreads()
-                    break
+        for lib in ["libX11.so", "libX11.so.6"]:
+            try:
+                x11 = ctypes.cdll.LoadLibrary(lib)
+            except OSError:
+                pass
+            if x11 is not None:
+                x11.XInitThreads()
+                break
 
         self.config = None
         self.reload_config()
@@ -299,16 +341,21 @@ class VideoPlayer(BasePlayer):
             if is_flatpak():
                 try:
                     self.original_wallpaper_uri = subprocess.check_output(
-                        "flatpak-spawn --host gsettings get org.gnome.desktop.background picture-uri", shell=True, encoding='UTF-8')
+                        "flatpak-spawn --host gsettings get org.gnome.desktop.background picture-uri",
+                        shell=True,
+                        encoding="UTF-8",
+                    )
                     self.original_wallpaper_uri_dark = subprocess.check_output(
-                        "flatpak-spawn --host gsettings get org.gnome.desktop.background picture-uri-dark", shell=True, encoding='UTF-8')
+                        "flatpak-spawn --host gsettings get org.gnome.desktop.background picture-uri-dark",
+                        shell=True,
+                        encoding="UTF-8",
+                    )
                 except subprocess.CalledProcessError as e:
                     logger.error(f"[StaticWallpaper] {e}")
             else:
                 gso = Gio.Settings.new("org.gnome.desktop.background")
                 self.original_wallpaper_uri = gso.get_string("picture-uri")
-                self.original_wallpaper_uri_dark = gso.get_string(
-                    "picture-uri-dark")
+                self.original_wallpaper_uri_dark = gso.get_string("picture-uri-dark")
 
         # Handler should be created after everything initialized
         self.active_handler, self.window_handler = None, None
@@ -337,8 +384,13 @@ class VideoPlayer(BasePlayer):
                 self.pause_playback()
 
     def _on_window_state_changed(self, state):
-        self.is_any_maximized, self.is_any_fullscreen = state["is_any_maximized"], state["is_any_fullscreen"]
-        logger.info(f"is_any_maximized: {self.is_any_maximized}, is_any_fullscreen: {self.is_any_fullscreen}")
+        self.is_any_maximized, self.is_any_fullscreen = (
+            state["is_any_maximized"],
+            state["is_any_fullscreen"],
+        )
+        logger.info(
+            f"is_any_maximized: {self.is_any_maximized}, is_any_fullscreen: {self.is_any_fullscreen}"
+        )
 
         if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]:
             if self._should_playback_start():
@@ -350,14 +402,22 @@ class VideoPlayer(BasePlayer):
                 if not monitor.is_primary():
                     continue
                 if self.is_any_fullscreen or self.is_any_maximized:
-                    window.volume_fade(target=0, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+                    window.volume_fade(
+                        target=0,
+                        fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                        fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL],
+                    )
                 else:
-                    window.volume_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
-        
+                    window.volume_fade(
+                        target=self.volume,
+                        fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                        fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL],
+                    )
+
     def _should_playback_start(self):
-        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] and (self.is_any_maximized or self.is_any_fullscreen):
+        if self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] and (
+            self.is_any_maximized or self.is_any_fullscreen
+        ):
             return False
         if self.is_paused_by_user:
             return False
@@ -379,25 +439,41 @@ class VideoPlayer(BasePlayer):
             # Get the dimension of the video
             video_width, video_height = {}, {}
             try:
-                for monitor,video in data_source.items():
+                for monitor, video in data_source.items():
                     # fallback to Default video
                     if len(video) == 0:
-                        video = data_source['Default']
-                    dimension = subprocess.check_output([
-                        'ffprobe', '-v', 'error', '-select_streams', 'v:0',
-                        '-show_entries', 'stream=width,height', '-of',
-                        'csv=s=x:p=0', video
-                        ], shell=False, encoding='UTF-8').replace('\n', '')
+                        video = data_source["Default"]
+                    dimension = subprocess.check_output(
+                        [
+                            "ffprobe",
+                            "-v",
+                            "error",
+                            "-select_streams",
+                            "v:0",
+                            "-show_entries",
+                            "stream=width,height",
+                            "-of",
+                            "csv=s=x:p=0",
+                            video,
+                        ],
+                        shell=False,
+                        encoding="UTF-8",
+                    ).replace("\n", "")
                     dimension = dimension.split("x")
                     video_width[monitor] = int(dimension[0])
                     video_height[monitor] = int(dimension[1])
             except subprocess.CalledProcessError:
-                for monitor, video in data_source.items():
+                for monitor, _video in data_source.items():
                     video_width.setdefault(monitor, None)
                     video_height.setdefault(monitor, None)
-                    
-            for (monitor, window) in self.windows.items():
-                source = data_source[monitor.get_model()] if monitor.get_model() in data_source and len(data_source[monitor.get_model()]) != 0 else data_source['Default']
+
+            for monitor, window in self.windows.items():
+                source = (
+                    data_source[monitor.get_model()]
+                    if monitor.get_model() in data_source
+                    and len(data_source[monitor.get_model()]) != 0
+                    else data_source["Default"]
+                )
                 logger.info(f"Setting source {source} to {monitor.get_model()}")
                 media = window.media_new(source)
                 """
@@ -411,18 +487,23 @@ class VideoPlayer(BasePlayer):
                     media.add_option("no-audio")
                 window.set_media(media)
                 window.set_position(0.0)
-                if monitor.get_model() not in data_source or len(data_source[monitor.get_model()]) == 0:
-                    window.centercrop(video_width['Default'], video_height['Default'])
-                else:                
-                    window.centercrop(video_width[monitor.get_model()], video_height[monitor.get_model()])
+                if (
+                    monitor.get_model() not in data_source
+                    or len(data_source[monitor.get_model()]) == 0
+                ):
+                    window.centercrop(video_width["Default"], video_height["Default"])
+                else:
+                    window.centercrop(
+                        video_width[monitor.get_model()], video_height[monitor.get_model()]
+                    )
 
         elif self.mode == MODE_STREAM:
-            source = data_source['Default']
+            source = data_source["Default"]
             formats = get_formats(source)
-            max_height = max(
-                self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
-            video_url, video_width, video_height = get_optimal_video(
-                formats, max_height)
+            max_height = (
+                max(self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
+            )
+            video_url, video_width, video_height = get_optimal_video(formats, max_height)
             audio_url = get_best_audio(formats)
 
             for monitor, window in self.windows.items():
@@ -482,19 +563,24 @@ class VideoPlayer(BasePlayer):
         return not self.is_paused_by_user
 
     def pause_playback(self):
-        for monitor, window in self.windows.items():
-            window.pause_fade(fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                              fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+        for _monitor, window in self.windows.items():
+            window.pause_fade(
+                fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL],
+            )
 
     def start_playback(self):
         if self._should_playback_start():
-            for monitor, window in self.windows.items():
-                window.play_fade(target=self.volume, fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
-                            fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL])
+            for _monitor, window in self.windows.items():
+                window.play_fade(
+                    target=self.volume,
+                    fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
+                    fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL],
+                )
 
     def monitor_sync(self):
         primary_monitor = None
-        for monitor, window in self.windows.items():
+        for monitor, _window in self.windows.items():
             if monitor.is_primary:
                 primary_monitor = monitor
                 break
@@ -504,10 +590,8 @@ class VideoPlayer(BasePlayer):
                     continue
                 # `set_position()` method require the playback to be enabled before calling
                 window.play()
-                window.set_position(
-                    self.windows[primary_monitor].get_position())
-                window.play() if self.windows[primary_monitor].is_playing(
-                ) else window.pause()
+                window.set_position(self.windows[primary_monitor].get_position())
+                window.play() if self.windows[primary_monitor].is_playing() else window.pause()
 
     def set_static_wallpaper(self):
         # Currently for GNOME only
@@ -515,34 +599,78 @@ class VideoPlayer(BasePlayer):
             return
         # Get the duration of the video
         try:
-            duration = float(subprocess.check_output([
-                'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-                '-of', 'default=noprint_wrappers=1:nokey=1', self.data_source['Default']
-            ], shell = False))
+            duration = float(
+                subprocess.check_output(
+                    [
+                        "ffprobe",
+                        "-v",
+                        "error",
+                        "-show_entries",
+                        "format=duration",
+                        "-of",
+                        "default=noprint_wrappers=1:nokey=1",
+                        self.data_source["Default"],
+                    ],
+                    shell=False,
+                )
+            )
         except subprocess.CalledProcessError:
             duration = 0
         # Find the golden ratio
-        ss = time.strftime('%H:%M:%S', time.gmtime(duration / 3.14))
+        ss = time.strftime("%H:%M:%S", time.gmtime(duration / 3.14))
         # Extract the frame
         static_wallpaper_path = os.path.join(
-            CONFIG_DIR, "static-{:06d}.png".format(random.randint(0, 999999)))
-        ret = subprocess.run([
-            'ffmpeg', '-y', '-ss', ss, '-i', self.data_source['Default'],
-            '-vframes', '1', static_wallpaper_path
-        ], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            CONFIG_DIR, f"static-{random.randint(0, 999999):06d}.png"
+        )
+        ret = subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-ss",
+                ss,
+                "-i",
+                self.data_source["Default"],
+                "-vframes",
+                "1",
+                static_wallpaper_path,
+            ],
+            shell=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
         if ret.returncode == 0 and os.path.isfile(static_wallpaper_path):
             blur_wallpaper = Image.open(static_wallpaper_path)
             blur_wallpaper = blur_wallpaper.filter(
-                ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"]))
+                ImageFilter.GaussianBlur(self.config["static_wallpaper_blur_radius"])
+            )
             blur_wallpaper.save(static_wallpaper_path)
-            static_wallpaper_uri = pathlib.Path(
-                static_wallpaper_path).resolve().as_uri()
+            static_wallpaper_uri = pathlib.Path(static_wallpaper_path).resolve().as_uri()
             if is_flatpak():
                 try:
                     subprocess.run(
-                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri', static_wallpaper_uri], shell=False)
+                        [
+                            "flatpak-spawn",
+                            "--host",
+                            "gsettings",
+                            "set",
+                            "org.gnome.desktop.background",
+                            "picture-uri",
+                            static_wallpaper_uri,
+                        ],
+                        shell=False,
+                    )
                     subprocess.run(
-                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri-dark', static_wallpaper_uri], shell=False)
+                        [
+                            "flatpak-spawn",
+                            "--host",
+                            "gsettings",
+                            "set",
+                            "org.gnome.desktop.background",
+                            "picture-uri-dark",
+                            static_wallpaper_uri,
+                        ],
+                        shell=False,
+                    )
                 except subprocess.CalledProcessError as e:
                     logger.error(f"[StaticWallpaper] {e}")
             else:
@@ -558,17 +686,36 @@ class VideoPlayer(BasePlayer):
             try:
                 if self.original_wallpaper_uri is not None:
                     subprocess.run(
-                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri', self.original_wallpaper_uri], shell=False)
+                        [
+                            "flatpak-spawn",
+                            "--host",
+                            "gsettings",
+                            "set",
+                            "org.gnome.desktop.background",
+                            "picture-uri",
+                            self.original_wallpaper_uri,
+                        ],
+                        shell=False,
+                    )
                 if self.original_wallpaper_uri_dark is not None:
                     subprocess.run(
-                        ['flatpak-spawn', '--host', 'gsettings', 'set', 'org.gnome.desktop.background', 'picture-uri-dark', self.original_wallpaper_uri], shell=False)
+                        [
+                            "flatpak-spawn",
+                            "--host",
+                            "gsettings",
+                            "set",
+                            "org.gnome.desktop.background",
+                            "picture-uri-dark",
+                            self.original_wallpaper_uri,
+                        ],
+                        shell=False,
+                    )
             except subprocess.CalledProcessError as e:
                 logger.error(f"[StaticWallpaper] {e}")
         else:
             gso = Gio.Settings.new("org.gnome.desktop.background")
             gso.set_string("picture-uri", self.original_wallpaper_uri)
-            gso.set_string("picture-uri-dark",
-                           self.original_wallpaper_uri_dark)
+            gso.set_string("picture-uri-dark", self.original_wallpaper_uri_dark)
         # Purge the generated static wallpaper (and leftover if any)
         for f in glob.glob(os.path.join(CONFIG_DIR, "static-*.png")):
             os.remove(f)
@@ -578,21 +725,21 @@ class VideoPlayer(BasePlayer):
 
     def quit_player(self):
         self.set_original_wallpaper()
-        
+
         # Cleanup handlers
         if self.active_handler:
             self.active_handler.cleanup()
             self.active_handler = None
-            
+
         if self.window_handler:
             self.window_handler.cleanup()
             self.window_handler = None
-        
+
         # Cleanup all windows
-        for monitor, window in self.windows.items():
+        for _monitor, window in self.windows.items():
             if window:
                 window.cleanup()
-        
+
         super().quit_player()
 
 

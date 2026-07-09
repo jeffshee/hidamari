@@ -1,32 +1,34 @@
 import argparse
 import logging
+import os
 import sys
 
-# TODO: Is there any way to make these imports look better?
-try:
-    from commons import *
-    from utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
-    import server
-except ModuleNotFoundError:
-    # These are imports for Flatpak
-    from hidamari.commons import *
-    from hidamari.utils import is_gnome, is_wayland, is_nvidia_proprietary, is_vdpau_ok, is_flatpak
-    from hidamari import server
+from hidamari import server
+from hidamari.commons import LOGGER_NAME, VIDEO_WALLPAPER_DIR
+from hidamari.utils import is_flatpak, is_gnome, is_wayland
 
 logger = logging.getLogger(LOGGER_NAME)
 
 
 # TODO: Add locale support
-def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/share/locale"):
+def main(version="devel", pkgdatadir="/usr/share/hidamari", localedir="/usr/share/locale"):
     # Make sure that X11 is the backend. Revert Wayland to XWayland.
     os.environ["GDK_BACKEND"] = "x11"
     # Suppress VLC Log
     os.environ["VLC_VERBOSE"] = "-1"
 
     parser = argparse.ArgumentParser(description=f"Hidamari v{version}")
-    parser.add_argument("-p", "--pause", dest="p", type=int, default=0,
-                        help="Add pause before launching Hidamari. [sec]")
-    parser.add_argument("-b", "--background", action="store_true", help="Launch only the live wallpaper.")
+    parser.add_argument(
+        "-p",
+        "--pause",
+        dest="p",
+        type=int,
+        default=0,
+        help="Add pause before launching Hidamari. [sec]",
+    )
+    parser.add_argument(
+        "-b", "--background", action="store_true", help="Launch only the live wallpaper."
+    )
     parser.add_argument("-d", "--debug", action="store_true", help="Print debug messages.")
     parser.add_argument("-r", "--reset", action="store_true", help="Reset user configuration.")
     args = parser.parse_args()
@@ -40,8 +42,6 @@ def main(version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/shar
     sys_info.append("--- System information ---")
     sys_info.append(f"is_gnome = {is_gnome()}")
     sys_info.append(f"is_wayland = {is_wayland()}")
-    sys_info.append(f"is_nvidia_proprietary = {is_nvidia_proprietary()}")
-    sys_info.append(f"is_vdpau_ok = {is_vdpau_ok()}")
     sys_info.append(f"is_flatpak = {is_flatpak()}")
     sys_info.append("--------------------------")
     sys_info_str = "\n".join(sys_info)

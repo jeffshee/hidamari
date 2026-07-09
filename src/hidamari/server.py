@@ -1,36 +1,44 @@
 import logging
+import multiprocessing as mp
 import random
 import signal
 import time
-import multiprocessing as mp
 from multiprocessing import Process
-import setproctitle
 
+import setproctitle
 from gi.repository import GLib
 from pydbus import SessionBus
 
-try:
-    from commons import *
-    from player.video_player import main as video_player_main
-    from player.web_player import main as web_player_main
-    from gui.control import main as gui_main
-    from menu import show_systray_icon
-    from monitor import *
-    from utils import ConfigUtil, EndSessionHandler, get_video_paths
-except ModuleNotFoundError:
-    from hidamari.commons import *
-    from hidamari.player.video_player import main as video_player_main
-    from hidamari.player.web_player import main as web_player_main
-    from hidamari.gui.control import main as gui_main
-    from hidamari.menu import show_systray_icon
-    from hidamari.utils import ConfigUtil, EndSessionHandler, get_video_paths
-    from hidamari.monitor import *
+from hidamari.commons import (
+    CONFIG_KEY_BLUR_RADIUS,
+    CONFIG_KEY_DATA_SOURCE,
+    CONFIG_KEY_MODE,
+    CONFIG_KEY_MUTE,
+    CONFIG_KEY_MUTE_WHEN_MAXIMIZED,
+    CONFIG_KEY_PAUSE_WHEN_MAXIMIZED,
+    CONFIG_KEY_STATIC_WALLPAPER,
+    CONFIG_KEY_SYSTRAY,
+    CONFIG_KEY_VOLUME,
+    DBUS_NAME_PLAYER,
+    DBUS_NAME_SERVER,
+    LOGGER_NAME,
+    MODE_NULL,
+    MODE_STREAM,
+    MODE_VIDEO,
+    MODE_WEBPAGE,
+)
+from hidamari.gui.control import main as gui_main
+from hidamari.menu import show_systray_icon
+from hidamari.monitor import Monitors
+from hidamari.player.video_player import main as video_player_main
+from hidamari.player.web_player import main as web_player_main
+from hidamari.utils import ConfigUtil, EndSessionHandler, get_video_paths
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
 
 
-class HidamariServer(object):
+class HidamariServer:
     """
     <node>
     <interface name='io.github.jeffshee.hidamari.server'>
@@ -117,7 +125,7 @@ class HidamariServer(object):
         # Set data source if specified
         if data_source and monitor:
             self.config[CONFIG_KEY_DATA_SOURCE][monitor] = data_source
-        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source # always update default source
+        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = data_source  # always update default source
 
         # Quit current then create a new player
         self._quit_player()
@@ -134,10 +142,12 @@ class HidamariServer(object):
 
         if mode in [MODE_VIDEO, MODE_STREAM]:
             self.player_process = Process(
-                name=f"hidamari-player-{self._player_count}", target=video_player_main)
+                name=f"hidamari-player-{self._player_count}", target=video_player_main
+            )
         elif mode == MODE_WEBPAGE:
             self.player_process = Process(
-                name=f"hidamari-player-{self._player_count}", target=web_player_main)
+                name=f"hidamari-player-{self._player_count}", target=web_player_main
+            )
         elif mode == MODE_NULL:
             pass
         else:
@@ -156,7 +166,10 @@ class HidamariServer(object):
                         self.sys_icon_process.kill()
                         self.sys_icon_process.join(timeout=1)
                 self.sys_icon_process = Process(
-                    name="hidamari-systray", target=show_systray_icon, args=(mode,))
+                    name="hidamari-systray",
+                    target=show_systray_icon,
+                    args=(mode, self.localedir),
+                )
                 self.sys_icon_process.start()
             self._prev_mode = self.mode
 
@@ -204,7 +217,7 @@ class HidamariServer(object):
         """Random play a video from the directory"""
         monitors = Monitors().get_monitors()
         for monitor in monitors:
-            file_list = get_video_paths()   
+            file_list = get_video_paths()
             # Remove current data source from the random selection
             if self.config[CONFIG_KEY_DATA_SOURCE][monitor] in file_list:
                 file_list.remove(self.config[CONFIG_KEY_DATA_SOURCE][monitor])
@@ -217,8 +230,15 @@ class HidamariServer(object):
 
     def show_gui(self):
         """Show main GUI"""
-        self.gui_process = Process(name="hidamari-gui", target=gui_main, args=(
-            self.version, self.pkgdatadir, self.localedir,))
+        self.gui_process = Process(
+            name="hidamari-gui",
+            target=gui_main,
+            args=(
+                self.version,
+                self.pkgdatadir,
+                self.localedir,
+            ),
+        )
         self.gui_process.start()
 
     def quit(self):
@@ -226,7 +246,7 @@ class HidamariServer(object):
             self._quit_player()
         except GLib.Error:
             pass
-        
+
         # Quit all processes with proper cleanup
         for process in [self.player_process, self.gui_process, self.sys_icon_process]:
             if process and process.is_alive():
@@ -236,7 +256,7 @@ class HidamariServer(object):
                     logger.warning(f"[Server] Process {process.name} didn't terminate, killing it")
                     process.kill()
                     process.join(timeout=1)
-        
+
         loop.quit()
         logger.info("[Server] Stopped")
 
@@ -339,6 +359,7 @@ def get_instance(dbus_name):
         return None
     return instance
 
+
 def main(version, pkgdatadir, localedir, args):
     server = get_instance(DBUS_NAME_SERVER)
     if server is not None:
@@ -351,5 +372,5 @@ def main(version, pkgdatadir, localedir, args):
         try:
             bus.publish(DBUS_NAME_SERVER, server)
             loop.run()
-        except RuntimeError:
-            raise Exception("Failed to create server")
+        except RuntimeError as e:
+            raise Exception("Failed to create server") from e

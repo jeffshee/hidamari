@@ -1,9 +1,9 @@
 pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
-moduledir = join_paths(pkgdatadir, 'hidamari')
 gnome = import('gnome')
 
 gnome.compile_resources('hidamari',
   'hidamari.gresource.xml',
+  source_dir: 'hidamari',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
@@ -25,21 +25,8 @@ configure_file(
   install_dir: get_option('bindir')
 )
 
-hidamari_sources = [
-  '__init__.py',
-  '__main__.py',
-  'commons.py',
-  'menu.py',
-  'server.py',
-  'monitor.py',
-  'utils.py',
-  'yt_utils.py'
-]
-
-exclude_dir = [
-  '__pycache__'
-]
-
-install_subdir('gui', install_dir: moduledir, exclude_directories: exclude_dir)
-install_subdir('player', install_dir: moduledir, exclude_directories: exclude_dir)
-install_data(hidamari_sources, install_dir: moduledir)
+# Install the `hidamari` package (dev and installed trees share this layout).
+install_subdir('hidamari',
+  install_dir: pkgdatadir,
+  exclude_directories: ['__pycache__', 'gui/__pycache__', 'player/__pycache__'],
+)

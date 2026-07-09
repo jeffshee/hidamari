@@ -1,5 +1,6 @@
 import gi
-gi.require_version('Gdk', '3.0')
+
+gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk
 
 
@@ -31,7 +32,7 @@ class MonitorInfo:
         display = Gdk.Display.get_default()
         n_monitors = display.get_n_monitors()
         monitors = []
-        
+
         for i in range(n_monitors):
             monitor = display.get_monitor(i)
             geometry = monitor.get_geometry()
@@ -40,44 +41,47 @@ class MonitorInfo:
             name = monitor.get_model()
             is_primary = monitor.is_primary()
 
-            monitors.append({
-                'x': geometry.x,
-                'y': geometry.y,
-                'width': geometry.width,
-                'height': geometry.height,
-                'width_mm': width_mm,
-                'height_mm': height_mm,
-                'name': name,
-                'is_primary': is_primary,
-            })
-        
+            monitors.append(
+                {
+                    "x": geometry.x,
+                    "y": geometry.y,
+                    "width": geometry.width,
+                    "height": geometry.height,
+                    "width_mm": width_mm,
+                    "height_mm": height_mm,
+                    "name": name,
+                    "is_primary": is_primary,
+                }
+            )
+
         return monitors
+
 
 class Monitors:
     def __init__(self):
         self.monitors = {}
         for monitor in MonitorInfo.monitors():
-            self.monitors[monitor['name']] = Monitor(
-                name=monitor['name'],
-                width=monitor['width'],
-                height=monitor['height'],
-                x=monitor['x'],
-                y=monitor['y'],
-                is_primary=monitor['is_primary']
+            self.monitors[monitor["name"]] = Monitor(
+                name=monitor["name"],
+                width=monitor["width"],
+                height=monitor["height"],
+                x=monitor["x"],
+                y=monitor["y"],
+                is_primary=monitor["is_primary"],
             )
 
     def get_monitor(self, key):
         return self.monitors[key]
 
     def get_primary_monitor(self):
-        for (model, monitor) in self.monitors.items():
+        for _model, monitor in self.monitors.items():
             if monitor.is_primary:
                 return monitor
 
         return self.monitors.items[0]
 
     def get_primary_monitor_index(self):
-        for i, (model, monitor) in enumerate(self.monitors.items()):
+        for i, (_model, monitor) in enumerate(self.monitors.items()):
             if monitor.is_primary:
                 return i
 
@@ -88,13 +92,3 @@ class Monitors:
 
     def __str__(self):
         return "\n".join(str(monitor) for monitor in self.monitors)
-
-"""def testCount():
-    info = MonitorInfo()
-    print(f"Unique Monitor Count = {info.get_unique_monitor_count()}")
-    
-def testMonitors():
-    monitors = Monitors()
-    for i, monitor in enumerate(monitors.get_monitors()):
-        print(f"Monitor {i} : {monitor}")
-"""

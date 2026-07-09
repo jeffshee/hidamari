@@ -1,38 +1,53 @@
-import sys
 import logging
-import threading
-import requests
 import multiprocessing as mp
-import setproctitle
+import os
+import subprocess
+import sys
+import threading
+from gettext import gettext as _
 
 # TODO: Port to Gtk4/adwaita someday...
 import gi
+import requests
+import setproctitle
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio, GLib, GdkPixbuf, Gdk
-
-from pydbus import SessionBus
+gi.require_version("Gdk", "3.0")
 import yt_dlp
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk
+from pydbus import SessionBus
 
-try:
-    import os
-
-    sys.path.insert(1, os.path.join(sys.path[0], ".."))
-    from commons import *
-    from monitor import *
-    from gui.gui_utils import get_thumbnail, debounce
-    from utils import ConfigUtil, setup_autostart, is_gnome, is_wayland, get_video_paths
-except ModuleNotFoundError:
-    from hidamari.monitor import *
-    from hidamari.commons import *
-    from hidamari.gui.gui_utils import get_thumbnail, debounce
-    from hidamari.utils import (
-        ConfigUtil,
-        setup_autostart,
-        is_gnome,
-        is_wayland,
-        get_video_paths,
-    )
+from hidamari.commons import (
+    AUTOSTART_DESKTOP_PATH,
+    CONFIG_KEY_BLUR_RADIUS,
+    CONFIG_KEY_DATA_SOURCE,
+    CONFIG_KEY_FIRST_TIME,
+    CONFIG_KEY_MODE,
+    CONFIG_KEY_MUTE,
+    CONFIG_KEY_MUTE_WHEN_MAXIMIZED,
+    CONFIG_KEY_PAUSE_WHEN_MAXIMIZED,
+    CONFIG_KEY_STATIC_WALLPAPER,
+    CONFIG_KEY_VOLUME,
+    CONFIG_PATH,
+    DBUS_NAME_SERVER,
+    LOGGER_NAME,
+    MODE_STREAM,
+    MODE_VIDEO,
+    MODE_WEBPAGE,
+    PROJECT,
+    TRANSLATION_DOMAIN,
+    VIDEO_WALLPAPER_DIR,
+)
+from hidamari.gui.gui_utils import debounce, get_thumbnail
+from hidamari.monitor import Monitors
+from hidamari.utils import (
+    ConfigUtil,
+    get_video_paths,
+    init_translations,
+    is_gnome,
+    is_wayland,
+    setup_autostart,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(LOGGER_NAME)
@@ -44,7 +59,7 @@ APP_UI_RESOURCE_PATH = "/io/jeffshee/Hidamari/control.ui"
 
 class ControlPanel(Gtk.Application):
     def __init__(self, version, *args, **kwargs):
-        super(ControlPanel, self).__init__(
+        super().__init__(
             *args,
             application_id=APP_ID,
             flags=Gio.ApplicationFlags.FLAGS_NONE,
@@ -54,10 +69,8 @@ class ControlPanel(Gtk.Application):
         # Builder init
         self.builder = Gtk.Builder()
         self.builder.set_application(self)
-        try:
-            self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
-        except GLib.Error:
-            self.builder.add_from_file(os.path.abspath("./assets/control.ui"))
+        self.builder.set_translation_domain(TRANSLATION_DOMAIN)
+        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
         # Handlers declared in `control.ui``
         signals = {
             "on_volume_changed": self.on_volume_changed,
@@ -89,27 +102,27 @@ class ControlPanel(Gtk.Application):
             if monitor in video_paths:
                 self.monitors.get_monitor(monitor).set_wallpaper(video_paths[monitor])
             else:
-                self.monitors.get_monitor(monitor).set_wallpaper(video_paths['Default'])
+                self.monitors.get_monitor(monitor).set_wallpaper(video_paths["Default"])
 
-        self._setup_context_menu() # setup context menu for selecting monitors
+        self._setup_context_menu()  # setup context menu for selecting monitors
 
     def _connect_server(self):
         try:
             self.server = SessionBus().get(DBUS_NAME_SERVER)
         except GLib.Error:
             logger.error("[GUI] Couldn't connect to server")
-    
+
     def _setup_context_menu(self):
         self.contextMenu_monitors = Gtk.Menu()
         self.contextMenu_monitors.show_all()
-        
-        for monitor_name,monitor in self.monitors.get_monitors().items():
-            item = Gtk.MenuItem(label=f"Set For {monitor_name}")
+
+        for monitor_name, monitor in self.monitors.get_monitors().items():
+            item = Gtk.MenuItem(label=_("Set For {monitor}").format(monitor=monitor_name))
             item.connect("activate", self.on_set_as, monitor)
             self.contextMenu_monitors.append(item)
 
         # add all option
-        item = Gtk.MenuItem(label=f"Set For All")
+        item = Gtk.MenuItem(label=_("Set For All"))
         item.connect("activate", self.on_set_as, self.all_key)
         self.contextMenu_monitors.append(item)
 
@@ -129,9 +142,7 @@ class ControlPanel(Gtk.Application):
         actions = [
             (
                 "local_video_dir",
-                lambda *_: subprocess.run(
-                    ["xdg-open", os.path.realpath(VIDEO_WALLPAPER_DIR)]
-                ),
+                lambda *_: subprocess.run(["xdg-open", os.path.realpath(VIDEO_WALLPAPER_DIR)]),
             ),
             ("local_video_refresh", self._reload_icon_view),
             ("local_video_apply", self.on_local_video_apply),
@@ -192,16 +203,14 @@ class ControlPanel(Gtk.Application):
 
     def do_activate(self):
         if self.window is None:
-            self.window: Gtk.ApplicationWindow = self.builder.get_object(
-                "ApplicationWindow"
-            )
+            self.window: Gtk.ApplicationWindow = self.builder.get_object("ApplicationWindow")
             self.window.set_title("Hidamari")
             self.window.set_application(self)
             self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.present()
 
         if self.server is None:
-            self._show_error("Couldn't connect to server")
+            self._show_error(_("Couldn't connect to server"))
 
         if self.config[CONFIG_KEY_FIRST_TIME]:
             self._show_welcome()
@@ -214,10 +223,15 @@ class ControlPanel(Gtk.Application):
             parent=self.window,
             modal=True,
             destroy_with_parent=True,
-            text="Welcome to Hidamari 🤗",
+            text=_("Welcome to Hidamari 🤗"),
             message_type=Gtk.MessageType.INFO,
             #    secondary_text="You can bring up the Menu by <b>Right click</b> on the desktop",
-            secondary_text="Quickstart for adding local videos:\n ・Click the folder icon to open the Hidamari folder\n ・Put your videos there\n ・Click the refresh button",
+            secondary_text=_(
+                "Quickstart for adding local videos:\n"
+                " ・Click the folder icon to open the Hidamari folder\n"
+                " ・Put your videos there\n"
+                " ・Click the refresh button"
+            ),
             secondary_use_markup=True,
             buttons=Gtk.ButtonsType.OK,
         )
@@ -229,7 +243,7 @@ class ControlPanel(Gtk.Application):
             parent=self.window,
             modal=True,
             destroy_with_parent=True,
-            text="Oops!",
+            text=_("Oops!"),
             message_type=Gtk.MessageType.ERROR,
             secondary_text=error,
             buttons=Gtk.ButtonsType.OK,
@@ -237,7 +251,7 @@ class ControlPanel(Gtk.Application):
         dialog.run()
         dialog.destroy()
 
-    def on_local_video_apply(self, *_):
+    def on_local_video_apply(self, *_args):
         selected = self.icon_view.get_selected_items()
         if len(selected) != 0:
             # show menu
@@ -248,9 +262,9 @@ class ControlPanel(Gtk.Application):
                 parent=self.window,
                 modal=True,
                 destroy_with_parent=True,
-                text="No Video Selected",
+                text=_("No Video Selected"),
                 message_type=Gtk.MessageType.INFO,
-                secondary_text="There are no video selected.\nPlease choose one first.",
+                secondary_text=_("There are no video selected.\nPlease choose one first."),
                 secondary_use_markup=True,
                 buttons=Gtk.ButtonsType.OK,
             )
@@ -265,7 +279,7 @@ class ControlPanel(Gtk.Application):
         paths = self.config[CONFIG_KEY_DATA_SOURCE] if not None else []
         # all option
         if monitor == self.all_key:
-            for name,monitor in self.monitors.get_monitors().items():
+            for name, monitor in self.monitors.get_monitors().items():
                 paths[name] = video_path
                 monitor.set_wallpaper(video_path)
         else:
@@ -273,23 +287,24 @@ class ControlPanel(Gtk.Application):
             self.monitors.get_monitor(monitor.name).set_wallpaper(video_path)
 
         # also update the Default video
-        paths['Default'] = video_path
+        paths["Default"] = video_path
         self.config[CONFIG_KEY_DATA_SOURCE] = paths
         self._save_config()
-        print(video_path, monitor.name)
         if self.server is not None:
             self.server.video(video_path, monitor.name)
 
-    def on_local_web_page_apply(self, *_):
+    def on_local_web_page_apply(self, *_args):
         file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
         choose: Gio.File = file_chooser.get_file()
         if choose is None:
-            self._show_error("Please choose a HTML file")
+            self._show_error(_("Please choose a HTML file"))
             return
         file_path = choose.get_path()
         logger.info(f"[GUI] Local Webpage: {file_path}")
         self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
-        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = file_path #! we dont want to break the config, webpage and stream modes will kept in Default source
+        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = (
+            file_path  #! we dont want to break the config, webpage and stream modes will kept in Default source
+        )
         self._save_config()
         if self.server is not None:
             self.server.webpage(choose.get_path())
@@ -392,10 +407,7 @@ class ControlPanel(Gtk.Application):
             self.server.is_mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
 
     def on_about(self, *_):
-        try:
-            self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
-        except GLib.Error:
-            self.builder.add_from_file(os.path.abspath("./assets/control.ui"))
+        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
         about_dialog: Gtk.AboutDialog = self.builder.get_object("AboutDialog")
         about_dialog.set_transient_for(self.window)
         about_dialog.set_version(self.version)
@@ -408,14 +420,14 @@ class ControlPanel(Gtk.Application):
             response = requests.get(url)
         except requests.exceptions.RequestException as e:
             logger.error(f"[GUI] Failed to access {url}. Error:\n{e}")
-            self._show_error(f"Failed to access {url}. Error:\n{e}")
+            self._show_error(_("Failed to access {url}. Error:\n{error}").format(url=url, error=e))
             return False
         if response.status_code >= 400:
-            logger.error(
-                f"[GUI] Failed to access {url}. Error code: {response.status_code}"
-            )
+            logger.error(f"[GUI] Failed to access {url}. Error code: {response.status_code}")
             self._show_error(
-                f"Failed to access {url}. Error code: {response.status_code}"
+                _("Failed to access {url}. Error code: {code}").format(
+                    url=url, code=response.status_code
+                )
             )
             return False
         return True
@@ -428,7 +440,9 @@ class ControlPanel(Gtk.Application):
         except yt_dlp.utils.DownloadError as e:
             s = " ".join(str(e).split(" ")[1:])
             logger.error(f"[GUI] Failed to stream {raw_url}. Error:\n{s}")
-            self._show_error(f"Failed to stream {raw_url}. Error:\n{s}")
+            self._show_error(
+                _("Failed to stream {url}. Error:\n{error}").format(url=raw_url, error=s)
+            )
             return False
         return True
 
@@ -438,7 +452,9 @@ class ControlPanel(Gtk.Application):
             return
         logger.info(f"[GUI] Streaming: {url}")
         self.config[CONFIG_KEY_MODE] = MODE_STREAM
-        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = url #! we dont want to break the config, webpage and stream modes will kept in Default source
+        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = (
+            url  #! we dont want to break the config, webpage and stream modes will kept in Default source
+        )
         self._save_config()
         if self.server is not None:
             self.server.stream(url)
@@ -449,21 +465,25 @@ class ControlPanel(Gtk.Application):
             return
         logger.info(f"[GUI] Webpage: {url}")
         self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
-        self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = url #! we dont want to break the config, webpage and stream modes will kept in Default source
+        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = (
+            url  #! we dont want to break the config, webpage and stream modes will kept in Default source
+        )
         self._save_config()
         if self.server is not None:
             self.server.webpage(url)
-    
+
     def on_icon_view_button_press(self, widget, event):
         if event.button == Gdk.BUTTON_SECONDARY:  # Right click
             path_info = widget.get_path_at_pos(event.x, event.y)
             if path_info is not None:
                 tree_path = Gtk.TreePath(path_info[0])
-                self.icon_view.grab_focus()  
+                self.icon_view.grab_focus()
                 widget.select_path(tree_path)
                 self.contextMenu_monitors.show_all()
-                self.contextMenu_monitors.popup(None, None, None, None, 0, Gtk.get_current_event_time())
-                return True 
+                self.contextMenu_monitors.popup(
+                    None, None, None, None, 0, Gtk.get_current_event_time()
+                )
+                return True
         return False
 
     def on_quit(self, *_):
@@ -511,23 +531,30 @@ class ControlPanel(Gtk.Application):
         for idx, video_path in enumerate(self.video_paths):
             pixbuf = Gtk.IconTheme().get_default().load_icon("video-x-generic", 96, 0)
             list_store.append([pixbuf, os.path.basename(video_path)])
-            thread = threading.Thread(
-                target=get_thumbnail, args=(video_path, list_store, idx)
-            )
+            thread = threading.Thread(target=get_thumbnail, args=(video_path, list_store, idx))
             thread.daemon = True
             thread.start()
 
 
-def main(
-    version="devel", pkgdatadir="/app/share/hidamari", localedir="/app/share/locale"
-):
-    try:
-        resource = Gio.Resource.load(os.path.join(pkgdatadir, "hidamari.gresource"))
-        resource._register()
-        icon_theme = Gtk.IconTheme.get_default()
-        icon_theme.add_resource_path("/io/jeffshee/Hidamari/icons")
-    except GLib.Error:
-        logger.error("[GUI] Couldn't load resource")
+def _find_gresource(pkgdatadir):
+    """Locate hidamari.gresource: the launcher-provided prefix first, then the
+    standard XDG data dirs (so `python -m hidamari` works for any install)."""
+    candidates = [os.path.join(pkgdatadir, "hidamari.gresource")]
+    candidates += [
+        os.path.join(d, "hidamari", "hidamari.gresource")
+        for d in (GLib.get_user_data_dir(), *GLib.get_system_data_dirs())
+    ]
+    return next((c for c in candidates if os.path.isfile(c)), None)
+
+
+def main(version="devel", pkgdatadir="/usr/share/hidamari", localedir="/usr/share/locale"):
+    init_translations(localedir)
+    gresource = _find_gresource(pkgdatadir)
+    if gresource is None:
+        logger.error("[GUI] Couldn't find hidamari.gresource. Is Hidamari installed?")
+        return
+    Gio.Resource.load(gresource)._register()
+    Gtk.IconTheme.get_default().add_resource_path("/io/jeffshee/Hidamari/icons")
 
     app = ControlPanel(version)
     app.run(sys.argv)

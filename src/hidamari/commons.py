@@ -7,6 +7,9 @@ PROJECT = "io.github.jeffshee.Hidamari"
 DBUS_NAME_SERVER = f"{PROJECT}.server"
 DBUS_NAME_PLAYER = f"{PROJECT}.player"
 
+# gettext text domain (matches po/meson.build and the installed hidamari.mo)
+TRANSLATION_DOMAIN = "hidamari"
+
 HOME = os.environ.get("HOME")
 try:
     xdg_video_dir = subprocess.check_output(
@@ -78,18 +81,14 @@ CONFIG_TEMPLATE = {
     CONFIG_KEY_FIRST_TIME: True,
 }
 
-try:
-    from monitor import Monitor, Monitors, MonitorInfo
-except ModuleNotFoundError:
-    from hidamari.monitor import Monitor, Monitors, MonitorInfo
+from hidamari.monitor import MonitorInfo
 
 # initialize config according to monitors
 info = MonitorInfo()
 monitors = info.monitors()
 data_sources = {}
-# create an 
 for monitor in monitors:
-    data_sources[monitor['name']] = ""
-data_sources['Default'] = ""
+    data_sources[monitor["name"]] = ""
+data_sources["Default"] = ""
 
 CONFIG_TEMPLATE[CONFIG_KEY_DATA_SOURCE] = data_sources
