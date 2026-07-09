@@ -1,0 +1,271 @@
+# Japanese translation for Hidamari.
+# Copyright (C) 2022 Jeff Shee (jeffshee8969@gmail.com)
+# This file is distributed under the same license as the hidamari package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: hidamari\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-10 02:19+0900\n"
+"PO-Revision-Date: 2026-07-10 01:30+0900\n"
+"Last-Translator: Jeff Shee <jeffshee8969@gmail.com>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/hidamari/gui/control.py:120
+#, python-brace-format
+msgid "Set For {monitor}"
+msgstr "{monitor} に設定"
+
+#. add all option
+#: src/hidamari/gui/control.py:125
+msgid "Set For All"
+msgstr "すべてに設定"
+
+#: src/hidamari/gui/control.py:213
+msgid "Couldn't connect to server"
+msgstr "サーバーに接続できませんでした"
+
+#: src/hidamari/gui/control.py:226
+msgid "Welcome to Hidamari 🤗"
+msgstr "Hidamari へようこそ 🤗"
+
+#: src/hidamari/gui/control.py:230
+msgid ""
+"Quickstart for adding local videos:\n"
+" ・Click the folder icon to open the Hidamari folder\n"
+" ・Put your videos there\n"
+" ・Click the refresh button"
+msgstr ""
+"ローカル動画を追加するクイックスタート:\n"
+" ・フォルダーアイコンをクリックして Hidamari フォルダーを開きます\n"
+" ・動画をそこに入れます\n"
+" ・更新ボタンをクリックします"
+
+#: src/hidamari/gui/control.py:246
+msgid "Oops!"
+msgstr "おっと！"
+
+#: src/hidamari/gui/control.py:265
+msgid "No Video Selected"
+msgstr "動画が選択されていません"
+
+#: src/hidamari/gui/control.py:267
+msgid ""
+"There are no video selected.\n"
+"Please choose one first."
+msgstr ""
+"動画が選択されていません。\n"
+"まず動画を1つ選択してください。"
+
+#: src/hidamari/gui/control.py:300
+msgid "Please choose a HTML file"
+msgstr "HTML ファイルを選択してください"
+
+#: src/hidamari/gui/control.py:423
+#, python-brace-format
+msgid ""
+"Failed to access {url}. Error:\n"
+"{error}"
+msgstr ""
+"{url} にアクセスできませんでした。エラー:\n"
+"{error}"
+
+#: src/hidamari/gui/control.py:428
+#, python-brace-format
+msgid "Failed to access {url}. Error code: {code}"
+msgstr "{url} にアクセスできませんでした。エラーコード: {code}"
+
+#: src/hidamari/gui/control.py:444
+#, python-brace-format
+msgid ""
+"Failed to stream {url}. Error:\n"
+"{error}"
+msgstr ""
+"{url} のストリーミングに失敗しました。エラー:\n"
+"{error}"
+
+#.
+#: src/hidamari/menu.py:97
+msgid "Show Hidamari"
+msgstr "Hidamari を表示"
+
+#.
+#: src/hidamari/menu.py:100
+msgid "Toggle Mute Audio"
+msgstr "音声ミュートの切り替え"
+
+#.
+#: src/hidamari/menu.py:103 src/hidamari/assets/control.ui:832
+msgid "Toggle Play/Pause"
+msgstr "再生 / 一時停止の切り替え"
+
+#.
+#: src/hidamari/menu.py:106
+msgid "Reload"
+msgstr "再読み込み"
+
+#.
+#: src/hidamari/menu.py:109 src/hidamari/assets/control.ui:851
+msgid "I'm Feeling Lucky"
+msgstr "おまかせ再生"
+
+#.
+#: src/hidamari/menu.py:112 src/hidamari/assets/control.ui:294
+msgid "Quit Hidamari"
+msgstr "Hidamari を終了"
+
+#: src/hidamari/assets/control.ui:10
+msgid ""
+"Video wallpaper for Linux. Written in Python. 🐍\n"
+"\n"
+"Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun"
+msgstr ""
+"Linux 向けの動画ウォールペーパー。Python で書かれています。🐍\n"
+"\n"
+"ひだまり【日溜まり】(名) 日の当たる暖かい場所"
+
+#: src/hidamari/assets/control.ui:76
+msgid "Quick toggles"
+msgstr "クイック切り替え"
+
+#: src/hidamari/assets/control.ui:93
+msgid "Autostart after login"
+msgstr "ログイン後に自動起動"
+
+#: src/hidamari/assets/control.ui:106
+msgid "Video frame can be applied as system wallpaper, look great in GNOME"
+msgstr "動画のフレームをシステム壁紙として適用でき、GNOME で美しく表示されます"
+
+#: src/hidamari/assets/control.ui:108
+msgid "Apply static wallpaper"
+msgstr "静止画壁紙を適用"
+
+#: src/hidamari/assets/control.ui:121
+msgid ""
+"Automatically pauses playback when maximized window or full screen mode is "
+"detected"
+msgstr ""
+"ウィンドウの最大化やフルスクリーンを検出すると自動的に再生を一時停止します"
+
+#: src/hidamari/assets/control.ui:123
+msgid "Pause when maximized window"
+msgstr "ウィンドウ最大化時に一時停止"
+
+#: src/hidamari/assets/control.ui:136
+msgid ""
+"Automatically mutes playback when maximized window or full screen mode is "
+"detected"
+msgstr "ウィンドウの最大化やフルスクリーンを検出すると自動的にミュートします"
+
+#: src/hidamari/assets/control.ui:138
+msgid "Mute when maximized window"
+msgstr "ウィンドウ最大化時にミュート"
+
+#: src/hidamari/assets/control.ui:162
+msgid "Volume control"
+msgstr "音量調整"
+
+#: src/hidamari/assets/control.ui:223
+msgid "Static wallpaper blur radius"
+msgstr "静止画壁紙のぼかし半径"
+
+#: src/hidamari/assets/control.ui:266
+msgid "Open config file"
+msgstr "設定ファイルを開く"
+
+#: src/hidamari/assets/control.ui:280
+msgid "About Hidamari"
+msgstr "Hidamari について"
+
+#: src/hidamari/assets/control.ui:339
+msgid ""
+"<span size=\"x-large\"><b>Local Video</b></span>\n"
+"Videos located in Hidamari folder"
+msgstr ""
+"<span size=\"x-large\"><b>ローカル動画</b></span>\n"
+"Hidamari フォルダー内の動画"
+
+#: src/hidamari/assets/control.ui:355
+msgid "Refresh"
+msgstr "更新"
+
+#: src/hidamari/assets/control.ui:380
+msgid "Open Hidamari folder"
+msgstr "Hidamari フォルダーを開く"
+
+#: src/hidamari/assets/control.ui:432 src/hidamari/assets/control.ui:755
+msgid "Apply"
+msgstr "適用"
+
+#: src/hidamari/assets/control.ui:452
+msgid "Local Video"
+msgstr "ローカル動画"
+
+#: src/hidamari/assets/control.ui:465
+msgid ""
+"<span size=\"x-large\"><b>Streaming</b></span>\n"
+"Videos from streaming services"
+msgstr ""
+"<span size=\"x-large\"><b>ストリーミング</b></span>\n"
+"ストリーミングサービスの動画"
+
+#: src/hidamari/assets/control.ui:500
+msgid "<b>Streaming URL</b>"
+msgstr "<b>ストリーミング URL</b>"
+
+#: src/hidamari/assets/control.ui:541
+msgid "💡\tThis feature uses <i>yt-dlp</i> as backend"
+msgstr "💡\tこの機能はバックエンドに <i>yt-dlp</i> を使用します"
+
+#: src/hidamari/assets/control.ui:555
+msgid ""
+"😉\tTry playing any YouTube video! <a href=\"https://github.com/yt-dlp/yt-"
+"dlp/blob/master/supportedsites.md\">Supported sites (yt-dlp)</a>"
+msgstr ""
+"😉\tYouTube の動画を再生してみましょう！<a href=\"https://github.com/yt-dlp/"
+"yt-dlp/blob/master/supportedsites.md\">対応サイト (yt-dlp)</a>"
+
+#: src/hidamari/assets/control.ui:570 src/hidamari/assets/control.ui:697
+msgid "Hint"
+msgstr "ヒント"
+
+#: src/hidamari/assets/control.ui:591
+msgid "Streaming"
+msgstr "ストリーミング"
+
+#: src/hidamari/assets/control.ui:605
+msgid ""
+"<span size=\"x-large\"><b>Web Page</b></span>\n"
+"Set a web page as wallpaper"
+msgstr ""
+"<span size=\"x-large\"><b>ウェブページ</b></span>\n"
+"ウェブページを壁紙に設定"
+
+#: src/hidamari/assets/control.ui:640
+msgid "<b>Web Page URL</b>"
+msgstr "<b>ウェブページ URL</b>"
+
+#: src/hidamari/assets/control.ui:681
+msgid ""
+"💡\tCheck this website for some really amazing examples!\n"
+"\t<a href=\"https://alteredqualia.com/\">https://alteredqualia.com/</a>"
+msgstr ""
+"💡\tこのウェブサイトで素晴らしい例をチェックしてみましょう！\n"
+"\t<a href=\"https://alteredqualia.com/\">https://alteredqualia.com/</a>"
+
+#: src/hidamari/assets/control.ui:713
+msgid "<b>Local Web Page</b>"
+msgstr "<b>ローカルウェブページ</b>"
+
+#: src/hidamari/assets/control.ui:727
+msgid "Alternately, you can choose a HTML file on your PC"
+msgstr "または、PC 上の HTML ファイルを選択することもできます"
+
+#: src/hidamari/assets/control.ui:790
+msgid "Web Page"
+msgstr "ウェブページ"
