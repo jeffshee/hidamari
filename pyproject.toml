@@ -1,0 +1,40 @@
+[project]
+name = "hidamari"
+version = "3.7"
+description = "Video wallpaper for Linux. Written in Python."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.10"
+# PyPI runtime deps — single source of truth for dev and the Flatpak build.
+# PyGObject (gi) is omitted on purpose: it comes from the system/GNOME runtime
+# (dev needs `uv venv --system-site-packages`).
+dependencies = [
+    "pillow>=12.3.0",
+    "pydbus==0.6.0",
+    "python-vlc>=3.0.21203",
+    "yt-dlp[default]>=2026.7.4",
+    "requests>=2.34.2",
+    "setproctitle==1.3.7",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.14"]
+
+[tool.uv]
+# uv only manages the dev env; Meson/Flatpak build the actual package.
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "W", "B"]
+ignore = [
+    "E402",  # gi.require_version() must precede `from gi.repository import ...`
+    "E501",  # line length handled by the formatter
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hidamari"]

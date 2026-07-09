@@ -3,8 +3,17 @@ __pycache__/
 
 # Build
 build/
+_build/
 
-# Project exclude paths
+# Virtual environments
 /venv/
+.venv/
+
+# Tooling caches
+.ruff_cache/
+
+# Flatpak build output
 .flatpak/
+.flatpak-builder/
+build-flatpak/
 *.flatpak
