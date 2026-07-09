@@ -17,16 +17,28 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-1.png</image>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/res/screenshot-1.png</image>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-2.png</image>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/res/screenshot-2.png</image>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/assets/screenshot-3.png</image>
+      <image type="source">https://raw.githubusercontent.com/jeffshee/hidamari/master/res/screenshot-3.png</image>
     </screenshot>
   </screenshots>
   <releases>
+    <release version="3.7" date="2026-07-09" type="stable">
+      <description>
+        <ul>
+          <li>Refactor and modernize the codebase for easier maintenance</li>
+          <li>Update dependencies and bump the GNOME runtime to 50</li>
+          <li>Reduce CPU usage during video playback</li>
+          <li>Fix video thumbnails not showing in the Flatpak version</li>
+          <li>Fix webpage wallpaper showing a blank screen on NVIDIA graphics</li>
+          <li>Add Japanese translation</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.6" date="2025-01-03" type="stable">
       <description>
         <ul>
