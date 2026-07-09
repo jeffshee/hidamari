@@ -8,7 +8,7 @@
             "name": "Launch Hidamari",
             "type": "python",
             "request": "launch",
-            "program": "__main__.py",
+            "module": "hidamari",
             "justMyCode": true,
             "cwd": "${workspaceFolder}/src",
             "args": ["-d"]
@@ -17,9 +17,9 @@
             "name": "Launch Control Panel",
             "type": "python",
             "request": "launch",
-            "program": "control.py",
+            "module": "hidamari.gui.control",
             "justMyCode": true,
-            "cwd": "${workspaceFolder}/src/gui/"
+            "cwd": "${workspaceFolder}/src"
         }
     ]
 }

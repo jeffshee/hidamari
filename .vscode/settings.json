@@ -1,24 +1,31 @@
 {
-    // module level import not at top of file 
-    "python.formatting.autopep8Args": [
-        "--ignore",
-        "E402"
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "src"
     ],
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
     "files.watcherExclude": {
+        ".git/objects/**": true,
+        ".git/subtree-cache/**": true,
+        ".hg/store/**": true,
+        "*/.git/objects/**": true,
+        "*/.git/subtree-cache/**": true,
+        "*/.hg/store/**": true,
         "**/.git/objects/**": true,
         "**/.git/subtree-cache/**": true,
         "**/.hg/store/**": true,
         "**/node_modules/*/**": true,
         ".flatpak/**": true,
-        "_build/**": true
+        "_build/**": true,
+        ".venv/**": true
     },
-    "grammarly.selectors": [
-        {
-            "language": "markdown",
-            "scheme": "file"
-        }
-    ],
+    "mesonbuild.mesonPath": "${workspaceFolder}/.flatpak/meson.sh",
     "mesonbuild.configureOnOpen": false,
-    "mesonbuild.buildFolder": "_build",
-    "mesonbuild.mesonPath": "${workspaceFolder}/.flatpak/meson.sh"
+    "mesonbuild.buildFolder": "_build"
 }
