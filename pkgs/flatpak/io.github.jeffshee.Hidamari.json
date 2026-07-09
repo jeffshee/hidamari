@@ -1,7 +1,7 @@
 {
     "app-id": "io.github.jeffshee.Hidamari",
     "runtime": "org.gnome.Platform",
-    "runtime-version": "47",
+    "runtime-version": "50",
     "sdk": "org.gnome.Sdk",
     "command": "hidamari",
     "finish-args": [
@@ -22,19 +22,26 @@
     ],
     "cleanup": [
         "/include",
+        "/lib/cmake",
         "/lib/pkgconfig",
-        "/man",
+        "/share/aclocal",
+        "/share/bash-completion",
         "/share/doc",
-        "/share/gtk-doc",
+        "/share/ffmpeg/examples",
+        "/share/fish",
+        "/share/gir-1.0",
+        "/share/kde4",
         "/share/man",
-        "/share/pkgconfig",
+        "/share/vala",
+        "/share/vlc",
+        "/share/zsh",
         "*.la",
         "*.a"
     ],
     "modules": [
-        "vlc-slim.json",
+        "vlc.json",
         "shared-modules/libappindicator/libappindicator-gtk3-introspection-12.10.json",
-        "python3-requirements.json",
+        "pypi-deps.json",
         {
             "name": "gnome-desktop",
             "buildsystem": "meson",
@@ -49,8 +56,8 @@
                 {
                     "type": "git",
                     "url": "https://gitlab.gnome.org/GNOME/gnome-desktop.git",
-                    "commit": "97c0344b3ba955bb6f6fe74ca03cc399a81acaa5",
-                    "tag": "44.0"
+                    "tag": "44.5",
+                    "commit": "c214a5f3ff96d6add49bd88372c0c449bcab1967"
                 }
             ]
         },
@@ -60,8 +67,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://download.gnome.org/sources/totem-pl-parser/3.26/totem-pl-parser-3.26.6.tar.xz",
-                    "sha256": "c0df0f68d5cf9d7da43c81c7f13f11158358368f98c22d47722f3bd04bd3ac1c",
+                    "url": "https://download.gnome.org/sources/totem-pl-parser/3.26/totem-pl-parser-3.26.7.tar.xz",
+                    "sha256": "60d517c1acabe54ae337f64451264fc76730696eaae26b5480fb37166689b5f3",
                     "x-checker-data": {
                         "type": "gnome",
                         "name": "totem-pl-parser"
@@ -76,7 +83,7 @@
                 {
                     "type": "git",
                     "url": "https://gitlab.gnome.org/GNOME/totem-video-thumbnailer.git",
-                    "commit": "78ddf6c113d439d8ad9ff1453cf433592fabe9fd"
+                    "commit": "6cb399918571a97591ff5a4a5a41d8e46b11027a"
                 }
             ]
         },
@@ -91,47 +98,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://download.gnome.org/sources/libwnck/43/libwnck-43.0.tar.xz",
-                    "sha256": "905bcdb85847d6b8f8861e56b30cd6dc61eae67ecef4cd994a9f925a26a2c1fe"
-                }
-            ]
-        },
-        {
-            "name": "mesa-demos",
-            "config-opts": [
-                "--without-glut",
-                "--bindir=/app/lib/mesa-demos"
-            ],
-            "make-args": [
-                "-C",
-                "src/xdemos",
-                "glxinfo"
-            ],
-            "no-make-install": true,
-            "build-commands": [
-                "install -D src/xdemos/glxinfo -t /app/bin/"
-            ],
-            "sources": [
-                {
-                    "type": "archive",
-                    "url": "https://mesa.freedesktop.org/archive/demos/mesa-demos-8.4.0.tar.bz2",
-                    "sha256": "01e99c94a0184e63e796728af89bfac559795fb2a0d6f506fa900455ca5fff7d"
-                }
-            ],
-            "cleanup": [
-                "/lib/mesa-demos"
-            ],
-            "modules": [
-                "shared-modules/glew/glew.json"
-            ]
-        },
-        {
-            "name": "vdpauinfo",
-            "sources": [
-                {
-                    "type": "archive",
-                    "url": "https://gitlab.freedesktop.org/vdpau/vdpauinfo/-/archive/1.5/vdpauinfo-1.5.tar.gz",
-                    "sha256": "1878d54f6732d02cedef8eabe77e23fc2239b4ec202612403a383f4140a17bc3"
+                    "url": "https://download.gnome.org/sources/libwnck/43/libwnck-43.3.tar.xz",
+                    "sha256": "6af8ac41a8f067ade1d3caaed254a83423b5f61ad3f7a460fcacbac2e192bdf7"
                 }
             ]
         },
@@ -144,8 +112,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://github.com/flatpak/libportal/releases/download/0.8.1/libportal-0.8.1.tar.xz",
-                    "sha256": "281e54e4f8561125a65d20658f1462ab932b2b1258c376fed2137718441825ac",
+                    "url": "https://github.com/flatpak/libportal/releases/download/0.9.1/libportal-0.9.1.tar.xz",
+                    "sha256": "de801ee349ed3c255a9af3c01b1a401fab5b3fc1c35eb2fd7dfb35d4b8194d7f",
                     "x-checker-data": {
                         "type": "json",
                         "url": "https://api.github.com/repos/flatpak/libportal/releases/latest",
@@ -161,13 +129,19 @@
             "buildsystem": "meson",
             "sources": [
                 {
-                    "type": "git",
-                    "url": "file:///home/jeffshee/Dev/hidamari"
+                    "type": "dir",
+                    "path": "../..",
+                    "skip": [
+                        ".git",
+                        ".flatpak",
+                        ".flatpak-builder",
+                        ".venv",
+                        "_build",
+                        "build-flatpak",
+                        ".ruff_cache"
+                    ]
                 }
             ]
         }
-    ],
-    "build-options": {
-        "env": {}
-    }
+    ]
 }

@@ -1,0 +1,202 @@
+{
+    "name": "vlc",
+    "cleanup": [
+        "/include",
+        "/lib/pkgconfig",
+        "/share/aclocal",
+        "/share/doc",
+        "/share/gtk-doc",
+        "/share/info",
+        "/share/man",
+        "/share/pkgconfig",
+        "/lib/cmake",
+        "*.la",
+        "*.a"
+    ],
+    "post-install": [
+        "mkdir -p /app/share/vlc/extra",
+        "ln -s /app/share/vlc/extra/plugins /app/lib/vlc/plugins/extra",
+        "rm -f /app/lib/vlc/plugins/plugins.dat",
+        "/app/lib/vlc/vlc-cache-gen /app/lib/vlc/plugins"
+    ],
+    "build-options": {
+        "env": {
+            "V": "1"
+        }
+    },
+    "modules": [
+        "shared-modules/intltool/intltool-0.51.json",
+        "shared-modules/glu/glu-9.json",
+        {
+            "name": "libebml",
+            "builddir": true,
+            "buildsystem": "cmake-ninja",
+            "config-opts": [
+                "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+                "-DBUILD_SHARED_LIBS=ON",
+                "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://dl.matroska.org/downloads/libebml/libebml-1.4.5.tar.xz",
+                    "sha256": "4971640b0592da29c2d426f303e137a9b0b3d07e1b81d069c1e56a2f49ab221b"
+                },
+                {
+                    "type": "patch",
+                    "path": "libvlc/cmake-min-version.patch"
+                }
+            ]
+        },
+        {
+            "name": "libmatroska",
+            "builddir": true,
+            "buildsystem": "cmake-ninja",
+            "config-opts": [
+                "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+                "-DBUILD_SHARED_LIBS=ON",
+                "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://dl.matroska.org/downloads/libmatroska/libmatroska-1.7.1.tar.xz",
+                    "sha256": "572a3033b8d93d48a6a858e514abce4b2f7a946fe1f02cbfeca39bfd703018b3"
+                },
+                {
+                    "type": "patch",
+                    "path": "libvlc/cmake-min-version.patch"
+                }
+            ]
+        },
+        {
+            "name": "dav1d",
+            "buildsystem": "meson",
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://download.videolan.org/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
+                    "sha256": "732010aa5ef461fa93355ed2c6c5fedb48ddc4b74e697eaabe8907eaeb943011"
+                }
+            ]
+        },
+        {
+            "name": "ffmpeg",
+            "config-opts": [
+                "--enable-pic",
+                "--enable-shared",
+                "--disable-doc",
+                "--disable-static",
+                "--enable-gpl",
+                "--enable-libvpx",
+                "--enable-libmp3lame",
+                "--enable-libvorbis",
+                "--enable-libopus"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://ffmpeg.org/releases/ffmpeg-4.4.7.tar.xz",
+                    "sha256": "39e7d6d0af050a0a8aae737d610d77264e67b9657f3a346f72bba03312565e2a"
+                }
+            ]
+        },
+        {
+            "name": "libplacebo",
+            "buildsystem": "meson",
+            "config-opts": [
+                "-Dvulkan=false"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/haasn/libplacebo/archive/refs/tags/v0.2.1.tar.gz",
+                    "sha256": "d5d920a1745e4209287d32e8b96a85127b61b843304813980e11104cd9f15e82"
+                }
+            ]
+        },
+        {
+            "name": "vlc",
+            "config-opts": [
+                "BUILDCC=/usr/bin/gcc -std=gnu99",
+                "CFLAGS=-U_FORTIFY_SOURCE",
+                "CXXFLAGS=-U_FORTIFY_SOURCE",
+                "--disable-archive",
+                "--disable-dc1394",
+                "--disable-dv1394",
+                "--disable-linsys",
+                "--disable-dvdread",
+                "--disable-dvdnav",
+                "--disable-bluray",
+                "--disable-opencv",
+                "--disable-smbclient",
+                "--disable-dsm",
+                "--disable-sftp",
+                "--disable-nfs",
+                "--disable-smb2",
+                "--disable-v4l2",
+                "--disable-decklink",
+                "--disable-vcd",
+                "--disable-libcddb",
+                "--disable-screen",
+                "--disable-vnc",
+                "--disable-freerdp",
+                "--disable-asdcp",
+                "--disable-a52",
+                "--disable-sdl-image",
+                "--disable-alsa",
+                "--disable-qt",
+                "--disable-skins2",
+                "--disable-ncurses",
+                "--disable-goom",
+                "--disable-projectm",
+                "--disable-vsxu",
+                "--disable-avahi",
+                "--disable-udev",
+                "--disable-mtp",
+                "--disable-upnp",
+                "--disable-microdns",
+                "--disable-secret",
+                "--disable-kwallet",
+                "--disable-vlc",
+                "--disable-lua",
+                "--disable-vlm",
+                "--disable-debug",
+                "--disable-update-check",
+                "--disable-maintainer-mode",
+                "--disable-dependency-tracking",
+                "--disable-sout",
+                "--disable-taglib",
+                "--disable-fluidlite",
+                "--disable-notify",
+                "--disable-zvbi",
+                "--disable-shout",
+                "--disable-mod",
+                "--disable-x264",
+                "--disable-x265",
+                "--disable-spatialaudio",
+                "--disable-srt",
+                "--disable-live555",
+                "--disable-chromecast"
+            ],
+            "cleanup": [
+                "/share/macosx"
+            ],
+            "post-install": [
+                "rm -f ${FLATPAK_DEST}/lib/vlc/plugins/plugins.dat",
+                "${FLATPAK_DEST}/lib/vlc/vlc-cache-gen ${FLATPAK_DEST}/lib/vlc/plugins"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://download.videolan.org/videolan/vlc/3.0.23/vlc-3.0.23.tar.xz",
+                    "sha256": "e891cae6aa3ccda69bf94173d5105cbc55c7a7d9b1d21b9b21666e69eff3e7e0"
+                },
+                {
+                    "type": "patch",
+                    "path": "libvlc/vlc-ignore-time-for-cache.patch"
+                }
+            ]
+        }
+    ]
+}
