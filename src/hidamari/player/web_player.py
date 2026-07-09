@@ -1,4 +1,6 @@
+import glob
 import logging
+import os
 import pathlib
 import sys
 
@@ -24,6 +26,36 @@ from hidamari.player.base_player import BasePlayer
 from hidamari.utils import ConfigUtil
 
 logger = logging.getLogger(LOGGER_NAME)
+
+
+def setup_render_device():
+    """
+    WebKitGTK's DMA-BUF renderer cannot allocate GBM buffers on the NVIDIA
+    driver ("Failed to create GBM buffer: Invalid argument"), which leaves the
+    webpage blank. When an NVIDIA GPU is present, steer WebKit to a Mesa
+    render node instead, or fall back to shared-memory buffers on NVIDIA-only
+    systems. Must be called before the first WebView is created.
+    """
+    overrides = (
+        "WEBKIT_WEB_RENDER_DEVICE_FILE",
+        "WEBKIT_DMABUF_RENDERER_FORCE_SHM",
+        "WEBKIT_DISABLE_DMABUF_RENDERER",
+    )
+    if any(var in os.environ for var in overrides):
+        return
+    drivers = {}
+    for node in sorted(glob.glob("/dev/dri/renderD*")):
+        driver = os.path.realpath(f"/sys/class/drm/{os.path.basename(node)}/device/driver")
+        drivers[node] = os.path.basename(driver)
+    if "nvidia" not in drivers.values():
+        return
+    for node, driver in drivers.items():
+        if driver != "nvidia":
+            logger.info(f"[WebPlayer] Using render device {node} ({driver})")
+            os.environ["WEBKIT_WEB_RENDER_DEVICE_FILE"] = node
+            return
+    logger.info("[WebPlayer] NVIDIA-only system, using SHM buffers for WebKit")
+    os.environ["WEBKIT_DMABUF_RENDERER_FORCE_SHM"] = "1"
 
 
 class WebWindow(Gtk.ApplicationWindow):
@@ -147,6 +179,7 @@ class WebPlayer(BasePlayer):
 
 
 def main():
+    setup_render_device()
     bus = SessionBus()
     app = WebPlayer()
     try:
