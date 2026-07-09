@@ -1,5 +1,7 @@
 import logging
 import os
+import subprocess
+import tempfile
 import threading
 
 import gi
@@ -8,8 +10,26 @@ gi.require_version("GnomeDesktop", "4.0")
 from gi.repository import GdkPixbuf, Gio, GLib, GnomeDesktop
 
 from hidamari.commons import LOGGER_NAME
+from hidamari.utils import is_flatpak
 
 logger = logging.getLogger(LOGGER_NAME)
+
+
+def _generate_thumbnail_flatpak(filename):
+    # Inside Flatpak, DesktopThumbnailFactory runs the thumbnailer via
+    # `flatpak-spawn --sandbox`, where glycin (which writes the PNG on
+    # recent GNOME runtimes) can't spawn its own sandboxed loader — nested
+    # sandboxes are blocked, so every thumbnail fails. Run the bundled
+    # thumbnailer directly instead; glycin's single-level sandbox then
+    # works via the org.freedesktop.Flatpak portal.
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        output = os.path.join(tmp_dir, "thumbnail.png")
+        subprocess.run(
+            ["totem-video-thumbnailer", "-s", "256", filename, output],
+            check=True,
+            timeout=60,
+        )
+        return GdkPixbuf.Pixbuf.new_from_file(output)
 
 
 def generate_thumbnail(filename):
@@ -29,7 +49,10 @@ def generate_thumbnail(filename):
     if not factory.can_thumbnail(uri, mime_type, mtime):
         return None
 
-    pixbuf = factory.generate_thumbnail(uri, mime_type)
+    if is_flatpak():
+        pixbuf = _generate_thumbnail_flatpak(filename)
+    else:
+        pixbuf = factory.generate_thumbnail(uri, mime_type)
     if pixbuf is None:
         return None
 
@@ -50,7 +73,7 @@ def get_thumbnail(video_path, list_store, idx):
         )
         if thumbnail:
             list_store[idx][0] = GdkPixbuf.Pixbuf.new_from_file_at_size(thumbnail, -1, 96)
-    except (GLib.Error, OSError) as e:
+    except (GLib.Error, OSError, subprocess.SubprocessError) as e:
         logger.debug("[Thumbnail] Skipped %s: %s", os.path.basename(video_path), e)
 
 
