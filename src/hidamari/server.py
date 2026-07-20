@@ -180,6 +180,9 @@ class HidamariServer:
         if player:
             player.quit_player()
 
+    def null(self):
+        self._setup_player(MODE_NULL)
+
     def video(self, video_path=None, monitor=None):
         self._setup_player(MODE_VIDEO, video_path, monitor)
 
