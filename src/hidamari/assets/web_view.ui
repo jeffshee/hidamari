@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
+<interface>
+    <requires lib="gtk+" version="3.24"/>
+    <object class="GtkFileFilter" id="filefilter1">
+        <mime-types>
+            <mime-type>text/html</mime-type>
+        </mime-types>
+    </object>
+    <object class="GtkBox" id="WebView">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <property name="hexpand">True</property>
+        <property name="vexpand">True</property>
+        <property name="halign">fill</property>
+        <property name="valign">fill</property>
+        <child>
+            <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="label" translatable="yes">&lt;span size="x-large"&gt;&lt;b&gt;Web Page&lt;/b&gt;&lt;/span&gt;
+Set a web page as wallpaper</property>
+            <property name="use-markup">True</property>
+            <property name="xalign">0</property>
+            </object>
+            <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            </object>
+            <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+            </packing>
+        </child>
+        <child>
+            <object class="GtkBox">
+            <property name="width-request">512</property>
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">center</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">8</property>
+            <child>
+                <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">start</property>
+                <property name="label" translatable="yes">&lt;b&gt;Web Page URL&lt;/b&gt;</property>
+                <property name="use-markup">True</property>
+                </object>
+                <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+                </packing>
+            </child>
+            <child>
+                <object class="GtkEntry">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="secondary-icon-name">go-next-symbolic</property>
+                <property name="placeholder-text" translatable="yes">https://www.google.com/</property>
+                <property name="input-purpose">url</property>
+                <property name="input-hints">GTK_INPUT_HINT_NO_SPELLCHECK | GTK_INPUT_HINT_NO_EMOJI | GTK_INPUT_HINT_NONE</property>
+                <signal name="activate" handler="on_web_page_activate" swapped="no"/>
+                <signal name="icon-press" handler="on_web_page_activate" swapped="no"/>
+                </object>
+                <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+                </packing>
+            </child>
+            <child>
+                <object class="GtkExpander">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <child>
+                    <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">8</property>
+                    <child>
+                        <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">💡	Check this website for some really amazing examples!
+&lt;a href="https://alteredqualia.com/"&gt;https://alteredqualia.com/&lt;/a&gt;</property>
+                        <property name="use-markup">True</property>
+                        </object>
+                        <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                        </packing>
+                    </child>
+                    </object>
+                </child>
+                <child type="label">
+                    <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">Hint</property>
+                    </object>
+                </child>
+                </object>
+                <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+                </packing>
+            </child>
+            <child>
+                <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">start</property>
+                <property name="margin-top">16</property>
+                <property name="label" translatable="yes">&lt;b&gt;Local Web Page&lt;/b&gt;</property>
+                <property name="use-markup">True</property>
+                </object>
+                <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+                </packing>
+            </child>
+            <child>
+                <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">start</property>
+                <property name="label" translatable="yes">Alternately, you can choose a HTML file on your PC</property>
+                </object>
+                <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+                </packing>
+            </child>
+            <child>
+                <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="spacing">8</property>
+                <child>
+                    <object class="GtkFileChooserButton" id="FileChooser">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="filter">filefilter1</property>
+                    <property name="title" translatable="yes"/>
+                    </object>
+                    <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                    </packing>
+                </child>
+                <child>
+                    <object class="GtkButton" id="ButtonApply2">
+                    <property name="label">Apply</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="halign">end</property>
+                    <property name="action-name">app.local_web_page_apply</property>
+                    <style>
+                        <class name="suggested-action"/>
+                    </style>
+                    </object>
+                    <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="pack-type">end</property>
+                    <property name="position">1</property>
+                    </packing>
+                </child>
+                </object>
+                <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
+                </packing>
+            </child>
+            </object>
+            <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">8</property>
+            <property name="position">3</property>
+            </packing>
+        </child>
+    </object>
+</interface>

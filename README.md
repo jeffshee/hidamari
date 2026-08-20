@@ -4,6 +4,7 @@
 <p align="center">Hidamari 日溜まり【ひだまり】(n) sunny spot; exposure to the sun</p>
 
 # Hidamari　ーひだまりー
+
 If you like my project, please consider buying me a coffee!! (⁎˃ ꇴ ˂⁎)ｯ
 
 [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/jeffshee)
@@ -18,6 +19,7 @@ Your support is truly appreciated!
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/mP7yg4gX7g)
 
 ## For GNOME user 🐾
+
 Please also check my new project [Hanabi](https://github.com/jeffshee/gnome-ext-hanabi)! While the project is still in its infancy, it has the potential to become more integrated with GNOME Shell
 
 ## Features 🔥
@@ -40,37 +42,46 @@ Hidamari offers similar feature as above, with additional features listed below:
 - [x] Multi-monitor support!
 - [x] Streaming URL support! <sup>5</sup>
 - [x] Webpage as wallpaper! <sup>6</sup>
+- [x] Create your playlists for your each monitor!
 - [ ] You name it! =)
 
 <sup>1</sup> Video frame can be applied as system wallpaper, look great in <i>GNOME</i> (currently GNOME exclusive, support for other DE might be added if requested...)  
 <sup>2</sup> Automatically pauses playback when maximized window or full screen mode is detected (currently X11 only...)  
 <sup>3</sup> Randomly select and play a video  
-<sup>4</sup> Use <i>vlc</i> as backend (currently HW acceleration doesn't work with Nvidia+Wayland combination...)     
+<sup>4</sup> Use <i>vlc</i> as backend (currently HW acceleration doesn't work with Nvidia+Wayland combination...)  
 <sup>5</sup> Use <i>yt-dlp</i> as backend, tested with YouTube videos  
 <sup>6</sup> Theoretically it can be anything from a normal webpage to <i>Unity/Godot WebGL games</i>, be creative!
 
 ## Installation ⏬
+
 ### Flatpak 📦
+
 It is available on Flathub!
 
 <a href='https://flathub.org/apps/details/io.github.jeffshee.Hidamari'><img width='240' alt='Download Hidamari on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
 
 #### Command line instructions
+
 Install:  
 Make sure to follow the [setup guide](https://flatpak.org/setup/) before installing
+
 ```
 flatpak install flathub io.github.jeffshee.Hidamari
 ```
-Run:  
+
+Run:
+
 ```
 flatpak run io.github.jeffshee.Hidamari
 ```
 
 ### Unofficial package
+
 These are maintained by the community!
-| Distro     | URL                                     | Maintainer                            |
-|------------|-----------------------------------------|---------------------------------------|
-| Arch Linux | [![AUR](https://img.shields.io/aur/version/hidamari?style=for-the-badge)](https://aur.archlinux.org/packages/hidamari) | None |
+
+| Distro     | URL                                                                                                                    | Maintainer |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Arch Linux | [![AUR](https://img.shields.io/aur/version/hidamari?style=for-the-badge)](https://aur.archlinux.org/packages/hidamari) | None       |
 
 ## Screenshot 📸
 
@@ -81,7 +92,7 @@ These are maintained by the community!
 ## Please!! 🙏
 
 Collaboration is welcome! Let's make it better together~  
-Feel free to open an issue if you have any problem or suggestion 🤗  
+Feel free to open an issue if you have any problem or suggestion 🤗
 
 ## Contributors ✨
 

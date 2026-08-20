@@ -3,24 +3,19 @@ import multiprocessing as mp
 import os
 import subprocess
 import sys
-import threading
 from gettext import gettext as _
 
 # TODO: Port to Gtk4/adwaita someday...
 import gi
-import requests
 import setproctitle
 
 gi.require_version("Gtk", "3.0")
-gi.require_version("Gdk", "3.0")
-import yt_dlp
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk
+from gi.repository import Gio, GLib, Gtk
 from pydbus import SessionBus
 
 from hidamari.commons import (
     AUTOSTART_DESKTOP_PATH,
     CONFIG_KEY_BLUR_RADIUS,
-    CONFIG_KEY_DATA_SOURCE,
     CONFIG_KEY_FIRST_TIME,
     CONFIG_KEY_MODE,
     CONFIG_KEY_MUTE,
@@ -31,6 +26,7 @@ from hidamari.commons import (
     CONFIG_PATH,
     DBUS_NAME_SERVER,
     LOGGER_NAME,
+    MODE_PLAYLIST,
     MODE_STREAM,
     MODE_VIDEO,
     MODE_WEBPAGE,
@@ -38,11 +34,14 @@ from hidamari.commons import (
     TRANSLATION_DOMAIN,
     VIDEO_WALLPAPER_DIR,
 )
-from hidamari.gui.gui_utils import debounce, get_thumbnail
-from hidamari.monitor import Monitors
+from hidamari.gui.gui_utils import debounce
+from hidamari.gui.local_video_view import LocalVideoView
+from hidamari.gui.playlist_view import PlaylistView
+from hidamari.gui.popover_main import PopoverMain
+from hidamari.gui.streaming_view import StreamingView
+from hidamari.gui.web_view import WebView
 from hidamari.utils import (
     ConfigUtil,
-    get_video_paths,
     init_translations,
     is_gnome,
     is_wayland,
@@ -54,8 +53,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 APP_ID = f"{PROJECT}.gui"
 APP_TITLE = "Hidamari"
-APP_UI_RESOURCE_PATH = "/io/jeffshee/Hidamari/control.ui"
-
+APP_UI_RESOURCE_PATH = "/io/jeffshee/Hidamari/"
 
 class ControlPanel(Gtk.Application):
     def __init__(self, version, *args, **kwargs):
@@ -66,17 +64,18 @@ class ControlPanel(Gtk.Application):
             **kwargs,
         )
         setproctitle.setproctitle(mp.current_process().name)
-        # Builder init
+        
+        # Load main UI
         self.builder = Gtk.Builder()
         self.builder.set_application(self)
         self.builder.set_translation_domain(TRANSLATION_DOMAIN)
-        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
-        # Handlers declared in `control.ui``
+        try:
+            self.builder.add_from_resource(APP_UI_RESOURCE_PATH + "control.ui")
+        except GLib.Error:
+            self.builder.add_from_file(os.path.abspath("./src/hidamari/assets/control.ui"))
+
+        # Handlers declared in `control.ui`
         signals = {
-            "on_volume_changed": self.on_volume_changed,
-            "on_streaming_activate": self.on_streaming_activate,
-            "on_web_page_activate": self.on_web_page_activate,
-            "on_blur_radius_changed": self.on_blur_radius_changed,
         }
         self.builder.connect_signals(signals)
 
@@ -84,47 +83,62 @@ class ControlPanel(Gtk.Application):
         self.version = version
         self.window = None
         self.server = None
-        self.icon_view = None
-        self.video_paths = None
-        self.all_key = "all"
 
         self.is_autostart = os.path.isfile(AUTOSTART_DESKTOP_PATH)
 
         self._connect_server()
         self._load_config()
+        
+        # Placeholders
+        self.web_placeholder = self.builder.get_object("WebViewPlaceholder")
+        self.streaming_placeholder = self.builder.get_object("StreamingViewPlaceholder")
+        self.localvideo_placeholder = self.builder.get_object("LocalVideoPlaceholder")
+        self.playlist_placeholder = self.builder.get_object("PlaylistViewPlaceholder")
 
-        # initialize monitors
-        self.monitors = Monitors()
-        # get video paths
-        video_paths = self.config[CONFIG_KEY_DATA_SOURCE]
-        for monitor in self.monitors.get_monitors():
-            # check if monitor exists in paths
-            if monitor in video_paths:
-                self.monitors.get_monitor(monitor).set_wallpaper(video_paths[monitor])
-            else:
-                self.monitors.get_monitor(monitor).set_wallpaper(video_paths["Default"])
+        # Load web view UI
+        self.web_view = WebView(self.config, self.server)
+        self._add_to_placeholder(self.web_placeholder, self.web_view.widget)
+        
+        # Load local video UI
+        self.local_video = LocalVideoView(self.config, self.server)
+        self._add_to_placeholder(self.localvideo_placeholder, self.local_video.widget)
+        
+        # Load streaming UI
+        self.streaming_view = StreamingView(self.config, self.server)
+        self._add_to_placeholder(self.streaming_placeholder, self.streaming_view.widget)
+        
+        # Load playlist UI
+        self.playlist_view = PlaylistView(self.config, self.server)
+        self._add_to_placeholder(self.playlist_placeholder, self.playlist_view.widget)
 
-        self._setup_context_menu()  # setup context menu for selecting monitors
+        # Load popover UI
+        self.popover_main = PopoverMain(self.config, self.server)
+        popoverButton = self.builder.get_object("popoverButton")
+        popoverButton.set_popover(self.popover_main.widget)
+
+        # Open on whichever tab matches the currently active mode, instead of
+        # always defaulting to the stack's first ("Local Video") page.
+        stack_child_name = {
+            MODE_VIDEO: "video",
+            MODE_STREAM: "stream",
+            MODE_WEBPAGE: "webpage",
+            MODE_PLAYLIST: "playlist",
+        }.get(self.config[CONFIG_KEY_MODE])
+        if stack_child_name:
+            self.builder.get_object("stack1").set_visible_child_name(stack_child_name)
+
+    def _add_to_placeholder(self, placeholder, widget):
+        parent = widget.get_parent()
+        if parent:
+            parent.remove(widget)
+        placeholder.add(widget)
+        placeholder.show_all()
 
     def _connect_server(self):
         try:
             self.server = SessionBus().get(DBUS_NAME_SERVER)
         except GLib.Error:
-            logger.error("[GUI] Couldn't connect to server")
-
-    def _setup_context_menu(self):
-        self.contextMenu_monitors = Gtk.Menu()
-        self.contextMenu_monitors.show_all()
-
-        for monitor_name, monitor in self.monitors.get_monitors().items():
-            item = Gtk.MenuItem(label=_("Set For {monitor}").format(monitor=monitor_name))
-            item.connect("activate", self.on_set_as, monitor)
-            self.contextMenu_monitors.append(item)
-
-        # add all option
-        item = Gtk.MenuItem(label=_("Set For All"))
-        item.connect("activate", self.on_set_as, self.all_key)
-        self.contextMenu_monitors.append(item)
+            logger.error("[GUI/ControlPanel] Couldn't connect to server")
 
     def _load_config(self):
         self.config = ConfigUtil().load()
@@ -144,16 +158,19 @@ class ControlPanel(Gtk.Application):
                 "local_video_dir",
                 lambda *_: subprocess.run(["xdg-open", os.path.realpath(VIDEO_WALLPAPER_DIR)]),
             ),
-            ("local_video_refresh", self._reload_icon_view),
-            ("local_video_apply", self.on_local_video_apply),
-            ("local_web_page_apply", self.on_local_web_page_apply),
+            ("local_video_refresh", self.local_video.reload_icon_view),
+            ("local_video_apply", self.local_video.on_local_video_apply),
+            ("local_web_page_apply", self.web_view.on_local_web_page_apply),
             ("play_pause", self.on_play_pause),
             ("feeling_lucky", self.on_feeling_lucky),
             (
                 "config",
                 lambda *_: subprocess.run(["xdg-open", os.path.realpath(CONFIG_PATH)]),
             ),
-            ("about", self.on_about),
+            (
+                "about", 
+                lambda *_: self.popover_main.on_about(self.window, self.version)
+            ),
             ("quit", self.on_quit),
         ]
 
@@ -163,22 +180,22 @@ class ControlPanel(Gtk.Application):
             self.add_action(action)
 
         statefuls = [
-            ("mute", self.config[CONFIG_KEY_MUTE], self.on_mute),
+            ("mute", self.config[CONFIG_KEY_MUTE], self.popover_main.on_mute),
             ("autostart", self.is_autostart, self.on_autostart),
             (
                 "static_wallpaper",
                 self.config[CONFIG_KEY_STATIC_WALLPAPER],
-                self.on_static_wallpaper,
+                self.popover_main.on_static_wallpaper,
             ),
             (
                 "pause_when_maximized",
                 self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED],
-                self.on_pause_when_maximized,
+                self.popover_main.on_pause_when_maximized,
             ),
             (
                 "mute_when_maximized",
                 self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED],
-                self.on_mute_when_maximized,
+                self.popover_main.on_mute_when_maximized,
             ),
         ]
 
@@ -190,14 +207,14 @@ class ControlPanel(Gtk.Application):
             self.add_action(action)
 
         if is_wayland():
-            self.builder.get_object("TogglePauseWhenMaximized").set_visible(False)
-            self.builder.get_object("ToggleMuteWhenMaximized").set_visible(False)
+            self.popover_main.builder.get_object("TogglePauseWhenMaximized").set_visible(False)
+            self.popover_main.builder.get_object("ToggleMuteWhenMaximized").set_visible(False)
 
         if not is_gnome():
             # Disable static wallpaper functionality for non-GNOME DE
-            self.builder.get_object("ToggleStaticWallpaper").set_visible(False)
-            self.builder.get_object("LabelBlurRadius").set_visible(False)
-            self.builder.get_object("SpinBlurRadius").set_visible(False)
+            self.popover_main.builder.get_object("ToggleStaticWallpaper").set_visible(False)
+            self.popover_main.builder.get_object("LabelBlurRadius").set_visible(False)
+            self.popover_main.builder.get_object("SpinBlurRadius").set_visible(False)
 
         self._reload_all_widgets()
 
@@ -251,64 +268,6 @@ class ControlPanel(Gtk.Application):
         dialog.run()
         dialog.destroy()
 
-    def on_local_video_apply(self, *_args):
-        selected = self.icon_view.get_selected_items()
-        if len(selected) != 0:
-            # show menu
-            self.contextMenu_monitors.show_all()
-            self.contextMenu_monitors.popup(None, None, None, None, 0, Gtk.get_current_event_time())
-        else:
-            dialog = Gtk.MessageDialog(
-                parent=self.window,
-                modal=True,
-                destroy_with_parent=True,
-                text=_("No Video Selected"),
-                message_type=Gtk.MessageType.INFO,
-                secondary_text=_("There are no video selected.\nPlease choose one first."),
-                secondary_use_markup=True,
-                buttons=Gtk.ButtonsType.OK,
-            )
-            dialog.run()
-            dialog.destroy()
-
-    def on_set_as(self, widget, monitor):
-        index = self.icon_view.get_selected_items()[0].get_indices()[0]
-        video_path = self.video_paths[index]
-        logger.info(f"[GUI] Local Video Set To {video_path} For Monitor {monitor}")
-        self.config[CONFIG_KEY_MODE] = MODE_VIDEO
-        paths = self.config[CONFIG_KEY_DATA_SOURCE] if not None else []
-        # all option
-        if monitor == self.all_key:
-            for name, monitor in self.monitors.get_monitors().items():
-                paths[name] = video_path
-                monitor.set_wallpaper(video_path)
-        else:
-            paths[monitor.name] = video_path
-            self.monitors.get_monitor(monitor.name).set_wallpaper(video_path)
-
-        # also update the Default video
-        paths["Default"] = video_path
-        self.config[CONFIG_KEY_DATA_SOURCE] = paths
-        self._save_config()
-        if self.server is not None:
-            self.server.video(video_path, monitor.name)
-
-    def on_local_web_page_apply(self, *_args):
-        file_chooser: Gtk.FileChooserButton = self.builder.get_object("FileChooser")
-        choose: Gio.File = file_chooser.get_file()
-        if choose is None:
-            self._show_error(_("Please choose a HTML file"))
-            return
-        file_path = choose.get_path()
-        logger.info(f"[GUI] Local Webpage: {file_path}")
-        self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
-        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = (
-            file_path  #! we dont want to break the config, webpage and stream modes will kept in Default source
-        )
-        self._save_config()
-        if self.server is not None:
-            self.server.webpage(choose.get_path())
-
     def on_play_pause(self, *_):
         if self.server is None:
             return
@@ -323,168 +282,11 @@ class ControlPanel(Gtk.Application):
         if self.server is not None:
             self.server.feeling_lucky()
 
-    def set_mute_toggle_icon(self):
-        toggle_icon: Gtk.Image = self.builder.get_object("ToggleMuteIcon")
-        volume, is_mute = self.config[CONFIG_KEY_VOLUME], self.config[CONFIG_KEY_MUTE]
-        if volume == 0 or is_mute:
-            icon_name = "audio-volume-muted-symbolic"
-        elif volume < 30:
-            icon_name = "audio-volume-low-symbolic"
-        elif volume < 60:
-            icon_name = "audio-volume-medium-symbolic"
-        else:
-            icon_name = "audio-volume-high-symbolic"
-        toggle_icon.set_from_icon_name(icon_name=icon_name, size=0)
-
-    def set_scale_volume_sensitive(self):
-        scale = self.builder.get_object("ScaleVolume")
-        if self.config[CONFIG_KEY_MUTE]:
-            scale.set_sensitive(False)
-        else:
-            scale.set_sensitive(True)
-
-    def set_spin_blur_radius_sensitive(self):
-        spin = self.builder.get_object("SpinBlurRadius")
-        if self.config[CONFIG_KEY_STATIC_WALLPAPER]:
-            spin.set_sensitive(True)
-        else:
-            spin.set_sensitive(False)
-
-    def on_volume_changed(self, adjustment):
-        self.config[CONFIG_KEY_VOLUME] = int(adjustment.get_value())
-        logger.info(f"[GUI] Volume: {self.config[CONFIG_KEY_VOLUME]}")
-        self._save_config_delay()
-        if self.server is not None:
-            self.server.volume = self.config[CONFIG_KEY_VOLUME]
-        self.set_mute_toggle_icon()
-
-    def on_blur_radius_changed(self, adjustment):
-        self.config[CONFIG_KEY_BLUR_RADIUS] = int(adjustment.get_value())
-        logger.info(f"[GUI] Blur radius: {self.config[CONFIG_KEY_BLUR_RADIUS]}")
-        self._save_config_delay()
-        if self.server is not None:
-            self.server.blur_radius = self.config[CONFIG_KEY_BLUR_RADIUS]
-
-    def on_mute(self, action, state):
-        action.set_state(state)
-        self.config[CONFIG_KEY_MUTE] = bool(state)
-        logger.info(f"[GUI] {action.get_name()}: {state}")
-        self._save_config()
-        if self.server is not None:
-            self.server.is_mute = self.config[CONFIG_KEY_MUTE]
-        self.set_mute_toggle_icon()
-        self.set_scale_volume_sensitive()
-
     def on_autostart(self, action, state):
         action.set_state(state)
         self.is_autostart = bool(state)
-        logger.info(f"[GUI] {action.get_name()}: {state}")
+        logger.info(f"[GUI/ControlPanel] {action.get_name()}: {state}")
         setup_autostart(state)
-
-    def on_static_wallpaper(self, action, state):
-        action.set_state(state)
-        self.config[CONFIG_KEY_STATIC_WALLPAPER] = bool(state)
-        logger.info(f"[GUI] {action.get_name()}: {state}")
-        self._save_config()
-        if self.server is not None:
-            self.server.is_static_wallpaper = self.config[CONFIG_KEY_STATIC_WALLPAPER]
-        self.set_spin_blur_radius_sensitive()
-
-    def on_pause_when_maximized(self, action, state):
-        action.set_state(state)
-        self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED] = bool(state)
-        logger.info(f"[GUI] {action.get_name()}: {state}")
-        self._save_config()
-        if self.server is not None:
-            self.server.is_pause_when_maximized = self.config[CONFIG_KEY_PAUSE_WHEN_MAXIMIZED]
-
-    def on_mute_when_maximized(self, action, state):
-        action.set_state(state)
-        self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED] = bool(state)
-        logger.info(f"[GUI] {action.get_name()}: {state}")
-        self._save_config()
-        if self.server is not None:
-            self.server.is_mute_when_maximized = self.config[CONFIG_KEY_MUTE_WHEN_MAXIMIZED]
-
-    def on_about(self, *_):
-        self.builder.add_from_resource(APP_UI_RESOURCE_PATH)
-        about_dialog: Gtk.AboutDialog = self.builder.get_object("AboutDialog")
-        about_dialog.set_transient_for(self.window)
-        about_dialog.set_version(self.version)
-        about_dialog.set_modal(True)
-        about_dialog.present()
-
-    def _check_url(self, url):
-        # Check if the url is valid
-        try:
-            response = requests.get(url)
-        except requests.exceptions.RequestException as e:
-            logger.error(f"[GUI] Failed to access {url}. Error:\n{e}")
-            self._show_error(_("Failed to access {url}. Error:\n{error}").format(url=url, error=e))
-            return False
-        if response.status_code >= 400:
-            logger.error(f"[GUI] Failed to access {url}. Error code: {response.status_code}")
-            self._show_error(
-                _("Failed to access {url}. Error code: {code}").format(
-                    url=url, code=response.status_code
-                )
-            )
-            return False
-        return True
-
-    def _check_yt_dlp(self, raw_url):
-        # Check if the url is valid (yt_dlp)
-        try:
-            with yt_dlp.YoutubeDL({"noplaylist": True}) as ydl:
-                ydl.extract_info(raw_url, download=False)
-        except yt_dlp.utils.DownloadError as e:
-            s = " ".join(str(e).split(" ")[1:])
-            logger.error(f"[GUI] Failed to stream {raw_url}. Error:\n{s}")
-            self._show_error(
-                _("Failed to stream {url}. Error:\n{error}").format(url=raw_url, error=s)
-            )
-            return False
-        return True
-
-    def on_streaming_activate(self, entry: Gtk.Entry, *_):
-        url = entry.get_text()
-        if not self._check_yt_dlp(url):
-            return
-        logger.info(f"[GUI] Streaming: {url}")
-        self.config[CONFIG_KEY_MODE] = MODE_STREAM
-        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = (
-            url  #! we dont want to break the config, webpage and stream modes will kept in Default source
-        )
-        self._save_config()
-        if self.server is not None:
-            self.server.stream(url)
-
-    def on_web_page_activate(self, entry: Gtk.Entry, *_):
-        url = entry.get_text()
-        if not self._check_url(url):
-            return
-        logger.info(f"[GUI] Webpage: {url}")
-        self.config[CONFIG_KEY_MODE] = MODE_WEBPAGE
-        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = (
-            url  #! we dont want to break the config, webpage and stream modes will kept in Default source
-        )
-        self._save_config()
-        if self.server is not None:
-            self.server.webpage(url)
-
-    def on_icon_view_button_press(self, widget, event):
-        if event.button == Gdk.BUTTON_SECONDARY:  # Right click
-            path_info = widget.get_path_at_pos(event.x, event.y)
-            if path_info is not None:
-                tree_path = Gtk.TreePath(path_info[0])
-                self.icon_view.grab_focus()
-                widget.select_path(tree_path)
-                self.contextMenu_monitors.show_all()
-                self.contextMenu_monitors.popup(
-                    None, None, None, None, 0, Gtk.get_current_event_time()
-                )
-                return True
-        return False
 
     def on_quit(self, *_):
         if self.server is not None:
@@ -496,45 +298,32 @@ class ControlPanel(Gtk.Application):
         self.quit()
 
     def _reload_all_widgets(self):
-        self._reload_icon_view()
-        self.set_mute_toggle_icon()
-        self.set_scale_volume_sensitive()
-        self.set_spin_blur_radius_sensitive()
-        toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleMute")
+        self.local_video.reload_icon_view()
+        self.playlist_view.reload_icon_view()
+        self.popover_main.set_mute_toggle_icon()
+        self.popover_main.set_scale_volume_sensitive()
+        self.popover_main.set_spin_blur_radius_sensitive()
+        toggle_mute: Gtk.ToggleButton = self.popover_main.builder.get_object("ToggleMute")
         toggle_mute.set_state = self.config[CONFIG_KEY_MUTE]
 
-        scale_volume: Gtk.Scale = self.builder.get_object("ScaleVolume")
-        adjustment_volume: Gtk.Adjustment = self.builder.get_object("AdjustmentVolume")
+        scale_volume: Gtk.Scale = self.popover_main.builder.get_object("ScaleVolume")
+        adjustment_volume: Gtk.Adjustment = self.popover_main.builder.get_object("AdjustmentVolume")
+        
         # Temporary block signal
-        adjustment_volume.handler_block_by_func(self.on_volume_changed)
+        adjustment_volume.handler_block_by_func(self.popover_main.on_volume_changed)
         scale_volume.set_value(self.config[CONFIG_KEY_VOLUME])
-        adjustment_volume.handler_unblock_by_func(self.on_volume_changed)
+        adjustment_volume.handler_unblock_by_func(self.popover_main.on_volume_changed)
 
-        spin_blur_radius: Gtk.Scale = self.builder.get_object("SpinBlurRadius")
-        adjustment_blur: Gtk.Adjustment = self.builder.get_object("AdjustmentBlur")
+        spin_blur_radius: Gtk.Scale = self.popover_main.builder.get_object("SpinBlurRadius")
+        adjustment_blur: Gtk.Adjustment = self.popover_main.builder.get_object("AdjustmentBlur")
+        
         # Temporary block signal
-        adjustment_blur.handler_block_by_func(self.on_blur_radius_changed)
+        adjustment_blur.handler_block_by_func(self.popover_main.on_blur_radius_changed)
         spin_blur_radius.set_value(self.config[CONFIG_KEY_BLUR_RADIUS])
-        adjustment_blur.handler_unblock_by_func(self.on_blur_radius_changed)
+        adjustment_blur.handler_unblock_by_func(self.popover_main.on_blur_radius_changed)
 
-        toggle_mute: Gtk.ToggleButton = self.builder.get_object("ToggleAutostart")
+        toggle_mute: Gtk.ToggleButton = self.popover_main.builder.get_object("ToggleAutostart")
         toggle_mute.set_state = self.is_autostart
-
-    def _reload_icon_view(self, *_):
-        self.video_paths = get_video_paths()
-        list_store = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
-        self.icon_view: Gtk.IconView = self.builder.get_object("IconView")
-        self.icon_view.set_pixbuf_column(0)
-        self.icon_view.set_text_column(1)
-        self.icon_view.set_model(list_store)
-        self.icon_view.connect("button-press-event", self.on_icon_view_button_press)
-        for idx, video_path in enumerate(self.video_paths):
-            pixbuf = Gtk.IconTheme().get_default().load_icon("video-x-generic", 96, 0)
-            list_store.append([pixbuf, os.path.basename(video_path)])
-            thread = threading.Thread(target=get_thumbnail, args=(video_path, list_store, idx))
-            thread.daemon = True
-            thread.start()
-
 
 def _find_gresource(pkgdatadir):
     """Locate hidamari.gresource: the launcher-provided prefix first, then the

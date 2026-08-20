@@ -10,6 +10,7 @@ from gi.repository import GLib
 from pydbus import SessionBus
 
 from hidamari.commons import (
+    CONFIG_KEY_ACTIVE_PLAYLIST,
     CONFIG_KEY_BLUR_RADIUS,
     CONFIG_KEY_DATA_SOURCE,
     CONFIG_KEY_MODE,
@@ -23,6 +24,7 @@ from hidamari.commons import (
     DBUS_NAME_SERVER,
     LOGGER_NAME,
     MODE_NULL,
+    MODE_PLAYLIST,
     MODE_STREAM,
     MODE_VIDEO,
     MODE_WEBPAGE,
@@ -33,6 +35,16 @@ from hidamari.monitor import Monitors
 from hidamari.player.video_player import main as video_player_main
 from hidamari.player.web_player import main as web_player_main
 from hidamari.utils import ConfigUtil, EndSessionHandler, get_video_paths
+
+# NOTE: `gui.control`, `player.video_player`, `player.web_player` and `menu` all import
+# GTK/GLib at module level. `multiprocessing`'s forkserver start method preloads this
+# `__main__` module into its persistent helper process *before* forking any children.
+# If GTK gets imported during that preload, the forkserver helper ends up with GTK's
+# internal worker thread(s) initialized, and every child forked from it afterward
+# inherits a broken thread state where synchronous D-Bus calls (e.g. `SessionBus().get()`)
+# hang forever. Keep these imports local to the functions that build each Process's
+# target, so GTK is only ever imported inside the already-forked child, never in the
+# forkserver's preloaded state.
 
 loop = GLib.MainLoop()
 logger = logging.getLogger(LOGGER_NAME)
@@ -46,6 +58,9 @@ class HidamariServer:
         <method name='video'>
             <arg type='s' name='video_path' direction='in'/>
             <arg type='s' name='monitor' direction='in'/>
+        </method>
+        <method name='playlist'>
+            <arg type='s' name='playlist_name' direction='in'/>
         </method>
         <method name='stream'>
             <arg type='s' name='stream_url' direction='in'/>
@@ -83,9 +98,15 @@ class HidamariServer:
         self._player_count = 0
 
         # Processes
-        # Switch to `forkserver` since v3.2 for performance. BTW `fork` didn't work (it crashes).
-        # Ref: https://bnikolic.co.uk/blog/python/parallelism/2019/11/13/python-forkserver-preload.html
-        mp.set_start_method("forkserver")
+        # `fork` crashes (GTK/GLib state doesn't survive a raw fork). `forkserver` was tried
+        # next, but on this GTK/GLib/D-Bus-heavy app it proved unreliable in practice: its
+        # persistent helper process inherits whatever module-level GTK state got preloaded
+        # into `__main__`, which can leave every child it forks afterward with a broken
+        # GLib/D-Bus thread state (synchronous D-Bus calls hang forever); separately, forking
+        # the GUI process right after the player process from that same helper has been
+        # observed to make the GUI process exit silently with no window and no error. `spawn`
+        # avoids both: each child is a fresh interpreter with no inherited GTK/thread state.
+        mp.set_start_method("spawn")
         self.gui_process = None
         self.sys_icon_process = None
         self.player_process = None
@@ -118,15 +139,23 @@ class HidamariServer:
         ConfigUtil().save(self.config)
 
     def _setup_player(self, mode, data_source=None, monitor=None):
+        # todo: implement playlist mode
         """Setup and run player"""
         logger.info(f"[Mode] {mode}")
+        logger.info(f"[Data Source] {data_source}")
+        logger.info(f"[Monitor] {monitor}")
         self.config[CONFIG_KEY_MODE] = mode
 
         # Set data source if specified
-        if data_source and monitor:
+        if data_source and monitor and mode == MODE_VIDEO:
             self.config[CONFIG_KEY_DATA_SOURCE][monitor] = data_source
-        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = data_source  # always update default source
 
+        if mode == MODE_VIDEO:
+            self.config[CONFIG_KEY_DATA_SOURCE]['Default'] = data_source # always update default source
+            
+        if mode == MODE_PLAYLIST:
+            self.config[CONFIG_KEY_ACTIVE_PLAYLIST] = data_source
+            
         # Quit current then create a new player
         self._quit_player()
 
@@ -140,11 +169,19 @@ class HidamariServer:
                 self.player_process.join(timeout=2)
             self.player_process = None
 
-        if mode in [MODE_VIDEO, MODE_STREAM]:
+        if mode in [MODE_VIDEO, MODE_STREAM, MODE_PLAYLIST]:
+            try:
+                from player.video_player import main as video_player_main
+            except ModuleNotFoundError:
+                from hidamari.player.video_player import main as video_player_main
             self.player_process = Process(
                 name=f"hidamari-player-{self._player_count}", target=video_player_main
             )
         elif mode == MODE_WEBPAGE:
+            try:
+                from player.web_player import main as web_player_main
+            except ModuleNotFoundError:
+                from hidamari.player.web_player import main as web_player_main
             self.player_process = Process(
                 name=f"hidamari-player-{self._player_count}", target=web_player_main
             )
@@ -180,6 +217,9 @@ class HidamariServer:
         if player:
             player.quit_player()
 
+    def playlist(self, playlist_name=None):
+        self._setup_player(MODE_PLAYLIST, playlist_name)
+    
     def video(self, video_path=None, monitor=None):
         self._setup_player(MODE_VIDEO, video_path, monitor)
 
@@ -204,6 +244,8 @@ class HidamariServer:
     def reload(self):
         if self.config[CONFIG_KEY_MODE] == MODE_VIDEO:
             self.video()
+        elif self.config[CONFIG_KEY_MODE] == MODE_PLAYLIST:
+            self.playlist()
         elif self.config[CONFIG_KEY_MODE] == MODE_STREAM:
             self.stream()
         elif self.config[CONFIG_KEY_MODE] == MODE_WEBPAGE:

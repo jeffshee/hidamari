@@ -24,9 +24,17 @@ from hidamari.commons import (
     CONFIG_VERSION,
     LOGGER_NAME,
     MODE_VIDEO,
+    PLAYLIST_KEY_MODE,
+    PLAYLIST_KEY_MONITORS,
+    PLAYLIST_KEY_VIDEOS,
+    PLAYLIST_MODE_PER_MONITOR,
+    PLAYLIST_PATH,
+    PLAYLIST_TEMPLATE,
+    PLAYLIST_VERSION,
     TRANSLATION_DOMAIN,
     VIDEO_WALLPAPER_DIR,
 )
+from hidamari.monitor import Monitors
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -275,6 +283,15 @@ class WindowHandler:
     """
 
     def __init__(self, on_window_state_changed: callable):
+        # Imported lazily: loading the Wnck typelib initializes fork-unsafe state, and
+        # utils.py is imported by server.py, which is preloaded into multiprocessing's
+        # forkserver helper. If Wnck were imported at module level here, every process
+        # forked afterward (GUI, player, ...) would hang on its first synchronous D-Bus
+        # call. Keep it local to the one class that actually needs it.
+        gi.require_version("Wnck", "3.0")
+        from gi.repository import Wnck
+        self._Wnck = Wnck
+
         self.on_window_state_changed = on_window_state_changed
         self.screen = Wnck.Screen.get_default()
         self.screen.force_update()
@@ -312,6 +329,7 @@ class WindowHandler:
 
     def eval(self, *args):
         # TODO: #28 (Wallpaper stops animating on other monitor when app maximized on other)
+        Wnck = self._Wnck
         is_changed = False
 
         is_any_maximized, is_any_fullscreen = False, False
@@ -425,6 +443,14 @@ class ConfigUtil:
                     self.save(config)
                     break
 
+    def _migrateV4ToV5(self, config: dict):
+        logger.debug(f"[Config] Migration from version 4 to 5.")
+        config['active_playlist'] = None
+        config['version'] = 5
+        # save config file
+        self.save(config)
+        return config
+
     def load(self):
         if os.path.isfile(CONFIG_PATH):
             with open(CONFIG_PATH) as f:
@@ -434,6 +460,11 @@ class ConfigUtil:
                     # migration to version 4 for data_source type change
                     if config.get("version") <= 3 and CONFIG_VERSION >= 4:
                         self._migrateV3To4(config)
+                        
+                    # migration to version 5 for adding new key
+                    if config.get("version") <= 4 and CONFIG_VERSION >= 5:
+                        config = self._migrateV4ToV5(config)
+
                     self._checkDefaultSource(config)
                     self._checkMissingMonitors(config, CONFIG_TEMPLATE)
                     if self._check(config):
@@ -468,6 +499,107 @@ class ConfigUtil:
             logs = []
             logs.append("--------- Config ---------")
             logs.append(pformat(config, indent=3))
+            logs.append("--------------------------")
+            logs_str = "\n".join(logs)
+            logger.debug(f"[Config] Saved {CONFIG_PATH}\n{logs_str}")
+
+class PlaylistUtil:
+    def generate_template(self):
+        os.makedirs(CONFIG_DIR, exist_ok=True)
+        self.save(PLAYLIST_TEMPLATE)
+        
+    @staticmethod
+    def _check(playlist: dict):
+        """Check if the playlist is valid"""
+        is_all_keys_match = all(key in playlist for key in PLAYLIST_TEMPLATE)
+        is_version_match = playlist.get("version") == PLAYLIST_VERSION
+        return is_all_keys_match and is_version_match
+
+    def _invalid(self):
+        logger.debug(f"[Playlist] Invalid. A new playlist will be generated.")
+        self.generate_template()
+        playlist = PLAYLIST_TEMPLATE
+        playlist = self._load_monitors(playlist) # ensure monitors are loaded
+        return playlist
+    
+    def _load_monitors(self, playlist: dict):
+        monitors = Monitors()
+        monitor_names = monitors.get_monitors()
+
+        for pl_name, pl_data in playlist.get("playlists", {}).items():
+            pl_data.setdefault(PLAYLIST_KEY_MODE, PLAYLIST_MODE_PER_MONITOR)
+            pl_data.setdefault(PLAYLIST_KEY_VIDEOS, [])
+            pl_monitors = pl_data.setdefault(PLAYLIST_KEY_MONITORS, {})
+            for monitor in monitor_names:
+                if monitor not in pl_monitors:
+                    logger.info(f"[Playlist] Adding missing monitor '{monitor}' to playlist '{pl_name}'.")
+                    pl_monitors[monitor] = []
+
+        self.save(playlist)
+        return playlist
+
+    def _migrateV1ToV2(self, playlist: dict):
+        """
+        v1 stored each playlist as a flat {monitor: [videos]} dict. v2 wraps it with a
+        'mode' (PER_MONITOR/ALL) so a playlist can also be evenly distributed across all
+        monitors instead of manually assigned per monitor.
+        """
+        logger.debug(f"[Playlist] Migration from version 1 to 2.")
+        old_playlists = playlist.get("playlists", {})
+        new_playlists = {}
+        for name, pl_monitors in old_playlists.items():
+            new_playlists[name] = {
+                PLAYLIST_KEY_MODE: PLAYLIST_MODE_PER_MONITOR,
+                PLAYLIST_KEY_MONITORS: pl_monitors,
+                PLAYLIST_KEY_VIDEOS: [],
+            }
+        playlist["playlists"] = new_playlists
+        playlist["version"] = 2
+        self.save(playlist)
+        return playlist
+
+    def load(self):
+        if os.path.isfile(PLAYLIST_PATH):
+            with open(PLAYLIST_PATH, "r") as f:
+                json_str = f.read()
+                try:
+                    playlist = json.loads(json_str)
+                    if playlist.get("version", 1) <= 1 and PLAYLIST_VERSION >= 2:
+                        playlist = self._migrateV1ToV2(playlist)
+                    self._load_monitors(playlist) # add missing monitors to playlists if exists
+                    if self._check(playlist):
+                        logs = []
+                        logs.append("--------- Playlist ---------")
+                        logs.append(pformat(playlist, indent=3))
+                        logs.append("--------------------------")
+                        logs_str = "\n".join(logs)
+                        logger.debug(
+                            f"[Playlist] Loaded {PLAYLIST_PATH}\n{logs_str}")
+                        return playlist
+                except json.decoder.JSONDecodeError:
+                    logger.debug(f"[Playlist] JSONDecodeError")
+        return self._invalid()
+
+    def save(self, playlist):
+        old_playlist = None
+        if os.path.isfile(PLAYLIST_PATH):
+            with open(PLAYLIST_PATH, "r") as f:
+                json_str = f.read()
+                try:
+                    old_playlist = json.loads(json_str)
+                    if not self._check(old_playlist):
+                        old_playlist = None
+                except json.decoder.JSONDecodeError:
+                    old_playlist = None
+        # Skip if the config is identical
+        if old_playlist == playlist:
+            return
+        with open(PLAYLIST_PATH, "w") as f:
+            json_str = json.dumps(playlist, indent=3)
+            print(json_str, file=f)
+            logs = []
+            logs.append("--------- Playlist ---------")
+            logs.append(pformat(playlist, indent=3))
             logs.append("--------------------------")
             logs_str = "\n".join(logs)
             logger.debug(f"[Config] Saved {CONFIG_PATH}\n{logs_str}")

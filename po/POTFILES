@@ -1,3 +1,15 @@
+src/hidamari/gui/about_dialog.py
 src/hidamari/gui/control.py
+src/hidamari/gui/local_video_view.py
+src/hidamari/gui/playlist_view.py
+src/hidamari/gui/popover_main.py
+src/hidamari/gui/streaming_view.py
+src/hidamari/gui/web_view.py
 src/hidamari/menu.py
+src/hidamari/assets/about_dialog.ui
 src/hidamari/assets/control.ui
+src/hidamari/assets/local_video_view.ui
+src/hidamari/assets/playlist_view.ui
+src/hidamari/assets/popover_main.ui
+src/hidamari/assets/streaming_view.ui
+src/hidamari/assets/web_view.ui

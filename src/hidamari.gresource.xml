@@ -6,5 +6,11 @@
   </gresource>
   <gresource prefix="/io/jeffshee/Hidamari">
     <file alias="control.ui" preprocess="xml-stripblanks">assets/control.ui</file>
+    <file alias="about_dialog.ui" preprocess="xml-stripblanks">assets/about_dialog.ui</file>
+    <file alias="local_video_view.ui" preprocess="xml-stripblanks">assets/local_video_view.ui</file>
+    <file alias="playlist_view.ui" preprocess="xml-stripblanks">assets/playlist_view.ui</file>
+    <file alias="popover_main.ui" preprocess="xml-stripblanks">assets/popover_main.ui</file>
+    <file alias="streaming_view.ui" preprocess="xml-stripblanks">assets/streaming_view.ui</file>
+    <file alias="web_view.ui" preprocess="xml-stripblanks">assets/web_view.ui</file>
   </gresource>
 </gresources>

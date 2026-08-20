@@ -20,6 +20,7 @@ from pydbus import SessionBus
 
 from hidamari.commons import (
     CONFIG_DIR,
+    CONFIG_KEY_ACTIVE_PLAYLIST,
     CONFIG_KEY_DATA_SOURCE,
     CONFIG_KEY_FADE_DURATION_SEC,
     CONFIG_KEY_FADE_INTERVAL,
@@ -31,14 +32,22 @@ from hidamari.commons import (
     CONFIG_KEY_VOLUME,
     DBUS_NAME_PLAYER,
     LOGGER_NAME,
+    MODE_NULL,
+    MODE_PLAYLIST,
     MODE_STREAM,
     MODE_VIDEO,
+    PLAYLIST_KEY_MODE,
+    PLAYLIST_KEY_MONITORS,
+    PLAYLIST_KEY_VIDEOS,
+    PLAYLIST_MODE_ALL,
+    PLAYLIST_MODE_PER_MONITOR,
 )
 from hidamari.menu import build_menu
 from hidamari.player.base_player import BasePlayer
 from hidamari.utils import (
     ActiveHandler,
     ConfigUtil,
+    PlaylistUtil,
     is_flatpak,
     is_gnome,
     is_wayland,
@@ -125,7 +134,15 @@ class VLCWidget(Gtk.DrawingArea):
         #   active, e.g. one per monitor. See the Flatpak, which uses Pulse too.
         vlc_options = ["--no-disable-screensaver", "--aout=pulse"]
         self.instance = vlc.Instance(vlc_options)
+        
+        # normal player
         self.player = self.instance.media_player_new()
+        
+        # playlist player
+        self.media_list = self.instance.media_list_new()
+        self.list_player = self.instance.media_list_player_new()
+        self.list_player.set_media_list(self.media_list)
+        self.list_player.set_media_player(self.player)
 
         def handle_embed(*args):
             self.player.set_xwindow(self.get_window().get_xid())
@@ -150,12 +167,14 @@ class VLCWidget(Gtk.DrawingArea):
 
 
 class PlayerWindow(Gtk.ApplicationWindow):
-    def __init__(self, name, width, height, *args, **kwargs):
+    def __init__(self, name, width, height, mode=MODE_VIDEO, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Setup a VLC widget given the provided width and height.
         self.width = width
         self.height = height
         self.name = name
+        self.mode = mode
+        
         self.__vlc_widget = VLCWidget(width, height)
         self.add(self.__vlc_widget)
         self.__vlc_widget.show()
@@ -172,7 +191,10 @@ class PlayerWindow(Gtk.ApplicationWindow):
         self.connect("button-press-event", self._on_button_press_event)
 
     def play(self):
-        self.__vlc_widget.player.play()
+        if self.mode == MODE_PLAYLIST:
+            self.__vlc_widget.list_player.play()
+        else:
+            self.__vlc_widget.player.play()
 
     def play_fade(self, target, fade_duration_sec, fade_interval):
         self.play()
@@ -188,11 +210,17 @@ class PlayerWindow(Gtk.ApplicationWindow):
         )
 
     def is_playing(self):
+        if self.mode == MODE_PLAYLIST:
+            return self.__vlc_widget.list_player.is_playing()
+        
         return self.__vlc_widget.player.is_playing()
 
     def pause(self):
-        if self.is_playing():
-            self.__vlc_widget.player.pause()
+        if self.mode == MODE_PLAYLIST and self.is_playing():
+            self.__vlc_widget.list_player.pause()
+        else:
+            if self.is_playing():
+                self.__vlc_widget.player.pause()
 
     def pause_fade(self, fade_duration_sec, fade_interval):
         cur = self.get_volume()
@@ -224,7 +252,28 @@ class PlayerWindow(Gtk.ApplicationWindow):
         return self.__vlc_widget.instance.media_new(*args)
 
     def set_media(self, *args):
-        self.__vlc_widget.player.set_media(*args)
+        if self.mode == MODE_PLAYLIST:
+            # playlist modunda tek video set etmek gerekirse listeyi sıfırla
+            self.__vlc_widget.media_list.release()
+            self.__vlc_widget.media_list = self.__vlc_widget.instance.media_list_new()
+            self.__vlc_widget.list_player.set_media_list(self.__vlc_widget.media_list)
+            self.__vlc_widget.media_list.add_media(*args)
+        else:
+            self.__vlc_widget.player.set_media(*args)
+            
+    def set_playlist(self, paths):
+        if self.mode == MODE_PLAYLIST:
+            self.__vlc_widget.media_list.release()
+            self.__vlc_widget.media_list = self.__vlc_widget.instance.media_list_new()
+            medias = []
+            for path in paths:
+                media = self.__vlc_widget.instance.media_new(path)
+                self.__vlc_widget.media_list.add_media(media)
+                medias.append(media)
+            self.__vlc_widget.list_player.set_media_list(self.__vlc_widget.media_list)
+            self.__vlc_widget.list_player.set_playback_mode(vlc.PlaybackMode.loop)
+            return medias
+        return []
 
     def set_volume(self, *args):
         self.__vlc_widget.player.audio_set_volume(*args)
@@ -317,10 +366,12 @@ class VideoPlayer(BasePlayer):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Initialize X11 threads so VLC can use hardware decoding.
-        # `libX11.so.6` fix for Fedora 33
+        # XInitThreads() must run before the process's first X11 connection, or Xlib's
+        # internal state is never made thread-safe and concurrent Xlib/xcb calls (GTK's
+        # main thread alongside libVLC's decode/output threads) corrupt the connection,
+        # crashing with `Assertion '!xcb_xlib_threads_sequence_lost' failed`. super().__init__()
+        # below (BasePlayer -> Gdk.Display.get_default()) opens that connection, so this
+        # has to happen first.
         x11 = None
         for lib in ["libX11.so", "libX11.so.6"]:
             try:
@@ -331,8 +382,12 @@ class VideoPlayer(BasePlayer):
                 x11.XInitThreads()
                 break
 
+        super(VideoPlayer, self).__init__(*args, **kwargs)
+
         self.config = None
+        self.playlist = None
         self.reload_config()
+        self.reload_playlist()
 
         # Static wallpaper (currently for GNOME only)
         if is_gnome():
@@ -434,6 +489,10 @@ class VideoPlayer(BasePlayer):
     @data_source.setter
     def data_source(self, data_source):
         self.config[CONFIG_KEY_DATA_SOURCE] = data_source
+        
+        # update mode for window
+        for window in self.windows.values():
+            window.mode = self.mode
 
         if self.mode == MODE_VIDEO:
             # Get the dimension of the video
@@ -496,6 +555,55 @@ class VideoPlayer(BasePlayer):
                     window.centercrop(
                         video_width[monitor.get_model()], video_height[monitor.get_model()]
                     )
+        elif self.mode == MODE_PLAYLIST:
+            self.reload_playlist()
+            playlist_name = self.config[CONFIG_KEY_ACTIVE_PLAYLIST]
+            playlist_data = self.playlist["playlists"].get(playlist_name, {})
+            distribution_mode = playlist_data.get(PLAYLIST_KEY_MODE, PLAYLIST_MODE_PER_MONITOR)
+
+            logger.info(f"[Playlist] Active playlist: {playlist_name} ({distribution_mode})")
+            logger.info(f"[Playlist] Loaded playlist: {playlist_data}")
+
+            monitor_models = [monitor.get_model() for monitor in self.windows]
+            if distribution_mode == PLAYLIST_MODE_ALL:
+                # Split the shared video pool round-robin across every connected monitor.
+                per_monitor_sources = self._distribute_evenly(
+                    playlist_data.get(PLAYLIST_KEY_VIDEOS, []), monitor_models)
+            else:
+                per_monitor_sources = playlist_data.get(PLAYLIST_KEY_MONITORS, {})
+
+            for (monitor, window) in self.windows.items():
+                sources = per_monitor_sources.get(monitor.get_model()) or []
+                if sources:
+                    window.mode = MODE_PLAYLIST
+                    medias = window.set_playlist(sources)
+                    """
+                    This loops the media itself. Using -R / --repeat and/or -L / --loop don't seem to work. However,
+                    based on reading, this probably only repeats 65535 times, which is still a lot of time, but might
+                    cause the program to stop playback if it's left on for a very long time.
+                    """
+                    for media in medias:
+                        # Prevent awful ear-rape with multiple instances.
+                        if not monitor.is_primary():
+                            media.add_option("no-audio")
+                else:
+                    # Monitor has no playlist entries: downgrade to a single looping video,
+                    # falling back from this monitor's data_source to the Default one.
+                    fallback = data_source.get(monitor.get_model()) or data_source.get('Default')
+                    if fallback:
+                        logger.info(
+                            f"[Playlist] '{monitor.get_model()}' has no playlist, downgrading to single video: {fallback}")
+                        window.mode = MODE_VIDEO
+                        media = window.media_new(fallback)
+                        media.add_option("input-repeat=65535")
+                        if not monitor.is_primary():
+                            media.add_option("no-audio")
+                        window.set_media(media)
+                        window.set_position(0.0)
+                    else:
+                        logger.info(
+                            f"[Playlist] '{monitor.get_model()}' has no playlist and no fallback source, leaving blank")
+                        window.mode = MODE_NULL
 
         elif self.mode == MODE_STREAM:
             source = data_source["Default"]
@@ -577,6 +685,16 @@ class VideoPlayer(BasePlayer):
                     fade_duration_sec=self.config[CONFIG_KEY_FADE_DURATION_SEC],
                     fade_interval=self.config[CONFIG_KEY_FADE_INTERVAL],
                 )
+
+    @staticmethod
+    def _distribute_evenly(videos, monitor_models):
+        """Round-robin split a flat video list across the given monitor models."""
+        distributed = {model: [] for model in monitor_models}
+        if not monitor_models:
+            return distributed
+        for idx, video in enumerate(videos):
+            distributed[monitor_models[idx % len(monitor_models)]].append(video)
+        return distributed
 
     def monitor_sync(self):
         primary_monitor = None
@@ -722,6 +840,9 @@ class VideoPlayer(BasePlayer):
 
     def reload_config(self):
         self.config = ConfigUtil().load()
+        
+    def reload_playlist(self):
+        self.playlist = PlaylistUtil().load()
 
     def quit_player(self):
         self.set_original_wallpaper()

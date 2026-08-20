@@ -45,16 +45,27 @@ X-Flatpak=io.github.jeffshee.Hidamari
 
 CONFIG_DIR = os.path.join(xdg_config_home, "hidamari")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
+PLAYLIST_PATH = os.path.join(CONFIG_DIR, "playlist.json")
+
+PLAYLIST_VERSION = 2
+
+PLAYLIST_MODE_PER_MONITOR = "PER_MONITOR"
+PLAYLIST_MODE_ALL = "ALL"
+PLAYLIST_KEY_MODE = "mode"
+PLAYLIST_KEY_MONITORS = "monitors"
+PLAYLIST_KEY_VIDEOS = "videos"
 
 MODE_NULL = "MODE_NULL"
 MODE_VIDEO = "MODE_VIDEO"
 MODE_STREAM = "MODE_STREAM"
 MODE_WEBPAGE = "MODE_WEBPAGE"
+MODE_PLAYLIST = "MODE_PLAYLIST"
 
-CONFIG_VERSION = 4
+CONFIG_VERSION = 5
 CONFIG_KEY_VERSION = "version"
 CONFIG_KEY_MODE = "mode"
 CONFIG_KEY_DATA_SOURCE = "data_source"
+CONFIG_KEY_ACTIVE_PLAYLIST = "active_playlist"
 CONFIG_KEY_MUTE = "is_mute"
 CONFIG_KEY_VOLUME = "audio_volume"
 CONFIG_KEY_STATIC_WALLPAPER = "is_static_wallpaper"
@@ -69,6 +80,7 @@ CONFIG_TEMPLATE = {
     CONFIG_KEY_VERSION: CONFIG_VERSION,
     CONFIG_KEY_MODE: MODE_NULL,
     CONFIG_KEY_DATA_SOURCE: None,
+    CONFIG_KEY_ACTIVE_PLAYLIST: None,
     CONFIG_KEY_MUTE: False,
     CONFIG_KEY_VOLUME: 50,
     CONFIG_KEY_STATIC_WALLPAPER: True,
@@ -79,6 +91,13 @@ CONFIG_TEMPLATE = {
     CONFIG_KEY_FADE_INTERVAL: 0.1,
     CONFIG_KEY_SYSTRAY: False,
     CONFIG_KEY_FIRST_TIME: True,
+}
+
+PLAYLIST_TEMPLATE = {
+    "version": PLAYLIST_VERSION,
+    "playlists": {
+
+    }
 }
 
 from hidamari.monitor import MonitorInfo
