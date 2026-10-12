@@ -7,14 +7,14 @@ import random
 import subprocess
 import sys
 import time
-from threading import Timer
+from threading import Thread, Timer
 
 import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 import vlc
-from gi.repository import Gdk, Gio, Gtk
+from gi.repository import Gdk, Gio, GLib, Gtk
 from PIL import Image, ImageFilter
 from pydbus import SessionBus
 
@@ -46,6 +46,12 @@ from hidamari.utils import (
 from hidamari.yt_utils import get_best_audio, get_formats, get_optimal_video
 
 logger = logging.getLogger(LOGGER_NAME)
+
+# Stream watchdog. Stream URLs can stop serving data mid-playback (e.g. YouTube
+# answers HTTP 403 past a byte offset), which leaves VLC silently frozen.
+STREAM_WATCHDOG_INTERVAL_SEC = 5
+STREAM_STALL_TIMEOUT_SEC = 15
+STREAM_MAX_RECOVERY_ATTEMPTS = 5
 
 if is_wayland():
     # TODO: Window event monitoring for GNOME Wayland is broken
@@ -238,6 +244,12 @@ class PlayerWindow(Gtk.ApplicationWindow):
     def get_position(self):
         return self.__vlc_widget.player.get_position()
 
+    def get_time(self):
+        return self.__vlc_widget.player.get_time()
+
+    def get_state(self):
+        return self.__vlc_widget.player.get_state()
+
     def set_position(self, *args):
         self.__vlc_widget.player.set_position(*args)
 
@@ -361,6 +373,15 @@ class VideoPlayer(BasePlayer):
         self.active_handler, self.window_handler = None, None
         self.is_any_maximized, self.is_any_fullscreen = False, False
         self.is_paused_by_user = False
+
+        # Stream stall watchdog state (MODE_STREAM only)
+        self._stream_watchdog_id = None
+        self._stream_generation = 0
+        self._stream_last_time = None
+        self._stream_last_progress = 0.0
+        self._stream_recovering = False
+        self._stream_failed_attempts = 0
+        self._stream_can_resume = True
 
     def new_window(self, gdk_monitor):
         rect = gdk_monitor.get_geometry()
@@ -498,25 +519,11 @@ class VideoPlayer(BasePlayer):
                     )
 
         elif self.mode == MODE_STREAM:
-            source = data_source["Default"]
-            formats = get_formats(source)
-            max_height = (
-                max(self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
-            )
-            video_url, video_width, video_height = get_optimal_video(formats, max_height)
-            audio_url = get_best_audio(formats)
-
-            for monitor, window in self.windows.items():
-                media = window.media_new(video_url)
-                media.add_option("input-repeat=65535")
-                window.set_media(media)
-                if monitor.is_primary():
-                    window.add_audio_track(audio_url)
-                else:
-                    # `get_optimal_video` now might return video with audio.
-                    media.add_option("no-audio")
-                window.set_position(0.0)
-                window.centercrop(video_width, video_height)
+            try:
+                self._set_stream_media(*self._resolve_stream(data_source["Default"]))
+            except Exception as e:
+                # The stream watchdog started below keeps retrying
+                logger.error(f"[Stream] Failed to resolve {data_source['Default']}: {e}")
         else:
             raise ValueError("Invalid mode")
 
@@ -535,6 +542,158 @@ class VideoPlayer(BasePlayer):
             self.set_static_wallpaper()
         else:
             self.set_original_wallpaper()
+
+        if self.mode == MODE_STREAM:
+            self._start_stream_watchdog()
+        else:
+            self._stop_stream_watchdog()
+
+    def _resolve_stream(self, source):
+        """Resolve a stream URL into (video_url, video_width, video_height, audio_url)"""
+        formats = get_formats(source)
+        max_height = max(self.windows, key=lambda m: m.get_geometry().height).get_geometry().height
+        video_url, video_width, video_height = get_optimal_video(formats, max_height)
+        audio_url = get_best_audio(formats)
+        return video_url, video_width, video_height, audio_url
+
+    def _set_stream_media(self, video_url, video_width, video_height, audio_url, start_time=0):
+        for monitor, window in self.windows.items():
+            media = window.media_new(video_url)
+            media.add_option("input-repeat=65535")
+            if start_time > 0:
+                media.add_option(f"start-time={start_time:.1f}")
+            window.set_media(media)
+            if monitor.is_primary():
+                window.add_audio_track(audio_url)
+            else:
+                # `get_optimal_video` now might return video with audio.
+                media.add_option("no-audio")
+            if start_time <= 0:
+                window.set_position(0.0)
+            window.centercrop(video_width, video_height)
+
+    def _get_primary_window(self):
+        for monitor, window in self.windows.items():
+            if monitor.is_primary():
+                return window
+        return next(iter(self.windows.values()), None)
+
+    def _start_stream_watchdog(self):
+        self._stop_stream_watchdog()
+        self._stream_generation += 1
+        self._stream_last_time = None
+        self._stream_last_progress = time.monotonic()
+        self._stream_recovering = False
+        self._stream_failed_attempts = 0
+        self._stream_can_resume = True
+        self._stream_watchdog_id = GLib.timeout_add_seconds(
+            STREAM_WATCHDOG_INTERVAL_SEC, self._on_stream_watchdog
+        )
+
+    def _stop_stream_watchdog(self):
+        if self._stream_watchdog_id is not None:
+            GLib.source_remove(self._stream_watchdog_id)
+            self._stream_watchdog_id = None
+        # Invalidate any recovery still in flight
+        self._stream_generation += 1
+
+    def _on_stream_watchdog(self):
+        """Periodic check that stream playback is still advancing. Runs on the GTK main loop."""
+        if self.mode != MODE_STREAM:
+            self._stream_watchdog_id = None
+            return GLib.SOURCE_REMOVE
+        window = self._get_primary_window()
+        if window is None or self._stream_recovering:
+            return GLib.SOURCE_CONTINUE
+
+        now = time.monotonic()
+        if not self._should_playback_start():
+            # Paused on purpose, not stalled
+            self._stream_last_progress = now
+            return GLib.SOURCE_CONTINUE
+
+        state = window.get_state()
+        cur_time = window.get_time()
+        if self._stream_last_time is None and state == vlc.State.Playing and cur_time >= 0:
+            # First sample after (re)loading: only a later change counts as progress, since a
+            # resumed stream reports its start time even if no data ever arrives.
+            self._stream_last_time = cur_time
+        elif state == vlc.State.Playing and cur_time != self._stream_last_time:
+            self._stream_last_time = cur_time
+            self._stream_last_progress = now
+            if self._stream_failed_attempts:
+                logger.info("[Stream] Playback recovered")
+                self._stream_failed_attempts = 0
+            return GLib.SOURCE_CONTINUE
+
+        # Error/Ended are a definite failure, anything else gets a grace period. Back off
+        # exponentially after failed recoveries so a dead source isn't hammered.
+        stalled_for = now - self._stream_last_progress
+        if state in (vlc.State.Error, vlc.State.Ended):
+            min_wait = 0
+        else:
+            min_wait = STREAM_STALL_TIMEOUT_SEC
+        if self._stream_failed_attempts:
+            backoff = STREAM_WATCHDOG_INTERVAL_SEC * 2**self._stream_failed_attempts
+            min_wait = max(min_wait, backoff)
+        if stalled_for < min_wait:
+            return GLib.SOURCE_CONTINUE
+
+        logger.warning(
+            f"[Stream] Playback stalled (state={state}, no progress for {stalled_for:.0f}s)"
+        )
+        if self._stream_failed_attempts >= STREAM_MAX_RECOVERY_ATTEMPTS:
+            logger.error(
+                f"[Stream] Giving up after {self._stream_failed_attempts} failed recovery attempts"
+            )
+            self._stream_watchdog_id = None
+            return GLib.SOURCE_REMOVE
+
+        # A previous resume made no progress: the source likely refuses data past an offset
+        # (e.g. YouTube without a JS runtime in yt-dlp serves only ~60s), so restart from 0.
+        if self._stream_failed_attempts > 0 and self._stream_can_resume:
+            self._stream_can_resume = False
+            logger.warning(
+                "[Stream] Resuming did not work for this stream, restarting from the beginning instead"
+            )
+        start_time = 0
+        if self._stream_can_resume and self._stream_last_time:
+            start_time = self._stream_last_time / 1000
+
+        self._stream_failed_attempts += 1
+        self._stream_recovering = True
+        logger.info(
+            f"[Stream] Re-resolving stream (attempt {self._stream_failed_attempts}/"
+            f"{STREAM_MAX_RECOVERY_ATTEMPTS}, start at {start_time:.1f}s)"
+        )
+        Thread(
+            target=self._recover_stream,
+            args=(self.data_source["Default"], start_time, self._stream_generation),
+            daemon=True,
+        ).start()
+        return GLib.SOURCE_CONTINUE
+
+    def _recover_stream(self, source, start_time, generation):
+        """Runs in a worker thread so the network calls don't block the main loop"""
+        try:
+            resolved = self._resolve_stream(source)
+        except Exception as e:
+            logger.error(f"[Stream] Failed to re-resolve {source}: {e}")
+            resolved = None
+        GLib.idle_add(self._apply_recovered_stream, resolved, start_time, generation)
+
+    def _apply_recovered_stream(self, resolved, start_time, generation):
+        if generation != self._stream_generation or self.mode != MODE_STREAM:
+            return GLib.SOURCE_REMOVE
+        self._stream_recovering = False
+        self._stream_last_time = None
+        self._stream_last_progress = time.monotonic()
+        if resolved is None:
+            return GLib.SOURCE_REMOVE
+        self._set_stream_media(*resolved, start_time=start_time)
+        self.is_mute = self.config[CONFIG_KEY_MUTE]
+        self.start_playback()
+        return GLib.SOURCE_REMOVE
 
     @property
     def volume(self):
@@ -725,6 +884,7 @@ class VideoPlayer(BasePlayer):
 
     def quit_player(self):
         self.set_original_wallpaper()
+        self._stop_stream_watchdog()
 
         # Cleanup handlers
         if self.active_handler:
