@@ -7,6 +7,20 @@ def get_formats(raw_url):
     return formats
 
 
+def _value(fmt, key, default):
+    # Formats may lack a field or set it to None, e.g. direct video URLs from the generic extractor
+    value = fmt.get(key)
+    return default if value is None else value
+
+
+def _dimensions(fmt):
+    width, height = fmt.get("width"), fmt.get("height")
+    if not width or not height:
+        # Unknown, callers fall back to detecting the size from the player
+        return None, None
+    return width, height
+
+
 def filter_audio(formats):
     return filter(lambda x: x.get("acodec") != "none" and x.get("vcodec") == "none", formats)
 
@@ -21,15 +35,15 @@ def filter_audio_video(formats):
 
 def get_best(formats):
     filtered = list(filter_audio_video(formats))
-    best = max(filtered, key=lambda x: x.get("quality", -1))
-    return best["url"], best["width"], best["height"]
+    best = max(filtered, key=lambda x: _value(x, "quality", -1))
+    return best["url"], *_dimensions(best)
 
 
 def get_best_audio(formats):
     filtered = list(filter_audio(formats))
     if not filtered:
         filtered = list(filter_audio_video(formats))
-    best = max(filtered, key=lambda x: x.get("quality", -1))
+    best = max(filtered, key=lambda x: _value(x, "quality", -1))
     return best["url"]
 
 
@@ -37,16 +51,16 @@ def get_best_video(formats):
     filtered = list(filter_video(formats))
     if not filtered:
         filtered = list(filter_audio_video(formats))
-    best = max(filtered, key=lambda x: x.get("quality", -1))
-    return best["url"], best["width"], best["height"]
+    best = max(filtered, key=lambda x: _value(x, "quality", -1))
+    return best["url"], *_dimensions(best)
 
 
 def get_optimal_video(formats, height):
     filtered = list(filter_video(formats))
     if not filtered:
         filtered = list(filter_audio_video(formats))
-    best = min(filtered, key=lambda x: abs(x.get("height", 0) - height))
-    return best["url"], best["width"], best["height"]
+    best = min(filtered, key=lambda x: abs(_value(x, "height", 0) - height))
+    return best["url"], *_dimensions(best)
 
 
 if __name__ == "__main__":
