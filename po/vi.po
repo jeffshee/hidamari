@@ -1,0 +1,279 @@
+# Hidamari - Video wallpaper for Linux
+# Copyright (C) 2022 Jeff Shee (jeffshee8969@gmail.com)
+# This file is distributed under the same license as the hidamari package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: hidamari\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-10 02:19+0900\n"
+"PO-Revision-Date: 2026-11-02 12:16+0700\n"
+"Last-Translator: imngkhang <nnguyenkhang14@gmail.com>\n"
+"Language-Team: \n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.10\n"
+
+#: src/hidamari/gui/control.py:120
+#, python-brace-format
+msgid "Set For {monitor}"
+msgstr "Đặt cho {monitor}"
+
+#. add all option
+#: src/hidamari/gui/control.py:125
+msgid "Set For All"
+msgstr "Đặt cho tất cả"
+
+#: src/hidamari/gui/control.py:213
+msgid "Couldn't connect to server"
+msgstr "Không thể kết nối tới máy chủ"
+
+#: src/hidamari/gui/control.py:226
+msgid "Welcome to Hidamari 🤗"
+msgstr "Chào mừng đến với Hidamari 🤗"
+
+#: src/hidamari/gui/control.py:230
+msgid ""
+"Quickstart for adding local videos:\n"
+" ・Click the folder icon to open the Hidamari folder\n"
+" ・Put your videos there\n"
+" ・Click the refresh button"
+msgstr ""
+"Hướng dẫn nhanh cách thêm video cục bộ:\n"
+" ・Nhấp vào biểu tượng thư mục để mở thư mục Hidamari\n"
+" ・Đặt video của bạn vào đó\n"
+" ・Nhấp vào nút làm mới"
+
+#: src/hidamari/gui/control.py:246
+msgid "Oops!"
+msgstr "Ối!"
+
+#: src/hidamari/gui/control.py:265
+msgid "No Video Selected"
+msgstr "Không có video nào được chọn"
+
+#: src/hidamari/gui/control.py:267
+msgid ""
+"There are no video selected.\n"
+"Please choose one first."
+msgstr ""
+"Hiện chưa có video nào được chọn.\n"
+"Vui lòng chọn một video trước."
+
+#: src/hidamari/gui/control.py:300
+msgid "Please choose a HTML file"
+msgstr "Vui lòng chọn một tập tin HTML"
+
+#: src/hidamari/gui/control.py:423
+#, python-brace-format
+msgid ""
+"Failed to access {url}. Error:\n"
+"{error}"
+msgstr ""
+"Thất bại khi truy cập {url}. Lỗi:\n"
+"{error}"
+
+#: src/hidamari/gui/control.py:428
+#, python-brace-format
+msgid "Failed to access {url}. Error code: {code}"
+msgstr "Thất bại khi truy cập {url}. Mã lỗi: {code}"
+
+#: src/hidamari/gui/control.py:444
+#, python-brace-format
+msgid ""
+"Failed to stream {url}. Error:\n"
+"{error}"
+msgstr ""
+"Thất bại khi phát trực tuyến {url}. Lỗi:\n"
+"{error}"
+
+#.
+#: src/hidamari/menu.py:97
+msgid "Show Hidamari"
+msgstr "Hiện Hidamari"
+
+#.
+#: src/hidamari/menu.py:100
+msgid "Toggle Mute Audio"
+msgstr "Chuyển đổi tắt/mở âm thanh"
+
+#.
+#: src/hidamari/menu.py:103 src/hidamari/assets/control.ui:832
+msgid "Toggle Play/Pause"
+msgstr "Bật/tắt tạm dừng/phát"
+
+#.
+#: src/hidamari/menu.py:106
+msgid "Reload"
+msgstr "Tải lại"
+
+#.
+#: src/hidamari/menu.py:109 src/hidamari/assets/control.ui:851
+msgid "I'm Feeling Lucky"
+msgstr "Tôi cảm thấy may mắn"
+
+#.
+#: src/hidamari/menu.py:112 src/hidamari/assets/control.ui:294
+msgid "Quit Hidamari"
+msgstr "Thoát Hidamari"
+
+#: src/hidamari/assets/control.ui:10
+msgid ""
+"Video wallpaper for Linux. Written in Python. 🐍\n"
+"\n"
+"Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun"
+msgstr ""
+"Hình nền video cho Linux. Được viết bằng Python. 🐍\n"
+"\n"
+"Hidamari 日溜まり 【ひだまり】 (dt) nơi nắng ấm; sự tiếp xúc với mặt trời"
+
+#: src/hidamari/assets/control.ui:76
+msgid "Quick toggles"
+msgstr "Chuyển đổi nhanh"
+
+#: src/hidamari/assets/control.ui:93
+msgid "Autostart after login"
+msgstr "Tự khởi chạy sau đăng nhập"
+
+#: src/hidamari/assets/control.ui:106
+msgid "Video frame can be applied as system wallpaper, look great in GNOME"
+msgstr ""
+"Khung video có thể được áp dụng làm hình nền hệ thống, nhìn rất đẹp trên "
+"GNOME"
+
+#: src/hidamari/assets/control.ui:108
+msgid "Apply static wallpaper"
+msgstr "Áp dụng hình nền tĩnh"
+
+#: src/hidamari/assets/control.ui:121
+msgid ""
+"Automatically pauses playback when maximized window or full screen mode is "
+"detected"
+msgstr ""
+"Tự động tạm dừng phát khi phát hiện cửa sổ được phóng to hoặc ở chế độ "
+"toàn màn hình"
+
+#: src/hidamari/assets/control.ui:123
+msgid "Pause when maximized window"
+msgstr "Tạm dừng khi phóng to cửa sổ"
+
+#: src/hidamari/assets/control.ui:136
+msgid ""
+"Automatically mutes playback when maximized window or full screen mode is "
+"detected"
+msgstr ""
+"Tự động tắt tiếng khi phát hiện cửa sổ được phóng to hoặc ở chế độ toàn "
+"màn hình"
+
+#: src/hidamari/assets/control.ui:138
+msgid "Mute when maximized window"
+msgstr "Tắt tiếng khi phóng to cửa sổ"
+
+#: src/hidamari/assets/control.ui:162
+msgid "Volume control"
+msgstr "Điều khiển âm lượng"
+
+#: src/hidamari/assets/control.ui:223
+msgid "Static wallpaper blur radius"
+msgstr "Bán kính làm mờ hình nền tĩnh"
+
+#: src/hidamari/assets/control.ui:266
+msgid "Open config file"
+msgstr "Mở tập tin cấu hình"
+
+#: src/hidamari/assets/control.ui:280
+msgid "About Hidamari"
+msgstr "Về Hidamari"
+
+#: src/hidamari/assets/control.ui:339
+msgid ""
+"<span size=\"x-large\"><b>Local Video</b></span>\n"
+"Videos located in Hidamari folder"
+msgstr ""
+"<span size=\"x-large\"><b>Video cục bộ</b></span>\n"
+"Các video nằm trong thư mục Hidamari"
+
+#: src/hidamari/assets/control.ui:355
+msgid "Refresh"
+msgstr "Làm mới"
+
+#: src/hidamari/assets/control.ui:380
+msgid "Open Hidamari folder"
+msgstr "Mở thư mục Hidamari"
+
+#: src/hidamari/assets/control.ui:432 src/hidamari/assets/control.ui:755
+msgid "Apply"
+msgstr "Áp dụng"
+
+#: src/hidamari/assets/control.ui:452
+msgid "Local Video"
+msgstr "Video cục bộ"
+
+#: src/hidamari/assets/control.ui:465
+msgid ""
+"<span size=\"x-large\"><b>Streaming</b></span>\n"
+"Videos from streaming services"
+msgstr ""
+"<span size=\"x-large\"><b>Phát trực tuyến</b></span>\n"
+"Video từ các dịch vụ phát trực tuyến"
+
+#: src/hidamari/assets/control.ui:500
+msgid "<b>Streaming URL</b>"
+msgstr "<b>URL phát trực tuyến</b>"
+
+#: src/hidamari/assets/control.ui:541
+msgid "💡\tThis feature uses <i>yt-dlp</i> as backend"
+msgstr "💡\tTính năng này dùng <i>yt-dlp</i> làm nền tảng"
+
+#: src/hidamari/assets/control.ui:555
+msgid ""
+"😉\tTry playing any YouTube video! <a href=\"https://github.com/yt-dlp/yt-"
+"dlp/blob/master/supportedsites.md\">Supported sites (yt-dlp)</a>"
+msgstr ""
+"😉\tHãy thử phát bất kì video YouTube nào! <a href=\"https://github.com/yt-"
+"dlp/yt-dlp/blob/master/supportedsites.md\">Các trang web được hỗ trợ (yt-"
+"dlp)</a>"
+
+#: src/hidamari/assets/control.ui:570 src/hidamari/assets/control.ui:697
+msgid "Hint"
+msgstr "Gợi ý"
+
+#: src/hidamari/assets/control.ui:591
+msgid "Streaming"
+msgstr "Phát trực tuyến"
+
+#: src/hidamari/assets/control.ui:605
+msgid ""
+"<span size=\"x-large\"><b>Web Page</b></span>\n"
+"Set a web page as wallpaper"
+msgstr ""
+"<span size=\"x-large\"><b>Trang web</b></span>\n"
+"Đặt một trang web làm hình nền"
+
+#: src/hidamari/assets/control.ui:640
+msgid "<b>Web Page URL</b>"
+msgstr "<b>URL trang web</b>"
+
+#: src/hidamari/assets/control.ui:681
+msgid ""
+"💡\tCheck this website for some really amazing examples!\n"
+"\t<a href=\"https://alteredqualia.com/\">https://alteredqualia.com/</a>"
+msgstr ""
+"💡\tXem trang web này để có những ví dụ thực sự tuyệt vời!\n"
+"\t<a href=\"https://alteredqualia.com/\">https://alteredqualia.com/</a>"
+
+#: src/hidamari/assets/control.ui:713
+msgid "<b>Local Web Page</b>"
+msgstr "<b>Trang web cục bộ</b>"
+
+#: src/hidamari/assets/control.ui:727
+msgid "Alternately, you can choose a HTML file on your PC"
+msgstr "Ngoài ra, bạn có thể chọn một tập tin HTML trên máy tính"
+
+#: src/hidamari/assets/control.ui:790
+msgid "Web Page"
+msgstr "Trang web"
