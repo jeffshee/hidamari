@@ -1,7 +1,23 @@
 import logging
 import multiprocessing as mp
 import threading
-from gettext import gettext as _
+#from gettext import gettext as _
+
+import os
+import locale
+import gettext
+
+# Detect locale dir (Flatpak uses /app/share/locale)
+if os.path.exists("/app/share/locale"):
+    _DEFAULT_LOCALEDIR = "/app/share/locale"
+else:
+    _DEFAULT_LOCALEDIR = "/usr/share/locale"
+
+# Start gettext at the beginning
+locale.bindtextdomain("hidamari", _DEFAULT_LOCALEDIR)
+gettext.bindtextdomain("hidamari", _DEFAULT_LOCALEDIR)
+gettext.textdomain("hidamari")
+_ = gettext.gettext
 
 import gi
 import setproctitle
@@ -123,7 +139,8 @@ def build_menu(mode):
     return menu
 
 
-def show_systray_icon(mode, localedir="/usr/share/locale"):
+#def show_systray_icon(mode, localedir="/usr/share/locale"):
+def show_systray_icon(mode, localedir=_DEFAULT_LOCALEDIR):
     setproctitle.setproctitle(mp.current_process().name)
     init_translations(localedir)
 
