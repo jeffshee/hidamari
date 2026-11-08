@@ -1,0 +1,278 @@
+# Hidamari - Video wallpaper for Linux
+# Copyright (C) 2022 Jeff Shee (jeffshee8969@gmail.com)
+# This file is distributed under the same license as the hidamari package.
+# mluna81 <lunamarcus@proton.me>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: hidamari\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-10 02:19+0900\n"
+"PO-Revision-Date: 2026-11-07 23:46-0300\n"
+"Last-Translator: mluna81 <lunamarcus@proton.me>\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.10\n"
+
+#: src/hidamari/gui/control.py:120
+#, python-brace-format
+msgid "Set For {monitor}"
+msgstr "Aplicar em {monitor}"
+
+#. add all option
+#: src/hidamari/gui/control.py:125
+msgid "Set For All"
+msgstr "Aplicar em todos os monitores"
+
+#: src/hidamari/gui/control.py:213
+msgid "Couldn't connect to server"
+msgstr "Não foi possível conectar ao servidor"
+
+#: src/hidamari/gui/control.py:226
+msgid "Welcome to Hidamari 🤗"
+msgstr "Bem-vindo ao Hidamari 🤗"
+
+#: src/hidamari/gui/control.py:230
+msgid ""
+"Quickstart for adding local videos:\n"
+" ・Click the folder icon to open the Hidamari folder\n"
+" ・Put your videos there\n"
+" ・Click the refresh button"
+msgstr ""
+"Como adicionar vídeos locais:\n"
+"・Clique no ícone de pasta para abrir a pasta do Hidamari\n"
+"・Coloque seus vídeos lá\n"
+"・Clique no botão de atualizar"
+
+#: src/hidamari/gui/control.py:246
+msgid "Oops!"
+msgstr "Opa!"
+
+#: src/hidamari/gui/control.py:265
+msgid "No Video Selected"
+msgstr "Nenhum Vídeo Selecionado"
+
+#: src/hidamari/gui/control.py:267
+msgid ""
+"There are no video selected.\n"
+"Please choose one first."
+msgstr ""
+"Nenhum vídeo foi selecionado.\n"
+"Por favor, escolha um primeiro."
+
+#: src/hidamari/gui/control.py:300
+msgid "Please choose a HTML file"
+msgstr "Por favor, escolha um arquivo HTML"
+
+#: src/hidamari/gui/control.py:423
+#, python-brace-format
+msgid ""
+"Failed to access {url}. Error:\n"
+"{error}"
+msgstr ""
+"Falha ao acessar {url}. Erro:\n"
+"{error}"
+
+#: src/hidamari/gui/control.py:428
+#, python-brace-format
+msgid "Failed to access {url}. Error code: {code}"
+msgstr "Falha ao acessar {url}. Código do erro: {code}"
+
+#: src/hidamari/gui/control.py:444
+#, python-brace-format
+msgid ""
+"Failed to stream {url}. Error:\n"
+"{error}"
+msgstr ""
+"Falha ao reproduzir {url}. Erro:\n"
+"{error}"
+
+#.
+#: src/hidamari/menu.py:97
+msgid "Show Hidamari"
+msgstr "Mostrar o Hidamari"
+
+#.
+#: src/hidamari/menu.py:100
+msgid "Toggle Mute Audio"
+msgstr "Ativar/Desativar Áudio"
+
+#.
+#: src/hidamari/menu.py:103 src/hidamari/assets/control.ui:832
+msgid "Toggle Play/Pause"
+msgstr "Reproduzir/Pausar"
+
+#.
+#: src/hidamari/menu.py:106
+msgid "Reload"
+msgstr "Recarregar"
+
+#.
+#: src/hidamari/menu.py:109 src/hidamari/assets/control.ui:851
+msgid "I'm Feeling Lucky"
+msgstr "Estou com sorte"
+
+#.
+#: src/hidamari/menu.py:112 src/hidamari/assets/control.ui:294
+msgid "Quit Hidamari"
+msgstr "Sair do Hidamari"
+
+#: src/hidamari/assets/control.ui:10
+msgid ""
+"Video wallpaper for Linux. Written in Python. 🐍\n"
+"\n"
+"Hidamari 日溜まり 【ひだまり】 (n) sunny spot; exposure to the sun"
+msgstr ""
+"Papel de parede de vídeo para Linux. Escrito em Python. 🐍\n"
+"\n"
+"Hidamari 日溜まり 【ひだまり】 (s.m.) local ensolarado; exposição ao sol"
+
+#: src/hidamari/assets/control.ui:76
+msgid "Quick toggles"
+msgstr "Ajustes rápidos"
+
+#: src/hidamari/assets/control.ui:93
+msgid "Autostart after login"
+msgstr "Iniciar após o login"
+
+#: src/hidamari/assets/control.ui:106
+msgid "Video frame can be applied as system wallpaper, look great in GNOME"
+msgstr ""
+"Um quadro do vídeo pode ser aplicado como papel de parede do sistema — "
+"fica ótimo no GNOME"
+
+#: src/hidamari/assets/control.ui:108
+msgid "Apply static wallpaper"
+msgstr "Aplicar papel de parede estático"
+
+#: src/hidamari/assets/control.ui:121
+msgid ""
+"Automatically pauses playback when maximized window or full screen mode is "
+"detected"
+msgstr ""
+"Pausar a reprodução automaticamente quando uma janela é maximizada ou o "
+"modo de tela cheia é detectado"
+
+#: src/hidamari/assets/control.ui:123
+msgid "Pause when maximized window"
+msgstr "Pausar quando uma janela é maximizada"
+
+#: src/hidamari/assets/control.ui:136
+msgid ""
+"Automatically mutes playback when maximized window or full screen mode is "
+"detected"
+msgstr ""
+"Silenciar automaticamente a reprodução quando uma janela é maximizada ou o "
+"modo de tela cheia é detectado"
+
+#: src/hidamari/assets/control.ui:138
+msgid "Mute when maximized window"
+msgstr "Silenciar quando uma janela é maximizada"
+
+#: src/hidamari/assets/control.ui:162
+msgid "Volume control"
+msgstr "Controle de volume"
+
+#: src/hidamari/assets/control.ui:223
+msgid "Static wallpaper blur radius"
+msgstr "Raio de desfoque do papel de parede estático"
+
+#: src/hidamari/assets/control.ui:266
+msgid "Open config file"
+msgstr "Abrir arquivo de configuração"
+
+#: src/hidamari/assets/control.ui:280
+msgid "About Hidamari"
+msgstr "Sobre o Hidamari"
+
+#: src/hidamari/assets/control.ui:339
+msgid ""
+"<span size=\"x-large\"><b>Local Video</b></span>\n"
+"Videos located in Hidamari folder"
+msgstr ""
+"<span size=\"x-large\"><b>Vídeo Local</b></span>\n"
+"Vídeos localizados na pasta do Hidamari"
+
+#: src/hidamari/assets/control.ui:355
+msgid "Refresh"
+msgstr "Atualizar"
+
+#: src/hidamari/assets/control.ui:380
+msgid "Open Hidamari folder"
+msgstr "Abrir pasta do Hidamari"
+
+#: src/hidamari/assets/control.ui:432 src/hidamari/assets/control.ui:755
+msgid "Apply"
+msgstr "Aplicar"
+
+#: src/hidamari/assets/control.ui:452
+msgid "Local Video"
+msgstr "Vídeo Local"
+
+#: src/hidamari/assets/control.ui:465
+msgid ""
+"<span size=\"x-large\"><b>Streaming</b></span>\n"
+"Videos from streaming services"
+msgstr ""
+"<span size=\"x-large\"><b>Streaming</b></span>\n"
+"Vídeos de serviços de streaming"
+
+#: src/hidamari/assets/control.ui:500
+msgid "<b>Streaming URL</b>"
+msgstr "<b>URL de streaming</b>"
+
+#: src/hidamari/assets/control.ui:541
+msgid "💡\tThis feature uses <i>yt-dlp</i> as backend"
+msgstr "💡\tEste recurso usa <i>yt-dlp</i> como backend"
+
+#: src/hidamari/assets/control.ui:555
+msgid ""
+"😉\tTry playing any YouTube video! <a href=\"https://github.com/yt-dlp/yt-"
+"dlp/blob/master/supportedsites.md\">Supported sites (yt-dlp)</a>"
+msgstr ""
+"😉\tTente reproduzir qualquer vídeo do YouTube! <a href=\"https://"
+"github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md\">Sites compatíveis "
+"(yt-dlp)</a>"
+
+#: src/hidamari/assets/control.ui:570 src/hidamari/assets/control.ui:697
+msgid "Hint"
+msgstr "Dica"
+
+#: src/hidamari/assets/control.ui:591
+msgid "Streaming"
+msgstr "Streaming"
+
+#: src/hidamari/assets/control.ui:605
+msgid ""
+"<span size=\"x-large\"><b>Web Page</b></span>\n"
+"Set a web page as wallpaper"
+msgstr ""
+"<span size=\"x-large\"><b>Página Web</b></span>\n"
+"Defina uma página da Web como papel de parede"
+
+#: src/hidamari/assets/control.ui:640
+msgid "<b>Web Page URL</b>"
+msgstr "<b>URL da Página Web</b>"
+
+#: src/hidamari/assets/control.ui:681
+msgid ""
+"💡\tCheck this website for some really amazing examples!\n"
+"\t<a href=\"https://alteredqualia.com/\">https://alteredqualia.com/</a>"
+msgstr ""
+"💡\tConfira este site para ver alguns exemplos realmente maravilhosos!\n"
+"\t<a href=\"https://alteredqualia.com/\">https://alteredqualia.com/</a>"
+
+#: src/hidamari/assets/control.ui:713
+msgid "<b>Local Web Page</b>"
+msgstr "<b>Página Web Local</b>"
+
+#: src/hidamari/assets/control.ui:727
+msgid "Alternately, you can choose a HTML file on your PC"
+msgstr "Alternativamente, você pode escolher um arquivo HTML no seu PC"
+
+#: src/hidamari/assets/control.ui:790
+msgid "Web Page"
+msgstr "Página Web"
