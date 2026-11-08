@@ -412,7 +412,9 @@ class ControlPanel(Gtk.Application):
         about_dialog.set_transient_for(self.window)
         about_dialog.set_version(self.version)
         about_dialog.set_modal(True)
-        about_dialog.present()
+        #about_dialog.present()
+        about_dialog.run()
+        about_dialog.destroy()
 
     def _check_url(self, url):
         # Check if the url is valid
