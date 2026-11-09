@@ -405,7 +405,7 @@ class ConfigUtil:
 
     def _checkDefaultSource(self, config: dict):
         # Check if the 'Default' source is empty
-        default_source = config["data_source"].get("Default", "")
+        default_source = config["data_source"].get("Default") or ""
         mode = config.get("mode")
         if mode == MODE_VIDEO and not os.path.isfile(default_source):
             logger.warning(
@@ -420,7 +420,7 @@ class ConfigUtil:
 
             # Set the 'Default' source to the first value available
             for value in values:
-                if len(value) > 0 and os.path.isfile(value):
+                if value and os.path.isfile(value):
                     config["data_source"]["Default"] = value
                     self.save(config)
                     break

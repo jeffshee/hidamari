@@ -125,7 +125,8 @@ class HidamariServer:
         # Set data source if specified
         if data_source and monitor:
             self.config[CONFIG_KEY_DATA_SOURCE][monitor] = data_source
-        self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = data_source  # always update default source
+        if data_source:
+            self.config[CONFIG_KEY_DATA_SOURCE]["Default"] = data_source  # update default source
 
         # Quit current then create a new player
         self._quit_player()
