@@ -81,7 +81,16 @@ class BasePlayer(Gtk.Application):
 
     def _on_monitor_removed(self, _, gdk_monitor, *args):
         logger.info("[Player] monitor-removed")
-        del self.windows[gdk_monitor]
+        # Dropping the dict entry is not enough: Gtk.Application keeps the window
+        # alive, so its player kept decoding in the background and every
+        # unplug/replug or suspend/resume leaked a whole VLC instance.
+        window = self.windows.pop(gdk_monitor, None)
+        if window is None:
+            return
+        cleanup = getattr(window, "cleanup", None)  # only PlayerWindow has one
+        if cleanup:
+            cleanup()
+        window.destroy()
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
